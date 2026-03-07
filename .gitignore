@@ -1,0 +1,3 @@
+# Sandbox: ignore everything except README.md
+sandbox/*
+!sandbox/README.md
