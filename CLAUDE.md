@@ -44,6 +44,15 @@ project/tasks/
 **When starting a task:** move it to `in-progress/` using `move-task.sh`.
 **When done:** run `complete-task.sh` — no `--parent` for top-level tasks, add `--parent` for subtasks.
 
+**To show outstanding work** (draft + backlog + in-progress, excluding complete):
+```bash
+project/tasks/scripts/list-tasks.sh --epic main --folder draft --depth 2
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog --depth 2
+project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --depth 2
+```
+Do NOT use `list-tasks.sh --epic main` without `--folder` when the user asks for
+outstanding or incomplete tasks — it includes `complete/` which adds noise.
+
 > **Rule:** Always use the scripts to manage tasks. Never manually edit task
 > `README.md` files to add or remove subtasks, and never manually move task
 > directories between status folders. The scripts keep the filesystem and
