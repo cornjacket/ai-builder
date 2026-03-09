@@ -19,10 +19,14 @@ project/tasks/
         complete/               # done and verified
         wont-do/                # explicitly decided against, kept for reference
     scripts/
-        new-task.sh             # create a new task
-        new-subtask.sh          # create a subtask under an existing task
+        new-task.sh             # create a task or subtask (--parent for subtasks)
         move-task.sh            # move a task to a different status
-        list-tasks.sh           # display the full task tree for an epic
+        complete-task.sh        # mark a task or subtask done/undone (--parent for subtasks)
+        delete-task.sh          # soft-delete: hides directory, removes from parent README
+        restore-task.sh         # reverse a soft-delete: unhides directory, re-adds to parent README
+        show-task.sh            # print a task's README to stdout
+        list-tasks.sh           # display the task tree (--depth, --root, --folder, --all)
+        task-template.md        # README template used by new-task.sh
 ```
 
 ---
@@ -51,15 +55,22 @@ Every task README begins with a metadata table:
 ```markdown
 # Task: <name>
 
-| Field  | Value  |
-|--------|--------|
-| Status | draft  |
-| Epic   | main   |
-| Tags   | —      |
-| Parent | —      |
+| Field    | Value  |
+|----------|--------|
+| Status   | draft  |
+| Epic     | main   |
+| Tags     | —      |
+| Parent   | —      |
+| Priority | HIGH   |
 ```
 
-Followed by `## Description`, `## Subtasks`, and `## Notes` sections.
+Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).
+
+Followed by `## Description`, `## Documentation`, `## Subtasks`, and `## Notes` sections.
+
+The `## Documentation` section is where the author records what public documentation
+(if any) this task requires and where it belongs (e.g. this README, `CLAUDE.md`,
+inline code comments). Write "none needed" if the task requires no external documentation.
 
 ---
 
@@ -86,22 +97,61 @@ All scripts are in `project/tasks/scripts/` and should be run from the
 **repo root**.
 
 ```bash
-# Create a new task
+# Create a new top-level task
 project/tasks/scripts/new-task.sh --epic main --folder draft --name my-task
 
+# Create a task with priority
+project/tasks/scripts/new-task.sh --epic main --folder draft --name my-task --priority HIGH
+
 # Create a subtask under an existing task
-project/tasks/scripts/new-subtask.sh --epic main --folder draft \
+project/tasks/scripts/new-task.sh --epic main --folder draft \
     --parent my-task --name my-subtask
 
 # Move a task (and all its subtasks) to a different status
 project/tasks/scripts/move-task.sh --epic main --name my-task \
     --from draft --to backlog
 
-# List all tasks in an epic
+# Mark a top-level task complete (moves to complete/)
+project/tasks/scripts/complete-task.sh --epic main --folder in-progress --name my-task
+
+# Mark a subtask complete (updates checkbox and Status field)
+project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
+    --parent my-task --name my-subtask
+
+# Undo either
+project/tasks/scripts/complete-task.sh --epic main --folder in-progress --name my-task --undo
+project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
+    --parent my-task --name my-subtask --undo
+
+# Print a task's README to stdout
+project/tasks/scripts/show-task.sh --epic main --folder in-progress --name my-task
+project/tasks/scripts/show-task.sh --epic main --folder in-progress \
+    --parent my-task --name my-subtask
+
+# Soft-delete a task (hides directory, removes from parent README)
+project/tasks/scripts/delete-task.sh --epic main --folder draft --name my-task
+project/tasks/scripts/delete-task.sh --epic main --folder draft \
+    --parent my-task --name my-subtask
+
+# Restore a soft-deleted task (unhides directory, re-appends to parent README)
+project/tasks/scripts/restore-task.sh --epic main --folder draft --name my-task
+project/tasks/scripts/restore-task.sh --epic main --folder draft \
+    --parent my-task --name my-subtask
+
+# List incomplete tasks in an epic (default)
 project/tasks/scripts/list-tasks.sh --epic main
 
-# List tasks in a specific status
-project/tasks/scripts/list-tasks.sh --epic main --folder backlog
+# List all tasks including completed subtasks
+project/tasks/scripts/list-tasks.sh --epic main --all
+
+# List incomplete tasks in a specific status, with subtask depth
+project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --depth 2
+
+# Filter by tag across all statuses
+project/tasks/scripts/list-tasks.sh --epic main --tag backend --depth 2 --all
+
+# List tasks rooted at a specific directory
+project/tasks/scripts/list-tasks.sh --root main/in-progress/my-task --depth 3
 ```
 
 ---

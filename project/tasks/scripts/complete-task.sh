@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+# Mark a task or subtask as complete (or undo a completion).
+#
+# Top-level task (no --parent):
+#   Moves the task directory from <folder> to complete/, updates the source
+#   status README and the task's own Status field.
+#   --undo moves it back from complete/ to <folder>.
+#
+# Subtask (with --parent):
+#   Updates [ ] → [x] in the parent README and sets Status to 'complete'
+#   in the subtask's own README.
+#   --undo reverses both changes.
+#
+# Usage:
+#   complete-task.sh --epic <epic> --folder <status> --name <task>
+#   complete-task.sh --epic <epic> --folder <status> --name <task> --undo
+#   complete-task.sh --epic <epic> --folder <status> --parent <task> --name <subtask>
+#   complete-task.sh --epic <epic> --folder <status> --parent <task> --name <subtask> --undo
+#
+# Examples:
+#   complete-task.sh --epic main --folder in-progress --name my-task
+#   complete-task.sh --epic main --folder in-progress --name my-task --undo
+#   complete-task.sh --epic main --folder in-progress --parent my-task --name my-subtask
+#   complete-task.sh --epic main --folder in-progress --parent my-task --name my-subtask --undo
+
+set -euo pipefail
+
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+
+# ---------------------------------------------------------------------------
+# Parse arguments
+# ---------------------------------------------------------------------------
+
+EPIC="main"
+FOLDER=""
+PARENT=""
+NAME=""
+UNDO=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --epic)   EPIC="$2";   shift 2 ;;
+        --folder) FOLDER="$2"; shift 2 ;;
+        --parent) PARENT="$2"; shift 2 ;;
+        --name)   NAME="$2";   shift 2 ;;
+        --undo)   UNDO=true;   shift ;;
+        *) echo "Unknown flag: $1"; exit 1 ;;
+    esac
+done
+
+if [[ -z "$FOLDER" || -z "$NAME" ]]; then
+    echo "Usage: complete-task.sh --folder <status> --name <task> [--epic <epic>] [--parent <parent-task>] [--undo]"
+    exit 1
+fi
+
+TASKS_DIR="$REPO_ROOT/project/tasks/$EPIC"
+
+# ---------------------------------------------------------------------------
+# Subtask path: update checkbox + Status field in place
+# ---------------------------------------------------------------------------
+
+if [[ -n "$PARENT" ]]; then
+    PARENT_README="$TASKS_DIR/$FOLDER/$PARENT/README.md"
+    SUBTASK_README="$TASKS_DIR/$FOLDER/$PARENT/$NAME/README.md"
+
+    if [[ ! -f "$PARENT_README" ]]; then
+        echo "Parent task not found: project/tasks/$EPIC/$FOLDER/$PARENT"
+        exit 1
+    fi
+    if [[ ! -f "$SUBTASK_README" ]]; then
+        echo "Subtask not found: project/tasks/$EPIC/$FOLDER/$PARENT/$NAME"
+        exit 1
+    fi
+
+    if [[ "$UNDO" == true ]]; then
+        if ! grep -q "\- \[x\] \[$NAME\]" "$PARENT_README"; then
+            echo "Subtask '$NAME' is not marked complete in $PARENT_README"
+            exit 1
+        fi
+        sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
+        sed -i '' "s/| Status | complete */| Status | $FOLDER              |/" "$SUBTASK_README"
+        echo "Marked incomplete: $NAME"
+    else
+        if ! grep -q "\- \[ \] \[$NAME\]" "$PARENT_README"; then
+            echo "Subtask '$NAME' not found or already complete in $PARENT_README"
+            exit 1
+        fi
+        sed -i '' "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
+        sed -i '' "s/| Status | .* |/| Status | complete             |/" "$SUBTASK_README"
+        echo "Marked complete: $NAME"
+    fi
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Top-level task path: move between status folders
+# ---------------------------------------------------------------------------
+
+if [[ "$UNDO" == true ]]; then
+    # complete/ → original folder
+    SRC_DIR="$TASKS_DIR/complete/$NAME"
+    DST_DIR="$TASKS_DIR/$FOLDER/$NAME"
+    SRC_STATUS_README="$TASKS_DIR/complete/README.md"
+    DST_STATUS_README="$TASKS_DIR/$FOLDER/README.md"
+    FROM="complete"
+    TO="$FOLDER"
+else
+    # folder → complete/
+    SRC_DIR="$TASKS_DIR/$FOLDER/$NAME"
+    DST_DIR="$TASKS_DIR/complete/$NAME"
+    SRC_STATUS_README="$TASKS_DIR/$FOLDER/README.md"
+    DST_STATUS_README="$TASKS_DIR/complete/README.md"
+    FROM="$FOLDER"
+    TO="complete"
+fi
+
+if [[ ! -d "$SRC_DIR" ]]; then
+    echo "Task not found: project/tasks/$EPIC/$FROM/$NAME"
+    exit 1
+fi
+
+if [[ -d "$DST_DIR" ]]; then
+    echo "Task already exists at destination: project/tasks/$EPIC/$TO/$NAME"
+    exit 1
+fi
+
+# Move directory
+mkdir -p "$(dirname "$DST_DIR")"
+mv "$SRC_DIR" "$DST_DIR"
+
+# Update task README Status field
+sed -i '' "s/| Status | .* |/| Status | $TO  |/" "$DST_DIR/README.md"
+
+# Remove from source status README
+if [[ -f "$SRC_STATUS_README" ]]; then
+    sed -i '' "/\[$NAME\]($NAME\/)/d" "$SRC_STATUS_README"
+fi
+
+# Add to destination status README (create if needed)
+if [[ ! -f "$DST_STATUS_README" ]]; then
+    cat > "$DST_STATUS_README" << EOF
+# $EPIC / $TO
+
+## Tasks
+
+<!-- When a task is finished, run move-task.sh --to complete before moving on. -->
+<!-- task-list-start -->
+<!-- task-list-end -->
+EOF
+fi
+sed -i '' "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$DST_STATUS_README"
+
+echo "Moved: project/tasks/$EPIC/$FROM/$NAME"
+echo "   ->  project/tasks/$EPIC/$TO/$NAME"
