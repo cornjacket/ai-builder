@@ -60,6 +60,13 @@ implementation. The template is derived from it, not a parallel design.
 
 <!-- When a subtask is finished, run complete-subtask.sh to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [ ] [e29682-create-template-skeleton](e29682-create-template-skeleton/)
+- [ ] [299a49-write-setup-script](299a49-write-setup-script/)
+- [ ] [02767c-write-claude-md-init-script](02767c-write-claude-md-init-script/)
+- [ ] [57c541-write-template-readme](57c541-write-template-readme/)
+- [ ] [a84be3-design-pm-role](a84be3-design-pm-role/)
+- [ ] [cb2735-implement-pm-role](cb2735-implement-pm-role/)
+- [ ] [392343-test-template-end-to-end](392343-test-template-end-to-end/)
 <!-- subtask-list-end -->
 
 ## Notes
