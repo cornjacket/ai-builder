@@ -1,0 +1,31 @@
+# Task: Fibonacci Package Demo
+
+## Goal
+
+Build a correct, importable Golang package that computes Fibonacci numbers.
+
+- Package name: `fibonacci`
+- Public function: `Compute(n int) []int`
+- The package should live in a subdirectory named `fibonacci/`
+- Include a `fibonacci_test.go` file with table-driven tests
+
+---
+
+## Design
+
+_To be completed by the ARCHITECT._
+
+- Language:
+- Package name:
+- Public function signature:
+- Input:
+- Output:
+- Edge cases to handle:
+- Files to produce:
+- Expected outputs for verification:
+
+---
+
+## Acceptance Criteria
+
+_To be completed by the ARCHITECT._
