@@ -70,8 +70,7 @@ mv "$SRC_DIR" "$DST_DIR"
 # Update task README: change Status field
 # ---------------------------------------------------------------------------
 
-sed -i '' "s|^| Status | $FROM  |$|| Status | $TO  |" "$TASK_README" 2>/dev/null || \
-sed -i '' "s/| Status | .* |/| Status | $TO  |/" "$TASK_README"
+sed -i '' "s/| Status *|[^|]*|/| Status | $TO |/" "$TASK_README"
 
 # ---------------------------------------------------------------------------
 # Remove task from source status README

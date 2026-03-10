@@ -79,7 +79,7 @@ if [[ -n "$PARENT" ]]; then
             exit 1
         fi
         sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
-        sed -i '' "s/| Status | complete */| Status | $FOLDER              |/" "$SUBTASK_README"
+        sed -i '' "s/| Status *|[^|]*|/| Status | $FOLDER |/" "$SUBTASK_README"
         echo "Marked incomplete: $NAME"
     else
         if ! grep -q "\- \[ \] \[$NAME\]" "$PARENT_README"; then
@@ -87,7 +87,7 @@ if [[ -n "$PARENT" ]]; then
             exit 1
         fi
         sed -i '' "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
-        sed -i '' "s/| Status | .* |/| Status | complete             |/" "$SUBTASK_README"
+        sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_README"
         echo "Marked complete: $NAME"
     fi
     exit 0
@@ -130,7 +130,7 @@ mkdir -p "$(dirname "$DST_DIR")"
 mv "$SRC_DIR" "$DST_DIR"
 
 # Update task README Status field
-sed -i '' "s/| Status | .* |/| Status | $TO  |/" "$DST_DIR/README.md"
+sed -i '' "s/| Status *|[^|]*|/| Status | $TO |/" "$DST_DIR/README.md"
 
 # Remove from source status README
 if [[ -f "$SRC_STATUS_README" ]]; then

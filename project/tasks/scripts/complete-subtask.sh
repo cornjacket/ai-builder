@@ -74,7 +74,7 @@ if [[ "$UNDO" == true ]]; then
     fi
     sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
     # Restore status to folder name
-    sed -i '' "s/| Status | complete */| Status | $FOLDER              |/" "$SUBTASK_README"
+    sed -i '' "s/| Status *|[^|]*|/| Status | $FOLDER |/" "$SUBTASK_README"
     echo "Marked incomplete: $NAME"
 else
     # [ ] → [x]
@@ -84,6 +84,6 @@ else
     fi
     sed -i '' "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
     # Update status to complete
-    sed -i '' "s/| Status | .* |/| Status | complete             |/" "$SUBTASK_README"
+    sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_README"
     echo "Marked complete: $NAME"
 fi
