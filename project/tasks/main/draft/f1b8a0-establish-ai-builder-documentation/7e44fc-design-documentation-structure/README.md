@@ -2,7 +2,7 @@
 
 | Field    | Value                                        |
 |----------|----------------------------------------------|
-| Status   | draft                                        |
+| Status   | —                    |
 | Epic     | main                                         |
 | Tags     | documentation, architecture                  |
 | Parent   | f1b8a0-establish-ai-builder-documentation    |

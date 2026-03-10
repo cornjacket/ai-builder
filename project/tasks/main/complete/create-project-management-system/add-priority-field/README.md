@@ -2,7 +2,7 @@
 
 | Field    | Value                            |
 |----------|----------------------------------|
-| Status   | in-progress                      |
+| Status   | complete             |
 | Epic     | main                             |
 | Tags     | project-management, tooling      |
 | Parent   | create-project-management-system |

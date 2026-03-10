@@ -26,7 +26,8 @@ project/tasks/
         restore-task.sh         # reverse a soft-delete: unhides directory, re-adds to parent README
         show-task.sh            # print a task's README to stdout
         list-tasks.sh           # display the task tree (--depth, --root, --folder, --all)
-        task-template.md        # README template used by new-task.sh
+        task-template.md        # README template for top-level tasks
+        subtask-template.md     # README template for subtasks
 ```
 
 ---
@@ -66,11 +67,36 @@ Every task README begins with a metadata table:
 
 Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).
 
-Followed by `## Description`, `## Documentation`, `## Subtasks`, and `## Notes` sections.
+**Subtask Status is binary.** Subtasks don't move between status folders — their
+`Status` field has only two valid values:
+
+| Value | Meaning |
+|---|---|
+| `—` | Not yet done |
+| `complete` | Done |
+
+Use `complete-task.sh --parent` to mark a subtask done; this updates both the
+`Status` field and the `[x]` checkbox in the parent README.
+
+Followed by `## Description`, `## Documentation`, `## Subtasks`, and `## Notes` sections
+for top-level tasks. Subtask READMEs have `## Description` and `## Notes` only.
 
 The `## Documentation` section is where the author records what public documentation
 (if any) this task requires and where it belongs (e.g. this README, `CLAUDE.md`,
 inline code comments). Write "none needed" if the task requires no external documentation.
+
+---
+
+## Workflow Rules
+
+**Before beginning any task or subtask:** describe its purpose and list all
+subtasks in order. If the project manager is human, wait for their approval
+before starting any implementation work.
+
+**When picking up work:** pull from `backlog/` in top-to-bottom order.
+**When starting a task:** move it to `in-progress/` using `move-task.sh`.
+**When done:** run `complete-task.sh` — no `--parent` for top-level tasks,
+add `--parent` for subtasks.
 
 ---
 

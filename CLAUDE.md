@@ -53,6 +53,10 @@ project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --depth 2
 Do NOT use `list-tasks.sh --epic main` without `--folder` when the user asks for
 outstanding or incomplete tasks — it includes `complete/` which adds noise.
 
+> **Rule:** Before beginning any task or subtask, describe its purpose and
+> list all subtasks in order. If the project manager is human, wait for their
+> approval before starting any implementation work.
+
 > **Rule:** Always use the scripts to manage tasks. Never manually edit task
 > `README.md` files to add or remove subtasks, and never manually move task
 > directories between status folders. The scripts keep the filesystem and
@@ -60,6 +64,10 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 
 > **Rule:** When a subtask is finished, always run `complete-task.sh --parent`
 > to mark it `[x]` before moving on to the next subtask.
+
+> **Rule:** Subtask `Status` is binary — only `—` (not done) or `complete`
+> (done). Subtasks do not have statuses like `draft`, `backlog`, or
+> `in-progress`; those apply only to top-level tasks.
 
 > **Rule:** When testing a new feature, leave the test task in place after
 > verification. Move it to `complete/` using `move-task.sh` rather than
