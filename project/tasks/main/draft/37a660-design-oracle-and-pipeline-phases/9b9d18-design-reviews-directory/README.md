@@ -44,3 +44,20 @@ after human review sessions. It is consulted by:
 ## Notes
 
 Reference: `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`
+
+**Review process does not use the pipeline.** It is a human judgment
+checkpoint, not an implementation task. Running review through the full
+PM→ARCHITECT→IMPLEMENTOR→TESTER loop would be circular. The review process
+produces an artifact (in `project/reviews/`) and gates further pipeline
+execution via `Stop-after` — it does not itself go through the pipeline.
+
+**CLAUDE.md placement is a required review checklist item** for any job
+that creates new directories. The reviewer must confirm:
+- Does each new directory warrant its own CLAUDE.md?
+- If yes, does the ARCHITECT's proposed content match the abstraction level?
+- Does the proposed hierarchy compose correctly with parent CLAUDE.md files?
+- Will subagents be spawned with the correct CWD to load the right context?
+
+This is one of the few structural decisions where post-hoc review is
+insufficient — getting the hierarchy wrong before implementation starts
+means the IMPLEMENTOR and TESTER ran with the wrong context.

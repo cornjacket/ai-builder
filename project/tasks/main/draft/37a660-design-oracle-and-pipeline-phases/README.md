@@ -42,6 +42,7 @@ as needed.
 - [ ] [f58844-design-planning-tools-for-architect](f58844-design-planning-tools-for-architect/)
 - [ ] [5e26c5-design-pipeline-mode-signalling](5e26c5-design-pipeline-mode-signalling/)
 - [ ] [e975fc-design-pipeline-regression-test](e975fc-design-pipeline-regression-test/)
+- [ ] [2c2130-design-subagent-cwd-convention](2c2130-design-subagent-cwd-convention/)
 <!-- subtask-list-end -->
 
 ## Notes
