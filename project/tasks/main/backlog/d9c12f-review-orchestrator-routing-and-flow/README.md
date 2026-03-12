@@ -43,4 +43,20 @@ are found during review.
 
 ## Notes
 
-_None._
+**Role prompt injection question (to resolve during review):**
+The PM prompt has dynamic content injected at runtime (target repo path,
+script paths, epic, request text). The ARCHITECT, IMPLEMENTOR, and TESTER
+prompts are currently static strings. As role definitions are extracted to
+`roles/*.md` files and potentially expanded, we need to decide:
+
+- Should role files be loaded verbatim (static text only), with dynamic
+  content appended by the orchestrator at runtime?
+- Or should role files support placeholders (e.g. `{{TARGET_REPO}}`) that
+  the orchestrator substitutes before sending to the agent?
+- If placeholders, what is the substitution mechanism and who owns the
+  list of valid placeholders?
+
+The current PM prompt mixes static role definition with dynamic runtime
+context in a single f-string. This is hard to maintain as prompts grow.
+A clean separation would be: role file = static identity and rules;
+orchestrator injects = runtime context (paths, job doc, output dir).

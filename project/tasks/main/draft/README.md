@@ -12,4 +12,5 @@
 - [3230ef-design-workspace-claude-md-boundary](3230ef-design-workspace-claude-md-boundary/)
 - [13ffa1-brainstorm-mcp-integration-strategy](13ffa1-brainstorm-mcp-integration-strategy/)
 - [c526bd-add-status-and-reviews-to-target](c526bd-add-status-and-reviews-to-target/)
+- [b71517-expand-architect-role-definition](b71517-expand-architect-role-definition/)
 <!-- task-list-end -->

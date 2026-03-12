@@ -38,3 +38,25 @@ The output of this task is the documentation itself. Once complete, update
 
 All subtasks should remain in draft until the documentation structure has been
 reviewed and agreed upon.
+
+**Open question — role of `docs/` vs. inline README hierarchy:**
+
+The preferred documentation model is index-of-indexes: README.md files that
+live near the code they describe, with higher layers more abstract and lower
+layers more granular. This keeps documentation co-located with what it
+describes and naturally visible to AI agents navigating the repo.
+
+However, there is value in a consolidated `docs/` for content that is not
+co-located with any specific code — specifically:
+
+- **ADRs** (Architecture Decision Records) — decisions that span the whole
+  codebase with no natural home in a subdirectory
+- **Theory / principles** — foundational thinking (e.g. effective AI agent
+  operation) that informs the whole project but isn't implementation
+- **Human-facing reference** — consolidated reading for onboarding or review
+
+The design decision to resolve in `7e44fc-design-documentation-structure`:
+what belongs in `docs/` vs. inline README hierarchy, and whether `docs/`
+content is intended primarily for humans, AI agents, or both. The current
+`docs/` directory (adr/, agents/, runbooks/, services/) already exists and
+its conventions are not yet documented.
