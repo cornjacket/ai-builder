@@ -19,7 +19,7 @@ the back-end orchestrator. It is the continuity layer across all pipeline
 phases.
 
 The N-phase model replaces the fixed 2-phase design with a flexible graph of
-phases (Discovery, Planning, Implementation, Review, Re-planning) connected
+phases (Discovery, Planning, Implementation, Documentation, Review, Re-planning) connected
 through the task system and `project/reviews/`.
 
 **Reference:** `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`
