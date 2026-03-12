@@ -9,8 +9,8 @@ WORK="$DIR/work"
 
 echo "Resetting fibonacci regression test..."
 
-# Restore the job document from the gold file
-cp "$WORK/JOB-fibonacci-demo.md.gold" "$WORK/JOB-fibonacci-demo.md"
+# Restore the job document from the template
+cp "$WORK/JOB-fibonacci-demo.md.template" "$WORK/JOB-fibonacci-demo.md"
 
 # Remove generated artifacts
 rm -rf "$WORK/fibonacci"
