@@ -23,9 +23,9 @@ use when spawning each role (ARCHITECT, IMPLEMENTOR, TESTER).
 - What CWD should each role be spawned with? Options:
   - Always the target repo root (simplest, loses subdirectory CLAUDE.md context)
   - The directory most relevant to the subtask being worked on (correct, but
-    requires the PM to record the relevant path in the job document)
+    requires the TM to record the relevant path in the job document)
   - The deepest common ancestor of all paths the subtask touches
-- How does the PM communicate the intended CWD to the orchestrator?
+- How does the TM communicate the intended CWD to the orchestrator?
   Should the job document include an explicit `Working directory:` field?
 - Should the orchestrator validate that the CWD exists before spawning?
 - Does the ARCHITECT need a different CWD than the IMPLEMENTOR for the
@@ -35,7 +35,7 @@ use when spawning each role (ARCHITECT, IMPLEMENTOR, TESTER).
 **Deliverables:**
 - A defined convention for CWD per role, documented in the orchestrator
 - Any required changes to the job document format to carry CWD information
-- Notes in `roles/TASK_MANAGER.md` on how the PM should specify CWD
+- Notes in `roles/TASK_MANAGER.md` on how the TM should specify CWD
 
 ## Notes
 

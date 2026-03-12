@@ -11,8 +11,8 @@
 ## Description
 
 Add three structural manipulation scripts to the task management system.
-These are needed by the PM during multi-level decomposition — as the
-ARCHITECT decomposes composite components, the PM needs to restructure
+These are needed by the TM during multi-level decomposition — as the
+ARCHITECT decomposes composite components, the TM needs to restructure
 the task tree to reflect the emerging hierarchy.
 
 **Scripts to add:**
@@ -60,8 +60,8 @@ and `CLAUDE.md` scripts reference section.
 
 ## Notes
 
-These scripts are needed by the PM during multi-level decomposition. When
-the ARCHITECT marks a component as `composite`, the PM decomposes it further
+These scripts are needed by the TM during multi-level decomposition. When
+the ARCHITECT marks a component as `composite`, the TM decomposes it further
 and may need to restructure the task tree — promoting a subtask to a task,
 converting a task to a subtask of a newly discovered parent, or renaming
 nodes to match the ARCHITECT's terminology.

@@ -58,7 +58,7 @@ decisions, findings, and follow-up actions from code and architecture reviews.
 Consulted by:
 - The ARCHITECT during planning (to avoid repeating past mistakes)
 - The Oracle during human review (to accumulate review history)
-- The PM during re-planning (to understand what went wrong)
+- The TM during re-planning (to understand what went wrong)
 
 **Status:** directory structure and artifact format are not yet fully designed.
 See `project/tasks/main/draft/37a660-design-oracle-and-pipeline-phases/9b9d18-design-reviews-directory/`

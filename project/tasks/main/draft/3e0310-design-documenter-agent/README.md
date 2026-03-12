@@ -29,12 +29,12 @@ the DOCUMENTER does not invent content.
 - Maintains consistent formatting and section conventions across all documents
 
 **Pipeline position:**
-DOCUMENTER runs after every content-producing role, before PM acts:
+DOCUMENTER runs after every content-producing role, before TM acts:
 ```
-ARCHITECT → DOCUMENTER → PM creates subtasks
+ARCHITECT → DOCUMENTER → TM creates subtasks
 ARCHITECT → DOCUMENTER → IMPLEMENTOR
 IMPLEMENTOR → DOCUMENTER → TESTER
-TESTER → DOCUMENTER → PM marks complete
+TESTER → DOCUMENTER → TM marks complete
 ```
 
 **Non-leaf README format** (ARCHITECT decompose output):

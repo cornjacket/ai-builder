@@ -90,7 +90,7 @@ inline code comments). Write "none needed" if the task requires no external docu
 ## Workflow Rules
 
 **Before beginning any task or subtask:** describe its purpose and list all
-subtasks in order. If the project manager is human, wait for their approval
+subtasks in order. If the task manager is human, wait for their approval
 before starting any implementation work.
 
 **When picking up work:** pull from `backlog/` in top-to-bottom order.

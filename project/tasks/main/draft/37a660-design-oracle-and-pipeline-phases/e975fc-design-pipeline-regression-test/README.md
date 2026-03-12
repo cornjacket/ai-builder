@@ -11,7 +11,7 @@
 ## Description
 
 Design and implement an orchestrator-level regression test that exercises the
-full PM→ARCHITECT→IMPLEMENTOR→TESTER pipeline end-to-end with a known request
+full TM→ARCHITECT→IMPLEMENTOR→TESTER pipeline end-to-end with a known request
 and verifiable output.
 
 Unlike `tests/regression/template-setup/` (which tests scripts without running
@@ -26,16 +26,16 @@ tests/regression/pipeline-e2e/
     gold/                — gold verifier (never visible to pipeline agents)
         verify.sh        — runs against work/ output, exits 0 if constraints met
     work/                — pipeline working directory (gitignored except reset state)
-        project/tasks/   — task system populated by PM during planning
+        project/tasks/   — task system populated by TM during planning
     reset.sh             — wipes work/ to initial state
     README.md
 ```
 
 **Test flow:**
-1. Oracle (or test harness) submits `request.md` to the pipeline with PM mode
-2. PM runs Planning phase — creates task tree in `work/project/tasks/`
+1. Oracle (or test harness) submits `request.md` to the pipeline with TM mode
+2. TM runs Planning phase — creates task tree in `work/project/tasks/`
 3. Human review step is skipped (automated) — plan is accepted as-is
-4. PM runs Implementation phase — ARCHITECT → IMPLEMENTOR → TESTER per subtask
+4. TM runs Implementation phase — ARCHITECT → IMPLEMENTOR → TESTER per subtask
 5. Gold verifier runs against `work/` output and checks:
    - All tasks in the plan were completed
    - Generated artifacts satisfy the constraints in `request.md`
@@ -46,8 +46,8 @@ tests/regression/pipeline-e2e/
 - What is the simplest request that exercises the full pipeline meaningfully?
   (Something deterministic enough to verify, complex enough to require planning)
 - How is the human review step handled in an automated test? Options:
-  - Skip it entirely (PM auto-approves its own plan)
-  - A fixed plan injected as a fixture (bypasses PM planning)
+  - Skip it entirely (TM auto-approves its own plan)
+  - A fixed plan injected as a fixture (bypasses TM planning)
   - A `--auto-approve` flag on the Oracle
 - How does the gold verifier know what to check? Constraints must be
   explicit in `request.md` and machine-checkable in `verify.sh`

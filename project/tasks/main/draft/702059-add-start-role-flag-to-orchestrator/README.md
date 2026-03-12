@@ -30,8 +30,8 @@ the caller specify which pipeline role to start from, overriding the default.
 - `--start-role` accepts any valid role name: `TASK_MANAGER`, `ARCHITECT`,
   `IMPLEMENTOR`, `TESTER`
 - When provided, the pipeline starts at that role instead of the default
-  (`TASK_MANAGER` in PM mode, `ARCHITECT` in non-PM mode)
-- Must be compatible with both PM mode and non-PM mode
+  (`TASK_MANAGER` in TM mode, `ARCHITECT` in non-TM mode)
+- Must be compatible with both TM mode and non-TM mode
 - Should validate that the requested role is defined in `AGENTS`
 - When starting mid-pipeline, the operator is responsible for providing
   correct prior state (e.g. a pre-populated job document, prior handoff notes

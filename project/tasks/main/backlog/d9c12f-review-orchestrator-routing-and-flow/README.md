@@ -14,14 +14,14 @@ Formally review the orchestrator routing logic and flow documentation to
 ensure they are correct, complete, and consistent with each other.
 
 Review scope:
-- `ai-builder/orchestrator.py` — ROUTES table, PM mode vs non-PM mode
+- `ai-builder/orchestrator.py` — ROUTES table, TM mode vs non-TM mode
   branching, state file handling, prompt construction for all roles
-- `ai-builder/FLOW.md` — PM mode diagram, non-PM mode diagram, routing
+- `ai-builder/FLOW.md` — TM mode diagram, non-TM mode diagram, routing
   tables, data flow; verify they accurately reflect the code
 
 Specific questions to answer:
 - Are all valid OUTCOME values for each role represented in ROUTES?
-- Does the PM loop-back correctly handle edge cases (empty backlog, task
+- Does the TM loop-back correctly handle edge cases (empty backlog, task
   already complete)?
 - Is the `current-task.txt` state file approach robust enough, or does it
   need a richer format (e.g. JSON with task name + epic)?
@@ -44,7 +44,7 @@ are found during review.
 ## Notes
 
 **Role prompt injection question (to resolve during review):**
-The PM prompt has dynamic content injected at runtime (target repo path,
+The TM prompt has dynamic content injected at runtime (target repo path,
 script paths, epic, request text). The ARCHITECT, IMPLEMENTOR, and TESTER
 prompts are currently static strings. As role definitions are extracted to
 `roles/*.md` files and potentially expanded, we need to decide:
@@ -56,7 +56,7 @@ prompts are currently static strings. As role definitions are extracted to
 - If placeholders, what is the substitution mechanism and who owns the
   list of valid placeholders?
 
-The current PM prompt mixes static role definition with dynamic runtime
+The current TM prompt mixes static role definition with dynamic runtime
 context in a single f-string. This is hard to maintain as prompts grow.
 A clean separation would be: role file = static identity and rules;
 orchestrator injects = runtime context (paths, job doc, output dir).

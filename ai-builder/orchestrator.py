@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description="AIDT+ orchestrator")
 parser.add_argument(
     "--job",
     type=Path,
-    help="Path to the job document (non-PM mode)",
+    help="Path to the job document (non-TM mode)",
 )
 parser.add_argument(
     "--output-dir",
@@ -26,23 +26,23 @@ parser.add_argument(
 parser.add_argument(
     "--target-repo",
     type=Path,
-    help="Path to the target repository (enables TASK MANAGER mode)",
+    help="Path to the target repository (enables TM mode)",
 )
 parser.add_argument(
     "--epic",
     default="main",
-    help="Epic name for the task system (PM mode only, default: main)",
+    help="Epic name for the task system (TM mode only, default: main)",
 )
 parser.add_argument(
     "--request",
     type=Path,
-    help="Path to project request file (PM mode only)",
+    help="Path to project request file (TM mode only)",
 )
 args = parser.parse_args()
 
-PM_MODE = args.target_repo is not None
+TM_MODE = args.target_repo is not None
 
-if PM_MODE:
+if TM_MODE:
     if not args.target_repo.exists():
         print(f"[orchestrator] Target repo not found: {args.target_repo}")
         sys.exit(1)
@@ -66,7 +66,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 EXECUTION_LOG    = OUTPUT_DIR / "execution.log"
 CURRENT_JOB_FILE = OUTPUT_DIR / "current-job.txt"
 
-if PM_MODE:
+if TM_MODE:
     TARGET_REPO    = args.target_repo.resolve()
     EPIC           = args.epic
     REQUEST        = args.request.read_text() if args.request else None
@@ -99,7 +99,7 @@ ROUTES = {
     ("TESTER",      "NEED_HELP"):       None,
 }
 
-if PM_MODE:
+if TM_MODE:
     ROUTES.update({
         ("TASK_MANAGER", "JOBS_READY"): "ARCHITECT",
         ("TASK_MANAGER", "ALL_DONE"):   None,
@@ -107,7 +107,7 @@ if PM_MODE:
         ("TESTER",          "DONE"):       "TASK_MANAGER",
     })
 else:
-    ROUTES[("TESTER", "DONE")] = None  # halt on completion in non-PM mode
+    ROUTES[("TESTER", "DONE")] = None  # halt on completion in non-TM mode
 
 
 # ---------------------------------------------------------------------------
@@ -230,13 +230,13 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 # Main loop
 # ---------------------------------------------------------------------------
 
-current_role = "TASK_MANAGER" if PM_MODE else "ARCHITECT"
+current_role = "TASK_MANAGER" if TM_MODE else "ARCHITECT"
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
 
 print("=== Orchestrator: starting ===")
-if PM_MODE:
-    print(f"    mode:          PM")
+if TM_MODE:
+    print(f"    mode:          TM")
     print(f"    target repo:   {TARGET_REPO}")
     print(f"    epic:          {EPIC}")
     print(f"    request:       {args.request or '(none)'}")
@@ -279,10 +279,10 @@ while current_role is not None:
         print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
         sys.exit(1)
 
-    # After PM signals JOBS_READY, read the current job path for downstream agents
+    # After TM signals JOBS_READY, read the current job path for downstream agents
     if current_role == "TASK_MANAGER" and outcome == "JOBS_READY":
         if not CURRENT_JOB_FILE.exists():
-            print(f"\n[orchestrator] PM did not write job path to {CURRENT_JOB_FILE}. Halting.")
+            print(f"\n[orchestrator] TM did not write job path to {CURRENT_JOB_FILE}. Halting.")
             sys.exit(1)
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
         if not job_doc.exists():

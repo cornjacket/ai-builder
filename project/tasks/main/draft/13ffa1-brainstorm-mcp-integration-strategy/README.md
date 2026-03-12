@@ -20,7 +20,7 @@ level, not the prompt level.
 - Agents are spawned as `claude -p` subprocesses with independent 200K token
   budgets
 - Each agent operates within a git worktree with scoped CLAUDE.md context
-- Agents operate at different abstraction levels: orchestrator (Oracle/PM),
+- Agents operate at different abstraction levels: orchestrator (Oracle/TM),
   implementer (ARCHITECT, IMPLEMENTOR), reviewer (TESTER, human gate)
 - Current tooling uses purpose-built scripts as constrained toolsets per role
 

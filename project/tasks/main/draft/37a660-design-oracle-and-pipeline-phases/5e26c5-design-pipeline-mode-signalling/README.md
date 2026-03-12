@@ -13,27 +13,27 @@
 Design how the orchestrator and pipeline roles know which phase mode they are
 operating in (Planning vs Implementation vs other future modes).
 
-Currently the pipeline has no concept of mode — the PM role interprets intent
-from the job document's PM instruction text. For N phases this needs to be
+Currently the pipeline has no concept of mode — the TM role interprets intent
+from the job document's TM instruction text. For N phases this needs to be
 more explicit and reliable.
 
 **Options to evaluate:**
 
 | Option | Pros | Cons |
 |---|---|---|
-| PM instruction in job doc (current) | Flexible, Oracle crafts per phase, no code changes | Fragile — depends on Oracle writing good prompts; PM must parse intent from prose |
+| TM instruction in job doc (current) | Flexible, Oracle crafts per phase, no code changes | Fragile — depends on Oracle writing good prompts; TM must parse intent from prose |
 | `## Mode: plan \| implement` field in job doc | Explicit, structured, no CLI changes | Oracle must set it correctly; adds a required field to JOB-TEMPLATE.md |
 | `--mode plan\|implement` CLI flag | Unambiguous, enforced at orchestrator level | Requires CLI change; Oracle must pass it correctly |
 | Separate orchestrator entry points | Maximum clarity, no ambiguity | More complex, harder to extend for N phases |
 
 **Recommendation to evaluate:** A `## Mode` field in the job document is
 likely the right balance — it is explicit and structured without requiring
-a new CLI flag, and it gives the PM clear instructions without relying on
+a new CLI flag, and it gives the TM clear instructions without relying on
 prose interpretation.
 
 **Questions to resolve:**
 
-- Does mode affect only the PM, or does it also change ARCHITECT behaviour
+- Does mode affect only the TM, or does it also change ARCHITECT behaviour
   (e.g. allowed tools, available outcomes)?
 - Can a single pipeline run span multiple modes, or is mode fixed per run?
 - How does mode interact with `--start-role`? (e.g. starting at ARCHITECT

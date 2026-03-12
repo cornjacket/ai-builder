@@ -12,7 +12,7 @@
 
 Add two pipeline control fields to both `task-template.md` and
 `subtask-template.md` (and their copies in `target/project/tasks/scripts/`).
-These fields make the PM a deterministic state machine — it reads fields
+These fields make the TM a deterministic state machine — it reads fields
 directly rather than re-asking the ARCHITECT what to do with each node.
 
 **Field 1: `Stop-after`**
@@ -21,18 +21,18 @@ Marks a phase boundary. When `true`, the Oracle pauses the implementation
 loop after this node completes and surfaces results to the human.
 
 - Default: `false`
-- Set by: ARCHITECT (not PM) when architectural risk warrants human review
+- Set by: ARCHITECT (not TM) when architectural risk warrants human review
 
 **Field 2: `Complexity`**
 
 Signals whether a node needs decomposition or can go directly to the
 IMPLEMENTOR. The ARCHITECT writes this when producing a component list.
-The PM reads it to decide next action — no AI re-derivation needed.
+The TM reads it to decide next action — no AI re-derivation needed.
 
 - Values: `atomic` | `composite`
 - Default: `atomic`
-- `atomic` → PM submits to ARCHITECT (design pass) → IMPLEMENTOR → TESTER
-- `composite` → PM submits to ARCHITECT (decompose pass) → creates subtasks
+- `atomic` → TM submits to ARCHITECT (design pass) → IMPLEMENTOR → TESTER
+- `composite` → TM submits to ARCHITECT (decompose pass) → creates subtasks
 
 **Changes:**
 
@@ -64,5 +64,5 @@ a human must validate the plan before expensive implementation begins.
 - Well-scoped jobs where the ARCHITECT's plan is low-risk
 - Jobs within a well-established area of the codebase
 
-The ARCHITECT (not the PM) should set `Stop-after: true` when it judges
-the complexity warrants it. The PM should not set it by default.
+The ARCHITECT (not the TM) should set `Stop-after: true` when it judges
+the complexity warrants it. The TM should not set it by default.

@@ -48,7 +48,7 @@ boundary file.
 **Planning vs. design distinction:**
 Deciding *what* the CLAUDE.md hierarchy looks like is a design step (done
 once, upfront). Deciding *where* to place a CLAUDE.md for a specific new
-directory is a planning step — it belongs in the PM/ARCHITECT phase of each
+directory is a planning step — it belongs in the TM/ARCHITECT phase of each
 job, not in a one-time setup script.
 
 This means:
@@ -68,7 +68,7 @@ distinct enough abstraction layer to warrant their own CLAUDE.md. This
 judgment happens during the Planning phase and is part of the review artifact.
 
 **Bootstrapping problem:**
-The first time the PM plans work in a new directory, no CLAUDE.md exists
+The first time the TM plans work in a new directory, no CLAUDE.md exists
 there yet. The ARCHITECT must create it before the IMPLEMENTOR starts work,
 meaning CLAUDE.md creation is always an early task in any plan that
 introduces new directories.

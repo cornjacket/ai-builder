@@ -4,16 +4,16 @@ ORCHESTRATOR FLOW
 
 Two modes:
 
-  Non-PM mode (--job):    starts at ARCHITECT, pipeline runs once for a
+  Non-TM mode (--job):    starts at ARCHITECT, pipeline runs once for a
                           single pre-defined job document.
 
-  PM mode (--target-repo): starts at TASK_MANAGER, which decomposes a
-                           project request into tasks and drives the full
-                           ARCHITECT→IMPLEMENTOR→TESTER pipeline for each
-                           task in sequence.
+  TM mode (--target-repo): starts at TASK_MANAGER, which decomposes a
+                            project request into tasks and drives the full
+                            ARCHITECT→IMPLEMENTOR→TESTER pipeline for each
+                            task in sequence.
 
 
-PM MODE FLOW
+TM MODE FLOW
 ============
 
   Project request file (--request)
@@ -61,12 +61,12 @@ PM MODE FLOW
   |                            |         '-----> IMPLEMENTOR       |
   |                            |                                   |
   |                            '-----------------------------------'
-  |                            (PM marks task complete, picks next)
+  |                            (TM marks task complete, picks next)
   |
   '-- ALL_DONE --> COMPLETE
 
 
-NON-PM MODE FLOW
+NON-TM MODE FLOW
 ================
 
   Task Document (read-only after ARCHITECT)
@@ -108,9 +108,9 @@ DATA FLOWS
 
   orchestrator.py
        |
-       |-- reads --> request file           (PM mode: project description)
-       |-- reads --> current-job.txt       (PM mode: current task path, written by PM)
-       |-- reads --> JOB.md                (non-PM mode: pre-defined job document)
+       |-- reads --> request file           (TM mode: project description)
+       |-- reads --> current-job.txt       (TM mode: current task path, written by TM)
+       |-- reads --> JOB.md                (non-TM mode: pre-defined job document)
        |-- writes -> execution.log          (append-only run history)
        |
        |-- calls --> agent_wrapper.py
@@ -143,7 +143,7 @@ AGENT PROMPT STRUCTURE (per turn)
 
   "Your role is {ROLE}.
 
-   Task document: {path}          <-- same doc every agent reads (not PM)
+   Task document: {path}          <-- same doc every agent reads (not TM)
 
    Role instructions:             <-- role-specific guidance
 
@@ -160,7 +160,7 @@ AGENT PROMPT STRUCTURE (per turn)
 ROUTING TABLE
 =============
 
-  PM mode:
+  TM mode:
     (TASK_MANAGER, JOBS_READY)  --> ARCHITECT
     (TASK_MANAGER, ALL_DONE)     --> halt (pipeline complete)
     (TASK_MANAGER, NEED_HELP)    --> halt
@@ -173,7 +173,7 @@ ROUTING TABLE
     (TESTER,          FAILED)       --> IMPLEMENTOR
     (TESTER,          NEED_HELP)    --> halt
 
-  Non-PM mode:
+  Non-TM mode:
     (ARCHITECT,   DONE)             --> IMPLEMENTOR
     (ARCHITECT,   NEED_HELP)        --> halt
     (IMPLEMENTOR, DONE)             --> TESTER

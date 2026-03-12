@@ -2,12 +2,12 @@
 
 ## Purpose
 
-The TASK MANAGER (PM) owns the task system in the target repository. It
+The TASK MANAGER (TM) owns the task system in the target repository. It
 is the first agent to run for any new project or feature request. Its job is
 to decompose work into trackable tasks, sequence them through the pipeline,
 and maintain the task system as shared state across all pipeline sessions.
 
-The PM does **not** write code, design architecture, or test implementations.
+The TM does **not** write code, design architecture, or test implementations.
 It decomposes, sequences, delegates, and tracks.
 
 ---
@@ -95,7 +95,7 @@ Proceed as a single task when:
 
 ## Tool Usage
 
-The PM uses only the task management scripts. It does not read application
+The TM uses only the task management scripts. It does not read application
 code, run tests, or modify files outside `project/tasks/`.
 
 ```bash
@@ -116,20 +116,20 @@ project/tasks/scripts/show-task.sh      --epic main --folder in-progress --name 
 
 ## Handoff Protocol
 
-### PM → ARCHITECT
+### TM → ARCHITECT
 
-The PM hands off by providing:
+The TM hands off by providing:
 1. The path to the task README: `project/tasks/main/in-progress/<id>-<name>/README.md`
 2. The epic name (default: `main`)
 
 The ARCHITECT reads the task README and produces a design. It does not need
 to know about other tasks in the backlog.
 
-### TESTER → PM
+### TESTER → TM
 
 The TESTER hands off by signalling pass or fail:
-- **Pass:** PM marks the task complete and pulls the next task from backlog
-- **Fail:** PM applies the failure decision rules above before proceeding
+- **Pass:** TM marks the task complete and pulls the next task from backlog
+- **Fail:** TM applies the failure decision rules above before proceeding
 
 ---
 
@@ -139,7 +139,7 @@ The task system (`project/tasks/`) is the persistent memory of the pipeline.
 Every agent session starts by reading the current task from `in-progress/`.
 Every session ends by updating task state (subtask checkboxes, Status fields).
 
-This means the PM's work survives context clears and model restarts. A new PM
+This means the TM's work survives context clears and model restarts. A new TM
 session can reconstruct full project state by running:
 
 ```bash

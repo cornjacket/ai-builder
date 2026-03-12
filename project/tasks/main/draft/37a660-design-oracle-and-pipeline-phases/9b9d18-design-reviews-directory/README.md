@@ -19,7 +19,7 @@ after human review sessions. It is consulted by:
 - The ARCHITECT during Planning (to avoid repeating past mistakes, factor in
   known debt, align with established patterns)
 - The Oracle during Human Review (to accumulate and surface review history)
-- The PM during Re-planning (to understand what went wrong)
+- The TM during Re-planning (to understand what went wrong)
 
 **Questions to resolve:**
 
@@ -47,7 +47,7 @@ Reference: `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`
 
 **Review process does not use the pipeline.** It is a human judgment
 checkpoint, not an implementation task. Running review through the full
-PM→ARCHITECT→IMPLEMENTOR→TESTER loop would be circular. The review process
+TM→ARCHITECT→IMPLEMENTOR→TESTER loop would be circular. The review process
 produces an artifact (in `project/reviews/`) and gates further pipeline
 execution via `Stop-after` — it does not itself go through the pipeline.
 

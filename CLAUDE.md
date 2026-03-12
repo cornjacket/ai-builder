@@ -71,7 +71,7 @@ Do NOT use `list-tasks.sh --epic main` without `--folder` when the user asks for
 outstanding or incomplete tasks — it includes `complete/` which adds noise.
 
 > **Rule:** Before beginning any task or subtask, describe its purpose and
-> list all subtasks in order. If the project manager is human, wait for their
+> list all subtasks in order. If the task manager is human, wait for their
 > approval before starting any implementation work.
 
 > **Rule:** Always use the scripts to manage tasks. Never manually edit task
