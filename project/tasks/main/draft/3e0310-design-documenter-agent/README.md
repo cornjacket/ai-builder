@@ -29,13 +29,18 @@ the DOCUMENTER does not invent content.
 - Maintains consistent formatting and section conventions across all documents
 
 **Pipeline position:**
-DOCUMENTER runs after every content-producing role, before TM acts:
+DOCUMENTER is a mandatory post-step hook, not a node in the ROUTES table.
+The orchestrator inserts it automatically after every content-producing role
+before routing to the next role:
 ```
-ARCHITECT → DOCUMENTER → TM creates subtasks
-ARCHITECT → DOCUMENTER → IMPLEMENTOR
-IMPLEMENTOR → DOCUMENTER → TESTER
-TESTER → DOCUMENTER → TM marks complete
+ARCHITECT  → [DOCUMENTER] → TM creates subtasks
+ARCHITECT  → [DOCUMENTER] → IMPLEMENTOR
+IMPLEMENTOR → [DOCUMENTER] → TESTER
+TESTER      → [DOCUMENTER] → TM marks complete
 ```
+`DOCUMENTER_TRIGGERS = {"ARCHITECT", "IMPLEMENTOR", "TESTER"}` (TM excluded).
+DOCUMENTER never needs to know what role follows — the orchestrator
+preserves the pending destination and resumes after the hook completes.
 
 **Non-leaf README format** (ARCHITECT decompose output):
 - Purpose statement
@@ -64,7 +69,9 @@ DOCUMENTER is sole judge of whether a document needs splitting. When split:
 - How does DOCUMENTER handle renamed or moved components?
 - Should DOCUMENTER verify existing docs are still accurate, or only create/update?
 - How is content passed from ARCHITECT/IMPLEMENTOR/TESTER to DOCUMENTER?
-  Via the job document, or by reading the output directory directly?
+  The orchestrator passes: which role just ran, the job doc path, the output
+  dir, and the previous role's handoff text. DOCUMENTER reads artifacts from
+  the output dir directly.
 
 **Status: DRAFT — requires review before implementation begins.**
 
