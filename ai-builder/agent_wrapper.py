@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +30,8 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
     logs_dir.mkdir(parents=True, exist_ok=True)
     role_log = logs_dir / f"{role}.log"
 
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+
     try:
         process = subprocess.Popen(
             _build_command(agent, prompt),
@@ -35,6 +39,7 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
             stderr=subprocess.PIPE,
             text=True,
             cwd=output_dir,
+            env=env,
         )
 
         response_text = []
@@ -95,10 +100,18 @@ def _extract_text(event: dict) -> str:
     return ""
 
 
+def _resolve(agent: str) -> str:
+    resolved = shutil.which(agent)
+    if not resolved:
+        raise FileNotFoundError(f"Agent executable not found in PATH: {agent}")
+    return resolved
+
+
 def _build_command(agent: str, prompt: str) -> list:
+    exe = _resolve(agent)
     if agent == "claude":
         return [
-            agent,
+            exe,
             "--output-format", "stream-json",
             "--verbose",
             "--allowedTools", "Read,Edit,Write,Bash",
@@ -106,9 +119,9 @@ def _build_command(agent: str, prompt: str) -> list:
         ]
     if agent == "gemini":
         return [
-            agent,
+            exe,
             "--output-format", "stream-json",
             "--yolo",
             "-p", prompt,
         ]
-    return [agent, "-p", prompt]
+    return [exe, "-p", prompt]

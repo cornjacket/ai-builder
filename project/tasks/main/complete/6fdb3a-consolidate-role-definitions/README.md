@@ -2,7 +2,7 @@
 
 | Field    | Value                |
 |----------|----------------------|
-| Status | in-progress |
+| Status | complete |
 | Epic     | main             |
 | Tags     | orchestrator, refactor             |
 | Parent   | —           |

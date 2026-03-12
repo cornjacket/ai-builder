@@ -7,4 +7,5 @@
 - [72d1c8-send-welcome-email](72d1c8-send-welcome-email/)
 - [create-project-management-system](create-project-management-system/)
 - [651a51-add-project-management-system-template](651a51-add-project-management-system-template/)
+- [6fdb3a-consolidate-role-definitions](6fdb3a-consolidate-role-definitions/)
 <!-- task-list-end -->

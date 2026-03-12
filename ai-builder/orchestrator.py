@@ -58,6 +58,7 @@ else:
         sys.exit(1)
 
 REPO_ROOT       = Path(__file__).resolve().parent.parent
+ROLES_DIR       = REPO_ROOT / "roles"
 OUTPUT_DIR      = args.output_dir.resolve()
 TIMEOUT_MINUTES = 5
 
@@ -178,30 +179,9 @@ Your job:
         job_section = ""
 
     else:
-        role_instructions = {
-            "ARCHITECT": (
-                "Read the Goal section. Fill in the Design and Acceptance Criteria "
-                "sections of the job document by editing it directly. Be concrete and specific. "
-                "Break the work into well-scoped steps so that each implementation step is small "
-                "enough that the IMPLEMENTOR requires minimal internal testing."
-            ),
-            "IMPLEMENTOR": (
-                "Read the Design section of the job document. Implement exactly what is "
-                "specified. Write output files to the output directory stated below.\n\n"
-                "Testing boundaries:\n"
-                "- Always run a syntax/compile check after writing the file.\n"
-                "- Do not introduce functions, classes, or modules not specified in the Design. "
-                "If the Design explicitly calls for a module with internal functions, you may "
-                "run minimal happy-path tests of those internals only. Otherwise, a syntax "
-                "check is sufficient.\n"
-                "- Do NOT run acceptance tests. Do NOT test the public interface or CLI behaviour — "
-                "that is the TESTER's exclusive responsibility."
-            ),
-            "TESTER": (
-                "Read the Design and Acceptance Criteria sections of the job document. "
-                "Run the program and verify every expected output. Report pass/fail for each case."
-            ),
-        }.get(role, "Complete the work described in the job document.")
+        role_file = ROLES_DIR / f"{role}.md"
+        role_instructions = role_file.read_text() if role_file.exists() \
+            else "Complete the work described in the job document."
         valid_outcomes = {
             "ARCHITECT":   "DONE | NEED_HELP",
             "IMPLEMENTOR": "DONE | NEEDS_ARCHITECT | NEED_HELP",
