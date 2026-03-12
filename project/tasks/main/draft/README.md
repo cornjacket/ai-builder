@@ -13,4 +13,5 @@
 - [13ffa1-brainstorm-mcp-integration-strategy](13ffa1-brainstorm-mcp-integration-strategy/)
 - [c526bd-add-status-and-reviews-to-target](c526bd-add-status-and-reviews-to-target/)
 - [b71517-expand-architect-role-definition](b71517-expand-architect-role-definition/)
+- [99c172-add-task-manipulation-scripts](99c172-add-task-manipulation-scripts/)
 <!-- task-list-end -->

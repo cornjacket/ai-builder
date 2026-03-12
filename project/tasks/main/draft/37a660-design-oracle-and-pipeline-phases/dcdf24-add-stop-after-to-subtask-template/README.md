@@ -1,4 +1,4 @@
-# Subtask: add-stop-after-to-subtask-template
+# Subtask: add-pipeline-fields-to-templates
 
 | Field    | Value                |
 |----------|----------------------|
@@ -10,23 +10,37 @@
 
 ## Description
 
-Add a `Stop-after` field to `project/tasks/scripts/subtask-template.md` and
-update the corresponding copies in `target/project/tasks/scripts/`.
+Add two pipeline control fields to both `task-template.md` and
+`subtask-template.md` (and their copies in `target/project/tasks/scripts/`).
+These fields make the PM a deterministic state machine — it reads fields
+directly rather than re-asking the ARCHITECT what to do with each node.
 
-The `Stop-after` field marks a phase boundary — when `true`, the Oracle pauses
-the implementation loop after this subtask completes and surfaces results to
-the human for review before continuing.
+**Field 1: `Stop-after`**
+
+Marks a phase boundary. When `true`, the Oracle pauses the implementation
+loop after this node completes and surfaces results to the human.
+
+- Default: `false`
+- Set by: ARCHITECT (not PM) when architectural risk warrants human review
+
+**Field 2: `Complexity`**
+
+Signals whether a node needs decomposition or can go directly to the
+IMPLEMENTOR. The ARCHITECT writes this when producing a component list.
+The PM reads it to decide next action — no AI re-derivation needed.
+
+- Values: `atomic` | `composite`
+- Default: `atomic`
+- `atomic` → PM submits to ARCHITECT (design pass) → IMPLEMENTOR → TESTER
+- `composite` → PM submits to ARCHITECT (decompose pass) → creates subtasks
 
 **Changes:**
 
-- Add `| Stop-after | false |` to the metadata table in `subtask-template.md`
-  (default: `false`)
-- Mirror the same change in `target/project/tasks/scripts/subtask-template.md`
-- Update `project/tasks/README.md` and `target/project/tasks/README.md` to
-  document the field and its semantics
-- Update `CLAUDE.md` with a note that the PM should set `Stop-after: true`
-  on subtasks that produce public interfaces, introduce dependencies, or
-  are flagged as review checkpoints during discovery
+- Add `| Stop-after  | false  |` to both templates
+- Add `| Complexity  | atomic |` to both templates
+- Mirror changes in `target/project/tasks/scripts/`
+- Update `project/tasks/README.md` and `target/project/tasks/README.md`
+  to document both fields and their semantics
 
 ## Notes
 
