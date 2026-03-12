@@ -7,63 +7,68 @@ Two modes:
   Non-TM mode (--job):    starts at ARCHITECT, pipeline runs once for a
                           single pre-defined job document.
 
-  TM mode (--target-repo): starts at TASK_MANAGER, which decomposes a
-                            project request into tasks and drives the full
-                            ARCHITECT→IMPLEMENTOR→TESTER pipeline for each
-                            task in sequence.
+  TM mode (--target-repo): the Oracle starts each pipeline run at ARCHITECT
+                            with a pre-built job document. TASK_MANAGER runs
+                            only at the end to update the task system. The
+                            Oracle drives the outer loop — it reads TM output
+                            and decides whether to start another pipeline run.
 
 
 TM MODE FLOW
 ============
 
-  Project request file (--request)
-           |
-           v
-  +------------------+
-  | TASK_MANAGER  |  (claude)
-  |                  |<---------------------------------------------.
-  | - sets up task   |                                              |
-  |   system if new  |                                              |
-  | - decomposes     |                                              |
-  |   request into   |                                              |
-  |   tasks          |                                              |
-  | - writes current |                                              |
-  |   task path to   |                                              |
-  |   current-job   |                                              |
-  +------------------+                                              |
-      |          |                                                  |
-  ALL_DONE   JOBS_READY                                            |
-      |          |                                                  |
-      v          v                                                  |
-   COMPLETE  +-----------+                                          |
-  .--------->| ARCHITECT |<-----------.                            |
-  |          |  (claude) |            |                            |
-  |          +-----------+            |                            |
-  |                |                  |                            |
-  |           OUTCOME: DONE           |                            |
-  |                |                  |                            |
-  |                v                  |                            |
-  |          +-------------+          |                            |
-  |          | IMPLEMENTOR |          |                            |
-  |          |  (gemini)   |          |                            |
-  |          +-------------+          |                            |
-  |           |           |           |                            |
-  |    NEEDS_ARCHITECT    DONE        |                            |
-  |           |           |           |                            |
-  |           '-----------.           v                            |
-  |                           +-----------+                        |
-  |                           |  TESTER   |                        |
-  |                           |  (claude) |                        |
-  |                           +-----------+                        |
-  |                            |         |                         |
-  |                          DONE      FAILED                      |
-  |                            |         |                         |
-  |                            |         '-----> IMPLEMENTOR       |
-  |                            |                                   |
-  |                            '-----------------------------------'
-  |                            (TM marks task complete, picks next)
-  |
-  '-- ALL_DONE --> COMPLETE
+  Each pipeline run handles one job (planning or implementation of a single
+  subtask). The Oracle is external — it prepares the job document and invokes
+  the orchestrator. The orchestrator always starts at ARCHITECT in TM mode.
+
+  [Oracle] -- prepares job doc --> orchestrator
+                                        |
+                                        v
+                                  +-----------+
+                      .---------->| ARCHITECT |<-----------.
+                      |           |  (claude) |            |
+                      |           +-----------+            |
+                      |                 |                  |
+                      |           OUTCOME: DONE            |
+                      |                 |                  |
+                      |           [DOCUMENTER hook]        |
+                      |                 |                  |
+                      |                 v                  |
+                      |           +-------------+          |
+                      |           | IMPLEMENTOR |          |
+                      |           |  (gemini)   |          |
+                      |           +-------------+          |
+                      |            |           |           |
+                      |   NEEDS_ARCHITECT      DONE        |
+                      |            |           |           |
+                      |            '-----------'     [DOCUMENTER hook]
+                      |                               |
+                      |                               v
+                      |                         +-----------+
+                      |                         |  TESTER   |
+                      |                         |  (claude) |
+                      |                         +-----------+
+                      |                          |         |
+                      |                        DONE      FAILED
+                      |                          |         |
+                      |                  [DOCUMENTER hook] |
+                      |                          |         '-----> IMPLEMENTOR
+                      |                          v
+                      |                  +--------------+
+                      |                  | TASK_MANAGER |
+                      |                  |   (claude)   |
+                      |                  +--------------+
+                      |                    |         |
+                      |                DONE      NEED_HELP
+                      |                    |         |
+                      |                    v         v
+                      |                 halt      halt
+                      |
+                      '-- NEEDS_ARCHITECT (from IMPLEMENTOR)
+
+  After the pipeline halts, the Oracle reads the outcome and task system
+  state to decide what to do next: start another pipeline run, pause for
+  human review, or declare the project complete.
 
 
 NON-TM MODE FLOW
@@ -108,9 +113,8 @@ DATA FLOWS
 
   orchestrator.py
        |
-       |-- reads --> request file           (TM mode: project description)
-       |-- reads --> current-job.txt       (TM mode: current task path, written by TM)
-       |-- reads --> JOB.md                (non-TM mode: pre-defined job document)
+       |-- reads --> JOB.md                (both modes: job document prepared by Oracle)
+       |-- reads --> request file           (TM mode: passed to TASK_MANAGER as context)
        |-- writes -> execution.log          (append-only run history)
        |
        |-- calls --> agent_wrapper.py
@@ -126,7 +130,7 @@ DATA FLOWS
                           '-- returns --> AgentResult(exit_code, response)
                                                 |
                           orchestrator parses --'
-                               OUTCOME + HANDOFF
+                               OUTCOME + HANDOFF + DOCS
                                     |
                                     |-- HANDOFF appended to handoff_history[]
                                     |      injected into next agent's prompt
@@ -154,24 +158,24 @@ AGENT PROMPT STRUCTURE (per turn)
 
    End your response with:
      OUTCOME: <valid outcomes for this role>
-     HANDOFF: ..."
+     HANDOFF: one paragraph summary for the next agent
+     DOCS: instructions for the DOCUMENTER (omit or write 'none' if no docs needed)"
 
 
 ROUTING TABLE
 =============
 
   TM mode:
-    (TASK_MANAGER, JOBS_READY)  --> ARCHITECT
-    (TASK_MANAGER, ALL_DONE)     --> halt (pipeline complete)
-    (TASK_MANAGER, NEED_HELP)    --> halt
-    (ARCHITECT,       DONE)         --> IMPLEMENTOR
-    (ARCHITECT,       NEED_HELP)    --> halt
-    (IMPLEMENTOR,     DONE)         --> TESTER
+    (ARCHITECT,       DONE)            --> [DOCUMENTER hook] --> IMPLEMENTOR
+    (ARCHITECT,       NEED_HELP)       --> halt
+    (IMPLEMENTOR,     DONE)            --> [DOCUMENTER hook] --> TESTER
     (IMPLEMENTOR,     NEEDS_ARCHITECT) --> ARCHITECT
-    (IMPLEMENTOR,     NEED_HELP)    --> halt
-    (TESTER,          DONE)         --> TASK_MANAGER
-    (TESTER,          FAILED)       --> IMPLEMENTOR
-    (TESTER,          NEED_HELP)    --> halt
+    (IMPLEMENTOR,     NEED_HELP)       --> halt
+    (TESTER,          DONE)            --> [DOCUMENTER hook] --> TASK_MANAGER
+    (TESTER,          FAILED)          --> IMPLEMENTOR
+    (TESTER,          NEED_HELP)       --> halt
+    (TASK_MANAGER,    DONE)            --> halt (Oracle decides next run)
+    (TASK_MANAGER,    NEED_HELP)       --> halt
 
   Non-TM mode:
     (ARCHITECT,   DONE)             --> IMPLEMENTOR
@@ -182,3 +186,8 @@ ROUTING TABLE
     (TESTER,      DONE)             --> halt (pipeline complete)
     (TESTER,      FAILED)           --> IMPLEMENTOR
     (TESTER,      NEED_HELP)        --> halt
+
+  DOCUMENTER hook runs after ARCHITECT, IMPLEMENTOR, and TESTER in TM mode
+  only if the role signals documentation work in its DOCS: output field.
+  DOCUMENTER is not a routing node — it is a mandatory post-step managed by
+  the orchestrator before routing to the next role.
