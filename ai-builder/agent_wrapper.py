@@ -30,6 +30,10 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
     logs_dir.mkdir(parents=True, exist_ok=True)
     role_log = logs_dir / f"{role}.log"
 
+    # Strip CLAUDECODE so the claude CLI doesn't refuse to start. Claude Code
+    # sets this variable and the CLI checks for it to block nested interactive
+    # sessions. Our subprocesses use -p (non-interactive) so the concern
+    # doesn't apply, but the check is unconditional.
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
     try:
