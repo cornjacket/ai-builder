@@ -14,4 +14,5 @@
 - [c526bd-add-status-and-reviews-to-target](c526bd-add-status-and-reviews-to-target/)
 - [b71517-expand-architect-role-definition](b71517-expand-architect-role-definition/)
 - [99c172-add-task-manipulation-scripts](99c172-add-task-manipulation-scripts/)
+- [e6c37d-add-stub-role-injection-for-pipeline-testing](e6c37d-add-stub-role-injection-for-pipeline-testing/)
 <!-- task-list-end -->
