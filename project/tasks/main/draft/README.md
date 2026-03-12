@@ -9,4 +9,7 @@
 - [284735-design-orchestrator-output-directory](284735-design-orchestrator-output-directory/)
 - [702059-add-start-role-flag-to-orchestrator](702059-add-start-role-flag-to-orchestrator/)
 - [37a660-design-oracle-and-pipeline-phases](37a660-design-oracle-and-pipeline-phases/)
+- [3230ef-design-workspace-claude-md-boundary](3230ef-design-workspace-claude-md-boundary/)
+- [13ffa1-brainstorm-mcp-integration-strategy](13ffa1-brainstorm-mcp-integration-strategy/)
+- [c526bd-add-status-and-reviews-to-target](c526bd-add-status-and-reviews-to-target/)
 <!-- task-list-end -->

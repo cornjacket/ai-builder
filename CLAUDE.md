@@ -15,6 +15,21 @@ exempt; the sandbox is for unstructured experimentation.
 
 ---
 
+## Session Status
+
+`project/status/` contains daily session logs (`YYYY-MM-DD.md`). **At the
+start of every session, read the most recent status file** to understand where
+things left off — what was in progress, what decisions were made, what is
+coming up next.
+
+**Sign-off:** when the user says "sign off", write a status summary to
+`project/status/YYYY-MM-DD.md` covering: work completed, work in progress,
+next up, and any key decisions. This is how context survives across sessions.
+
+**Full documentation:** [`project/README.md`](project/README.md)
+
+---
+
 ## Task Management
 
 All work in this repository is tracked through a structured task management
