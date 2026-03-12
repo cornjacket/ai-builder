@@ -14,7 +14,7 @@ Design the long-term home for orchestrator output: job documents, execution
 logs, agent logs, and generated artifacts.
 
 Currently `--output-dir` is caller-specified and ephemeral. Job documents
-created by the PROJECT MANAGER are written there temporarily. This works for
+created by the TASK MANAGER are written there temporarily. This works for
 now but raises questions about where this output should live permanently.
 
 **Questions to resolve:**

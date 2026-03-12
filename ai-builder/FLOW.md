@@ -7,7 +7,7 @@ Two modes:
   Non-PM mode (--job):    starts at ARCHITECT, pipeline runs once for a
                           single pre-defined job document.
 
-  PM mode (--target-repo): starts at PROJECT_MANAGER, which decomposes a
+  PM mode (--target-repo): starts at TASK_MANAGER, which decomposes a
                            project request into tasks and drives the full
                            ARCHITECT→IMPLEMENTOR→TESTER pipeline for each
                            task in sequence.
@@ -20,7 +20,7 @@ PM MODE FLOW
            |
            v
   +------------------+
-  | PROJECT_MANAGER  |  (claude)
+  | TASK_MANAGER  |  (claude)
   |                  |<---------------------------------------------.
   | - sets up task   |                                              |
   |   system if new  |                                              |
@@ -148,7 +148,7 @@ AGENT PROMPT STRUCTURE (per turn)
    Role instructions:             <-- role-specific guidance
 
    Handoff Notes:                 <-- accumulated from all prior agents
-     [PROJECT_MANAGER] ...
+     [TASK_MANAGER] ...
      [ARCHITECT] ...
      [IMPLEMENTOR] ...
 
@@ -161,15 +161,15 @@ ROUTING TABLE
 =============
 
   PM mode:
-    (PROJECT_MANAGER, JOBS_READY)  --> ARCHITECT
-    (PROJECT_MANAGER, ALL_DONE)     --> halt (pipeline complete)
-    (PROJECT_MANAGER, NEED_HELP)    --> halt
+    (TASK_MANAGER, JOBS_READY)  --> ARCHITECT
+    (TASK_MANAGER, ALL_DONE)     --> halt (pipeline complete)
+    (TASK_MANAGER, NEED_HELP)    --> halt
     (ARCHITECT,       DONE)         --> IMPLEMENTOR
     (ARCHITECT,       NEED_HELP)    --> halt
     (IMPLEMENTOR,     DONE)         --> TESTER
     (IMPLEMENTOR,     NEEDS_ARCHITECT) --> ARCHITECT
     (IMPLEMENTOR,     NEED_HELP)    --> halt
-    (TESTER,          DONE)         --> PROJECT_MANAGER
+    (TESTER,          DONE)         --> TASK_MANAGER
     (TESTER,          FAILED)       --> IMPLEMENTOR
     (TESTER,          NEED_HELP)    --> halt
 

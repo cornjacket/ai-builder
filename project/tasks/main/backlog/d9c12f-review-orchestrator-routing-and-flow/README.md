@@ -25,7 +25,7 @@ Specific questions to answer:
   already complete)?
 - Is the `current-task.txt` state file approach robust enough, or does it
   need a richer format (e.g. JSON with task name + epic)?
-- Does FLOW.md accurately describe both modes after the PROJECT_MANAGER
+- Does FLOW.md accurately describe both modes after the TASK_MANAGER
   addition?
 
 Deliverable: a written review with any issues found and fixes applied.

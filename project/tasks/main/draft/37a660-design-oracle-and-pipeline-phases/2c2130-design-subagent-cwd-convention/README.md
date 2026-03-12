@@ -35,7 +35,7 @@ use when spawning each role (ARCHITECT, IMPLEMENTOR, TESTER).
 **Deliverables:**
 - A defined convention for CWD per role, documented in the orchestrator
 - Any required changes to the job document format to carry CWD information
-- Notes in `roles/PROJECT_MANAGER.md` on how the PM should specify CWD
+- Notes in `roles/TASK_MANAGER.md` on how the PM should specify CWD
 
 ## Notes
 

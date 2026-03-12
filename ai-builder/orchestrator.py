@@ -26,7 +26,7 @@ parser.add_argument(
 parser.add_argument(
     "--target-repo",
     type=Path,
-    help="Path to the target repository (enables PROJECT MANAGER mode)",
+    help="Path to the target repository (enables TASK MANAGER mode)",
 )
 parser.add_argument(
     "--epic",
@@ -83,7 +83,7 @@ else:
 # ---------------------------------------------------------------------------
 
 AGENTS = {
-    "PROJECT_MANAGER": "claude",
+    "TASK_MANAGER": "claude",
     "ARCHITECT":       "claude",
     "IMPLEMENTOR":     "gemini",
     "TESTER":          "claude",
@@ -101,10 +101,10 @@ ROUTES = {
 
 if PM_MODE:
     ROUTES.update({
-        ("PROJECT_MANAGER", "JOBS_READY"): "ARCHITECT",
-        ("PROJECT_MANAGER", "ALL_DONE"):   None,
-        ("PROJECT_MANAGER", "NEED_HELP"):  None,
-        ("TESTER",          "DONE"):       "PROJECT_MANAGER",
+        ("TASK_MANAGER", "JOBS_READY"): "ARCHITECT",
+        ("TASK_MANAGER", "ALL_DONE"):   None,
+        ("TASK_MANAGER", "NEED_HELP"):  None,
+        ("TESTER",          "DONE"):       "TASK_MANAGER",
     })
 else:
     ROUTES[("TESTER", "DONE")] = None  # halt on completion in non-PM mode
@@ -120,12 +120,12 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
             "\n\n---\n\n".join(handoff_history)
 
-    if role == "PROJECT_MANAGER":
+    if role == "TASK_MANAGER":
         is_first_run = not CURRENT_JOB_FILE.exists()
         if is_first_run:
             request_text = REQUEST or "(no request file provided)"
             role_instructions = f"""\
-You are the PROJECT MANAGER for the ai-builder pipeline.
+You are the TASK MANAGER for the ai-builder pipeline.
 
 Target repository : {TARGET_REPO}
 Epic              : {EPIC}
@@ -154,7 +154,7 @@ Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
         else:
             role_instructions = f"""\
-You are the PROJECT MANAGER for the ai-builder pipeline.
+You are the TASK MANAGER for the ai-builder pipeline.
 
 Target repository : {TARGET_REPO}
 Epic              : {EPIC}
@@ -230,7 +230,7 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 # Main loop
 # ---------------------------------------------------------------------------
 
-current_role = "PROJECT_MANAGER" if PM_MODE else "ARCHITECT"
+current_role = "TASK_MANAGER" if PM_MODE else "ARCHITECT"
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
 
@@ -280,7 +280,7 @@ while current_role is not None:
         sys.exit(1)
 
     # After PM signals JOBS_READY, read the current job path for downstream agents
-    if current_role == "PROJECT_MANAGER" and outcome == "JOBS_READY":
+    if current_role == "TASK_MANAGER" and outcome == "JOBS_READY":
         if not CURRENT_JOB_FILE.exists():
             print(f"\n[orchestrator] PM did not write job path to {CURRENT_JOB_FILE}. Halting.")
             sys.exit(1)

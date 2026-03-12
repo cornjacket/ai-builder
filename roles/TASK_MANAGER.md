@@ -1,8 +1,8 @@
-# Role: PROJECT MANAGER
+# Role: TASK MANAGER
 
 ## Purpose
 
-The PROJECT MANAGER (PM) owns the task system in the target repository. It
+The TASK MANAGER (PM) owns the task system in the target repository. It
 is the first agent to run for any new project or feature request. Its job is
 to decompose work into trackable tasks, sequence them through the pipeline,
 and maintain the task system as shared state across all pipeline sessions.
