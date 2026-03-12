@@ -45,6 +45,9 @@ summarising what was done (see Sign-off below).
 **Convention:** files are named `YYYY-MM-DD.md`. If multiple sessions occur
 on the same day, append to the existing file rather than creating a new one.
 
+When writing a sign-off, also add a new row to the top of the log table in
+`project/status/README.md` with the date and a one-line summary.
+
 ---
 
 ## reviews/

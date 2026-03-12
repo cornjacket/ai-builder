@@ -24,7 +24,9 @@ coming up next.
 
 **Sign-off:** when the user says "sign off", write a status summary to
 `project/status/YYYY-MM-DD.md` covering: work completed, work in progress,
-next up, and any key decisions. This is how context survives across sessions.
+next up, and any key decisions. Also add a new row to the top of the log
+table in `project/status/README.md` with the date and a one-line summary.
+This is how context survives across sessions.
 
 **Full documentation:** [`project/README.md`](project/README.md)
 
