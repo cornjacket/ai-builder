@@ -13,5 +13,6 @@ next up, and key decisions made.
 
 | Date | Summary |
 |------|---------|
+| [2026-03-11](2026-03-11.md) | Completed 6fdb3a (role extraction, agent_wrapper fixes); multi-level decomposition and DOCUMENTER design brainstorm |
 | [2026-03-10](2026-03-10.md) | verify-setup.sh refactor; CLAUDE.md hierarchy and agent operation design discussions; MCP integration task created |
 | [2026-03-09](2026-03-09.md) | Completed 651a51-add-project-management-system-template: target/ skeleton, PM role, orchestrator PM mode, regression tests |
