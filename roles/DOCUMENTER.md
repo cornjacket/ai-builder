@@ -22,7 +22,18 @@ This guideline applies to all directories in the target application and in
 ai-builder itself. It defines what gets documented, where it lives, and what
 belongs at each level.
 
+> **Note:** The rule below — every directory has a `README.md` — is a
+> general repository convention, not just a DOCUMENTER concern. It applies
+> to all contributors (human and AI) at all times, regardless of whether
+> the DOCUMENTER role is active. It should eventually be promoted to a
+> top-level repository standard (e.g. `CLAUDE.md` or a dedicated
+> `CONTRIBUTING.md`). It lives here for now as the authoritative draft.
+
 ### Every directory gets a `README.md`
+
+**This is a hard rule.** Any directory without a `README.md` is incomplete.
+A directory exists to group related things — the README explains what those
+things are and why they belong together.
 
 The README is the entry point for the directory. It must answer: *what is
 this, what is in it, and how does it fit together?*
