@@ -65,6 +65,10 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
 
                 text = _extract_text(event)
                 if text:
+                    # Ensure adjacent blocks are separated by a newline so that
+                    # OUTCOME: always appears at the start of a line when parsed.
+                    if response_text and not response_text[-1].endswith("\n"):
+                        response_text.append("\n")
                     response_text.append(text)
                     print(text, end="", flush=True)
 

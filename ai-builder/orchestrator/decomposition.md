@@ -149,8 +149,8 @@ TASK_MANAGER navigates the task tree top-down:
 | `DONE` | Used in implementation pass (existing) |
 | `NEEDS_REVISION` | Plan has gaps; iterate before task creation |
 
-These outcomes are not yet implemented in the orchestrator. See
-`open-questions.md` for the pending design work.
+These outcomes are not yet implemented in the orchestrator. See task
+`8eea17-implement-decomposition-in-orchestrator`.
 
 ---
 
@@ -172,3 +172,69 @@ These outcomes are not yet implemented in the orchestrator. See
 - Component boundary decisions
 - Design and acceptance criteria content
 - Whether implementation is correct (caught by TESTER)
+
+---
+
+## README Content by Level
+
+The README hierarchy mirrors the decomposition tree exactly. Each level of
+decomposition produces a README for that directory — the ARCHITECT is the
+content producer, DOCUMENTER formats and owns the file.
+
+**Non-leaf README** (produced by ARCHITECT decompose pass):
+
+```
+## <service-name>
+
+One sentence: what does this part of the system do?
+
+## Data Flow
+
+    client → [api-layer] → [auth-handler] → [user-store]
+                  |               |
+                  v               v
+             rate-limit      JWT issue/validate
+
+## Components
+
+| Component    | Responsibility                        |
+|--------------|---------------------------------------|
+| api-layer    | HTTP routing, middleware, rate-limit  |
+| auth-handler | JWT validation and token issuance     |
+| user-store   | User CRUD, PostgreSQL                 |
+```
+
+Bounded by design — only describes this level's scope. No implementation
+detail. Links down to child READMEs.
+
+**Leaf README** (skeleton by ARCHITECT design pass, completed by IMPLEMENTOR):
+- Purpose and interface contracts (inputs, outputs, error conditions)
+- Data structures and types
+- Dependencies (what this component calls, what calls it)
+- Usage examples
+- Implementation notes (non-obvious decisions, known limitations)
+
+Bulk of technical detail lives here. Non-leaf documents link down to it.
+
+---
+
+## Pipeline Documentation Responsibilities
+
+Content producers write *what* the system does. DOCUMENTER writes *the document*.
+
+| Role | Produces |
+|------|----------|
+| ARCHITECT (decompose pass) | Data flow description, component table with responsibilities |
+| ARCHITECT (design pass) | Interface contracts, data structures, dependencies |
+| IMPLEMENTOR | Implementation notes, usage examples, known limitations |
+| TESTER | Acceptance test cases, documented alongside test files |
+| **DOCUMENTER** | **All README files — formats, organises, and maintains** |
+
+Each job template specifies what content the producing role must provide:
+
+| Template | Role | Content required |
+|----------|------|-----------------|
+| `JOB-service-build` | ARCHITECT | Data flow description + component list with responsibilities |
+| `JOB-component-design` | ARCHITECT | Interface contracts + data structures + dependencies |
+| `JOB-component-implement` | IMPLEMENTOR | Implementation notes + usage examples + known limitations |
+| `JOB-component-test` | TESTER | Acceptance test cases documented alongside test files |

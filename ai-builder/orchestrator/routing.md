@@ -13,14 +13,19 @@ or `None` (halt).
 | From | Outcome | To |
 |------|---------|----|
 | ARCHITECT | `DONE` | [DOCUMENTER hook] → IMPLEMENTOR |
+| ARCHITECT | `COMPONENTS_READY` | [DOCUMENTER hook] → TASK_MANAGER |
+| ARCHITECT | `COMPONENT_READY` | [DOCUMENTER hook] → IMPLEMENTOR |
+| ARCHITECT | `NEEDS_REVISION` | ARCHITECT *(self-loop — iteration limit applies)* |
 | ARCHITECT | `NEED_HELP` | halt |
-| IMPLEMENTOR | `DONE` | [DOCUMENTER hook] → TESTER |
+| IMPLEMENTOR | `IMPLEMENTATION_DONE` | [DOCUMENTER hook] → TESTER |
 | IMPLEMENTOR | `NEEDS_ARCHITECT` | ARCHITECT |
 | IMPLEMENTOR | `NEED_HELP` | halt |
-| TESTER | `DONE` | [DOCUMENTER hook] → TASK_MANAGER |
-| TESTER | `FAILED` | IMPLEMENTOR |
+| TESTER | `TESTS_PASS` | [DOCUMENTER hook] → TASK_MANAGER |
+| TESTER | `TESTS_FAIL` | IMPLEMENTOR |
 | TESTER | `NEED_HELP` | halt |
-| TASK_MANAGER | `DONE` | halt (Oracle decides next run) |
+| TASK_MANAGER | `JOBS_READY` | ARCHITECT |
+| TASK_MANAGER | `ALL_DONE` | halt |
+| TASK_MANAGER | `STOP_AFTER` | halt *(Oracle intervention required)* |
 | TASK_MANAGER | `NEED_HELP` | halt |
 
 ### Non-TM Mode
@@ -29,11 +34,11 @@ or `None` (halt).
 |------|---------|----|
 | ARCHITECT | `DONE` | IMPLEMENTOR |
 | ARCHITECT | `NEED_HELP` | halt |
-| IMPLEMENTOR | `DONE` | TESTER |
+| IMPLEMENTOR | `IMPLEMENTATION_DONE` | TESTER |
 | IMPLEMENTOR | `NEEDS_ARCHITECT` | ARCHITECT |
 | IMPLEMENTOR | `NEED_HELP` | halt |
-| TESTER | `DONE` | halt (pipeline complete) |
-| TESTER | `FAILED` | IMPLEMENTOR |
+| TESTER | `TESTS_PASS` | halt (pipeline complete) |
+| TESTER | `TESTS_FAIL` | IMPLEMENTOR |
 | TESTER | `NEED_HELP` | halt |
 
 DOCUMENTER hook does not run in non-TM mode.

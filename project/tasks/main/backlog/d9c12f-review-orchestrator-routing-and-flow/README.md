@@ -14,10 +14,10 @@ Formally review the orchestrator routing logic and flow documentation to
 ensure they are correct, complete, and consistent with each other.
 
 Review scope:
-- `ai-builder/orchestrator.py` — ROUTES table, TM mode vs non-TM mode
+- `ai-builder/orchestrator/orchestrator.py` — ROUTES table, TM mode vs non-TM mode
   branching, state file handling, prompt construction for all roles
-- `ai-builder/FLOW.md` — TM mode diagram, non-TM mode diagram, routing
-  tables, data flow; verify they accurately reflect the code
+- `ai-builder/orchestrator/README.md` — TM mode diagram, non-TM mode diagram,
+  routing tables, data flow; verify they accurately reflect the code
 
 Specific questions to answer:
 - Are all valid OUTCOME values for each role represented in ROUTES?
@@ -32,8 +32,8 @@ Deliverable: a written review with any issues found and fixes applied.
 
 ## Documentation
 
-Update `ai-builder/FLOW.md` and `ai-builder/orchestrator.py` if issues
-are found during review.
+Update `ai-builder/orchestrator/README.md` and `ai-builder/orchestrator/orchestrator.py`
+if issues are found during review.
 
 ## Subtasks
 

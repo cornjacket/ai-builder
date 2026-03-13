@@ -76,6 +76,13 @@ Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).
 
 Use `complete-task.sh --parent` to mark a subtask done.
 
+**Subtask-only fields:**
+
+| Field | Values | Default | Meaning |
+|-------|--------|---------|---------|
+| `Complexity` | `atomic` / `composite` / `—` | `—` | Set by ARCHITECT during decomposition. `atomic` = implementable directly; `composite` = needs further decomposition before implementation. |
+| `Stop-after` | `true` / `false` | `false` | When `true`, the Oracle pauses after this subtask completes and presents results to the human before continuing. Set during planning; human can override during plan review. |
+
 ---
 
 ## Status Directories

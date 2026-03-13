@@ -26,6 +26,7 @@ mutually exclusive: `--job` is required in non-TM mode and ignored in TM mode.
 | Name | Value | Purpose |
 |------|-------|---------|
 | `TIMEOUT_MINUTES` | 5 | Per-role subprocess timeout |
+| `MAX_ROLE_ITERATIONS` | 3 | Max consecutive self-routes before halting with error |
 | `AGENTS` | dict | Maps role name → agent CLI name (`claude` or `gemini`) |
 | `ROUTES` | dict | Maps `(role, outcome)` → next role or `None` (halt) |
 | `REPO_ROOT` | Path | Absolute path to the ai-builder repo root |
@@ -75,8 +76,10 @@ and handoff. Append-only — never overwrites prior entries.
 ## Main Loop
 
 ```
-current_role = "TASK_MANAGER" (TM mode) or "ARCHITECT" (non-TM mode)
-job_doc      = job document path (non-TM mode) or None (TM mode, set later)
+current_role = "ARCHITECT" (always — TM only runs when routed to it)
+job_doc      = --job path (non-TM mode)
+             | current-job.txt contents if pre-seeded by Oracle (TM mode)
+             | None if Oracle has not yet written current-job.txt (TM mode, first TM run)
 
 while current_role is not None:
     agent  = AGENTS[current_role]
@@ -97,7 +100,17 @@ while current_role is not None:
     if current_role == "TASK_MANAGER" and outcome == "JOBS_READY":
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
 
-    current_role = ROUTES.get((current_role, outcome))
+    next_role = ROUTES.get((current_role, outcome))
+
+    # Self-loop guard: increment counter if routing back to same role
+    if next_role == current_role:
+        role_iteration_counts[current_role] += 1
+        if role_iteration_counts[current_role] >= MAX_ROLE_ITERATIONS:
+            → halt (sys.exit 1, iteration limit reached)
+    else:
+        role_iteration_counts.pop(current_role)  # reset on role change
+
+    current_role = next_role
 ```
 
 `NEED_HELP` exits with code 0 (expected halt, not an error). All other
@@ -111,10 +124,20 @@ halts exit with code 1.
 |-----------|------|------|
 | Read | `--job` (job document) | non-TM mode startup |
 | Read | `--request` (project request) | TM mode, passed to TASK_MANAGER prompt |
+| Read | `current-job.txt` | TM mode startup — if present, initialises `job_doc` for the first ARCHITECT call (Oracle pre-seeds this before invoking the orchestrator) |
 | Read | `roles/<ROLE>.md` | each `build_prompt()` call for non-TM roles |
-| Read | `current-job.txt` | after TASK_MANAGER emits `JOBS_READY` |
 | Write | `execution.log` | after every role run (append) |
-| Read/Write | `current-job.txt` | written by TASK_MANAGER, read by orchestrator |
+| Write | `current-job.txt` | by TASK_MANAGER after `JOBS_READY` — path to the next job document |
+| Read | `current-job.txt` | by orchestrator after TASK_MANAGER emits `JOBS_READY` — updates `job_doc` for downstream roles |
+
+**Oracle contract (TM mode):** before invoking the orchestrator, Oracle must:
+1. Place the top-level task in `in-progress/` in the target repo's task system
+2. Write the job document to `OUTPUT_DIR/<task-name>.md`
+3. Write its absolute path to `OUTPUT_DIR/current-job.txt`
+
+The orchestrator reads `current-job.txt` at startup and uses it as `job_doc`
+for the first ARCHITECT call. If `current-job.txt` is absent, `job_doc` is
+`None` and TASK_MANAGER runs first to bootstrap the task system.
 
 ---
 

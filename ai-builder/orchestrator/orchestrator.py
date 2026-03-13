@@ -57,7 +57,7 @@ else:
         print(f"[orchestrator] Job document not found: {args.job}")
         sys.exit(1)
 
-REPO_ROOT       = Path(__file__).resolve().parent.parent
+REPO_ROOT       = Path(__file__).resolve().parent.parent.parent
 ROLES_DIR       = REPO_ROOT / "roles"
 OUTPUT_DIR      = args.output_dir.resolve()
 TIMEOUT_MINUTES = 5
@@ -73,7 +73,11 @@ if TM_MODE:
     PM_SCRIPTS_DIR = TARGET_REPO / "project" / "tasks" / "scripts"
     SETUP_SCRIPT   = REPO_ROOT / "target" / "setup-project.sh"
     INIT_SCRIPT    = REPO_ROOT / "target" / "init-claude-md.sh"
-    initial_job_doc = None
+    # If Oracle pre-seeded current-job.txt (e.g. regression test setup), use it.
+    if CURRENT_JOB_FILE.exists():
+        initial_job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
+    else:
+        initial_job_doc = None
 else:
     initial_job_doc = args.job.resolve()
 
@@ -90,31 +94,35 @@ AGENTS = {
 }
 
 ROUTES = {
-    ("ARCHITECT",   "DONE"):            "IMPLEMENTOR",
-    ("ARCHITECT",   "NEED_HELP"):       None,
-    ("IMPLEMENTOR", "DONE"):            "TESTER",
-    ("IMPLEMENTOR", "NEEDS_ARCHITECT"): "ARCHITECT",
-    ("IMPLEMENTOR", "NEED_HELP"):       None,
-    ("TESTER",      "FAILED"):          "IMPLEMENTOR",
-    ("TESTER",      "NEED_HELP"):       None,
+    ("ARCHITECT",   "DONE"):                "IMPLEMENTOR",
+    ("ARCHITECT",   "NEED_HELP"):           None,
+    ("IMPLEMENTOR", "IMPLEMENTATION_DONE"): "TESTER",
+    ("IMPLEMENTOR", "NEEDS_ARCHITECT"):     "ARCHITECT",
+    ("IMPLEMENTOR", "NEED_HELP"):           None,
+    ("TESTER",      "TESTS_FAIL"):          "IMPLEMENTOR",
+    ("TESTER",      "NEED_HELP"):           None,
 }
 
 if TM_MODE:
     ROUTES.update({
-        ("TASK_MANAGER", "JOBS_READY"): "ARCHITECT",
-        ("TASK_MANAGER", "ALL_DONE"):   None,
-        ("TASK_MANAGER", "NEED_HELP"):  None,
-        ("TESTER",          "DONE"):       "TASK_MANAGER",
+        ("ARCHITECT",    "COMPONENTS_READY"): "TASK_MANAGER",
+        ("ARCHITECT",    "COMPONENT_READY"):  "IMPLEMENTOR",
+        ("ARCHITECT",    "NEEDS_REVISION"):   "ARCHITECT",
+        ("TASK_MANAGER", "JOBS_READY"):       "ARCHITECT",
+        ("TASK_MANAGER", "ALL_DONE"):         None,
+        ("TASK_MANAGER", "STOP_AFTER"):       None,
+        ("TASK_MANAGER", "NEED_HELP"):        None,
+        ("TESTER",       "TESTS_PASS"):       "TASK_MANAGER",
     })
 else:
-    ROUTES[("TESTER", "DONE")] = None  # halt on completion in non-TM mode
+    ROUTES[("TESTER", "TESTS_PASS")] = None  # halt on completion in non-TM mode
 
 
 # ---------------------------------------------------------------------------
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str]) -> str:
+def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str], last_outcome: str = "") -> str:
     history_section = ""
     if handoff_history:
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
@@ -145,10 +153,41 @@ Your job:
 4. Move the first task to in-progress/:
      {PM_SCRIPTS_DIR}/move-task.sh --epic {EPIC} --name <id-task-name> --from backlog --to in-progress
 5. Create a job document for the first task using the template at:
-     {REPO_ROOT}/ai-builder/JOB-TEMPLATE.md
+     {REPO_ROOT}/ai-builder/orchestrator/JOB-TEMPLATE.md
    Write the job document to: {output_dir}/<task-name>.md
    Populate the Goal section from the task README Description.
 6. Write the absolute path to the job document to: {CURRENT_JOB_FILE}
+
+Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
+"""
+        elif last_outcome == "COMPONENTS_READY":
+            role_instructions = f"""\
+You are the TASK MANAGER for the ai-builder pipeline.
+
+Target repository : {TARGET_REPO}
+Epic              : {EPIC}
+Job state file    : {CURRENT_JOB_FILE}
+
+The ARCHITECT has completed a decomposition pass (COMPONENTS_READY).
+The job document contains a completed component table in the Components section.
+
+Your job:
+1. Read the component table from the job document at:
+     {CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else '<job doc path>'}
+   The table format is: | Name | Complexity | Description |
+2. For each component row, create a subtask:
+     {PM_SCRIPTS_DIR}/new-task.sh --epic {EPIC} --folder draft --parent <parent-task-name> --name <component-name>
+   Then set the Complexity field in the subtask README to the value from the table.
+3. Order subtasks by implementation priority (dependencies first).
+4. Move the first subtask to in-progress/:
+     {PM_SCRIPTS_DIR}/move-task.sh --epic {EPIC} --name <id-subtask-name> --from draft --to in-progress
+5. Determine the correct job template for the first subtask:
+   - If Complexity is "atomic": use {REPO_ROOT}/ai-builder/orchestrator/JOB-component-design.md
+   - If Complexity is "composite": use {REPO_ROOT}/ai-builder/orchestrator/JOB-service-build.md
+6. Create the job document from the template. Write it to: {output_dir}/<subtask-name>.md
+   Populate the Goal from the subtask README Description and Context from the
+   parent service description.
+7. Write the absolute path to the job document to: {CURRENT_JOB_FILE}
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
@@ -163,30 +202,53 @@ Job state file    : {CURRENT_JOB_FILE}
 The pipeline just completed a job. Review the handoff notes below.
 
 Your job:
-1. Mark the completed task done:
-     {PM_SCRIPTS_DIR}/complete-task.sh --epic {EPIC} --folder in-progress --name <id-task-name>
-2. Check for remaining work:
-     {PM_SCRIPTS_DIR}/list-tasks.sh --epic {EPIC} --folder backlog --depth 1
-3. If tasks remain:
-   - Move the next task to in-progress/
-   - Create a job document for it using {REPO_ROOT}/ai-builder/JOB-TEMPLATE.md
-     Write it to: {output_dir}/<task-name>.md
+1. Identify the completed subtask from the handoff notes and mark it done:
+     {PM_SCRIPTS_DIR}/complete-task.sh --epic {EPIC} --folder in-progress --parent <parent-task> --name <id-subtask-name>
+2. Check the completed subtask's Stop-after field in its README.
+   If Stop-after is true:
+   - Output OUTCOME: STOP_AFTER
+   - Include in HANDOFF: which subtask completed, what was implemented,
+     TESTER results, and that Oracle intervention is required before continuing.
+   If Stop-after is false, continue to step 3.
+3. Check for remaining subtasks:
+     {PM_SCRIPTS_DIR}/list-tasks.sh --epic {EPIC} --folder in-progress --depth 2
+   Also check backlog for any not yet started:
+     {PM_SCRIPTS_DIR}/list-tasks.sh --epic {EPIC} --folder backlog --depth 2
+4. If subtasks remain:
+   - Move the next subtask to in-progress/ if needed
+   - Determine the correct job template:
+     * Complexity "atomic"    → {REPO_ROOT}/ai-builder/orchestrator/JOB-component-design.md
+     * Complexity "composite" → {REPO_ROOT}/ai-builder/orchestrator/JOB-service-build.md
+   - Create the job document and write it to: {output_dir}/<subtask-name>.md
    - Write its absolute path to: {CURRENT_JOB_FILE}
    - Output OUTCOME: JOBS_READY
-4. If no tasks remain: output OUTCOME: ALL_DONE\
+5. If no subtasks remain, check for remaining top-level tasks in backlog/.
+   If top-level tasks remain: move next to in-progress/, create job doc, output OUTCOME: JOBS_READY
+6. If nothing remains: output OUTCOME: ALL_DONE
+
+Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
-        valid_outcomes = "JOBS_READY | ALL_DONE | NEED_HELP"
+        valid_outcomes = "JOBS_READY | ALL_DONE | STOP_AFTER | NEED_HELP"
         job_section = ""
 
     else:
         role_file = ROLES_DIR / f"{role}.md"
         role_instructions = role_file.read_text() if role_file.exists() \
             else "Complete the work described in the job document."
-        valid_outcomes = {
-            "ARCHITECT":   "DONE | NEED_HELP",
-            "IMPLEMENTOR": "DONE | NEEDS_ARCHITECT | NEED_HELP",
-            "TESTER":      "DONE | FAILED | NEED_HELP",
-        }.get(role, "DONE | NEED_HELP")
+        if role == "ARCHITECT":
+            job_content = job_doc.read_text() if job_doc and job_doc.exists() else ""
+            if "## Components" in job_content:
+                valid_outcomes = "COMPONENTS_READY | NEEDS_REVISION | NEED_HELP"
+            elif "## Design" in job_content and "## Acceptance Criteria" in job_content:
+                valid_outcomes = "COMPONENT_READY | NEEDS_REVISION | NEED_HELP"
+            else:
+                valid_outcomes = "DONE | NEED_HELP"
+        elif role == "IMPLEMENTOR":
+            valid_outcomes = "IMPLEMENTATION_DONE | NEEDS_ARCHITECT | NEED_HELP"
+        elif role == "TESTER":
+            valid_outcomes = "TESTS_PASS | TESTS_FAIL | NEED_HELP"
+        else:
+            valid_outcomes = "DONE | NEED_HELP"
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
 
     return f"""Your role is {role}.
@@ -230,9 +292,13 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 # Main loop
 # ---------------------------------------------------------------------------
 
-current_role = "TASK_MANAGER" if TM_MODE else "ARCHITECT"
+MAX_ROLE_ITERATIONS = 3
+
+current_role = "ARCHITECT"  # always starts at ARCHITECT; TM only runs when routed to it
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
+role_iteration_counts: dict[str, int] = {}
+last_outcome: str = ""
 
 print("=== Orchestrator: starting ===")
 if TM_MODE:
@@ -253,7 +319,7 @@ while current_role is not None:
 
     print(f"\n>>> [{current_role} / {agent}]")
 
-    prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
+    prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history, last_outcome)
     result: AgentResult = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
 
     if result.exit_code == 2:
@@ -266,6 +332,7 @@ while current_role is not None:
     outcome, handoff = parse_outcome(result.response)
     handoff_history.append(f"[{current_role}] {handoff}")
     log_run(current_role, agent, outcome, handoff)
+    last_outcome = outcome
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
 
@@ -290,6 +357,20 @@ while current_role is not None:
             sys.exit(1)
         print(f"    current job:   {job_doc}")
 
-    current_role = ROUTES.get((current_role, outcome))
+    next_role = ROUTES.get((current_role, outcome))
+
+    if next_role == current_role:
+        role_iteration_counts[current_role] = role_iteration_counts.get(current_role, 0) + 1
+        if role_iteration_counts[current_role] >= MAX_ROLE_ITERATIONS:
+            print(f"\n[orchestrator] {current_role} has self-routed {role_iteration_counts[current_role]} times "
+                  f"(outcome='{outcome}'). Iteration limit ({MAX_ROLE_ITERATIONS}) reached. Halting.")
+            print(f"    Review the job document and role prompt for {current_role}.")
+            if job_doc:
+                print(f"    Job document: {job_doc}")
+            sys.exit(1)
+    else:
+        role_iteration_counts.pop(current_role, None)
+
+    current_role = next_role
 
 print("\n=== Orchestrator: pipeline complete ===")

@@ -2,11 +2,13 @@
 
 | Field    | Value                |
 |----------|----------------------|
-| Status   | —                    |
-| Epic     | {{EPIC}}             |
-| Tags     | {{TAGS}}             |
-| Parent   | {{PARENT}}           |
-| Priority | {{PRIORITY}}         |
+| Status      | —                    |
+| Epic        | {{EPIC}}             |
+| Tags        | {{TAGS}}             |
+| Parent      | {{PARENT}}           |
+| Priority    | {{PRIORITY}}         |
+| Complexity  | —                    |
+| Stop-after  | false                |
 
 ## Description
 

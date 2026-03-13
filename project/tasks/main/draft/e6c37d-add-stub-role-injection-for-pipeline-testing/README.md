@@ -27,7 +27,7 @@ pipeline state (task system, logs, artifacts) is correct at each step.
 **Proposed interface:**
 
 ```
-python3 ai-builder/orchestrator.py \
+python3 ai-builder/orchestrator/orchestrator.py \
     --job path/to/job.md \
     --output-dir path/to/work \
     --stub IMPLEMENTOR:path/to/stub.json \

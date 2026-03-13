@@ -20,12 +20,6 @@ for testing. This blocks deterministic testing of conditional paths like
 `NEEDS_ARCHITECT` and `TESTER → FAILED` loops. See task
 `e6c37d-add-stub-role-injection-for-pipeline-testing`.
 
-**TM mode start role vs. current code**
-`orchestrator.py` still starts at `TASK_MANAGER` in TM mode. The agreed
-design starts at `ARCHITECT`. The orchestrator code needs to be updated to
-reflect the new design where the Oracle is the entry point and TM only runs
-at the end. See task `d9c12f-review-orchestrator-routing-and-flow`.
-
 ---
 
 ## Decomposition
@@ -41,10 +35,19 @@ Decompose mode vs. design mode needs a signal. Options:
 - Explicit `## Mode:` field in the job document
 - Instruction injected by Oracle in the job doc
 
-**Gold verifier for service-level regression tests**
-A single-component test (fibonacci) verifies one leaf. A service-level test
-needs to verify the assembled output of all components. The gold comparison
-strategy for multi-component outputs is not yet designed.
+
+**Component list format: markdown table vs. structured data**
+The ARCHITECT component list is currently specified as a markdown table
+(`| Name | Complexity | Description |`). This is readable but requires the
+TM to parse prose. A structured format (JSON/YAML) would be easier to parse
+deterministically. Tradeoff: markdown is more natural for the ARCHITECT to
+write; structured data is safer for TM to consume without AI interpretation.
+
+**TM tree depth navigation**
+How does the TM reliably find the next incomplete atomic node in the task
+tree? `list-tasks.sh --depth N` gives the tree, but the TM needs to walk it
+correctly — especially when composite nodes are partially complete. Risk of
+losing position or skipping nodes if the navigation logic is not well-defined.
 
 ---
 

@@ -14,6 +14,6 @@ each acceptance criterion.
 
 ## Valid Outcomes
 
-- `DONE` — all acceptance criteria pass
-- `FAILED` — one or more acceptance criteria failed; include details in HANDOFF
+- `TESTS_PASS` — all acceptance criteria pass
+- `TESTS_FAIL` — one or more acceptance criteria failed; include details in HANDOFF
 - `NEED_HELP` — cannot run the tests due to an environmental or setup issue

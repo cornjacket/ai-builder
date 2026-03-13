@@ -21,6 +21,6 @@ Testing boundaries:
 
 ## Valid Outcomes
 
-- `DONE` — implementation is complete and syntax checks pass
+- `IMPLEMENTATION_DONE` — implementation is complete and syntax checks pass
 - `NEEDS_ARCHITECT` — the Design is ambiguous, incomplete, or contradictory
 - `NEED_HELP` — blocked by an external issue that cannot be resolved

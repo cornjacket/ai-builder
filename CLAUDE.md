@@ -13,6 +13,9 @@ exempt; the sandbox is for unstructured experimentation.
 3. Do the work.
 4. Move the task to `complete/` when done.
 
+**After completing a task or subtask:** concisely explain what was just done
+and why in one short sentence, then suggest the next steps.
+
 ---
 
 ## Session Status
@@ -94,6 +97,7 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 
 Run from the repo root:
 
+
 ```bash
 project/tasks/scripts/new-task.sh       --epic main --folder draft --name <task>
 project/tasks/scripts/new-task.sh       --epic main --folder draft --parent <task> --name <subtask>
@@ -105,4 +109,23 @@ project/tasks/scripts/delete-task.sh    --epic main --folder <status> --name <ta
 project/tasks/scripts/restore-task.sh   --epic main --folder <status> --name <task>
 project/tasks/scripts/list-tasks.sh     --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>]
 ```
+
+---
+
+## Documentation
+
+When adding functionality to ai-builder (new flags, new roles, new pipeline
+behaviour, new scripts), update or create documentation as part of the same
+task:
+
+- Every directory must have a `README.md`. If you create a new directory,
+  create its README before moving on.
+- Every source file should have a companion `.md` (e.g. `foo.py` → `foo.md`).
+  Update the companion when the file's observable behaviour changes (inputs,
+  outputs, side effects, design assumptions). Internal refactors that preserve
+  the external contract do not require a doc update.
+- Update the relevant `README.md` file index and overview when files are added,
+  moved, or removed.
+
+**Full documentation guideline:** [`roles/DOCUMENTER.md`](roles/DOCUMENTER.md)
 

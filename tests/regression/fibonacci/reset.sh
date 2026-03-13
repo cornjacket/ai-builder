@@ -18,6 +18,6 @@ rm -f  "$WORK/execution.log"
 rm -rf "$WORK/logs"
 
 echo "Done. Ready to run:"
-echo "  python3 ai-builder/orchestrator.py \\"
+echo "  python3 ai-builder/orchestrator/orchestrator.py \\"
 echo "      --job tests/regression/fibonacci/work/JOB-fibonacci-demo.md \\"
 echo "      --output-dir tests/regression/fibonacci/work"

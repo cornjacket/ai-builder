@@ -1,0 +1,48 @@
+# Job: User Management HTTP Service
+
+## Goal
+
+Build a user management HTTP service in Go. The service manages a collection
+of users via a REST API and stores them in memory (no persistence between
+restarts).
+
+**Requirements:**
+- Language: Go
+- Port: `8080`
+- Routes:
+  - `POST /users` — create a user, return the created user with a generated ID
+  - `GET /users/{id}` — retrieve a user by ID; return 404 if not found
+  - `PUT /users/{id}` — update a user by ID; return 404 if not found
+  - `DELETE /users/{id}` — delete a user by ID; return 404 if not found
+- Response format: JSON for all responses
+- Storage: in-memory (no database, no persistence)
+- No authentication or authorisation
+
+---
+
+## Context
+
+None.
+
+---
+
+## Components
+
+_To be completed by the ARCHITECT._
+
+Decompose the service into its top-level components. For each component,
+determine whether it is atomic (implementable in a single design +
+implement + test pass) or composite (requires further decomposition).
+
+Output the component list in exactly this format:
+
+```markdown
+| Name | Complexity | Description |
+|------|------------|-------------|
+| <component-name> | atomic | <one-line responsibility> |
+| <component-name> | composite | <one-line responsibility — needs further decomposition> |
+```
+
+Output `COMPONENTS_READY` when the table is complete.
+Output `NEEDS_REVISION` if the goal is ambiguous and needs clarification
+before decomposition can proceed.
