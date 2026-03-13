@@ -53,6 +53,16 @@ detail file, replace the section with a one-line summary and a link.
 
 Companion files live alongside the source file in the same directory.
 
+**When to update a companion file:**
+A companion `.md` must be updated when a code change alters *observable
+behaviour* — inputs, outputs, side effects, design assumptions, or
+non-obvious behaviour. Internal refactors that preserve the external contract
+do not require a doc update.
+
+The IMPLEMENTOR signals this via the `DOCS:` field. If `DOCS:` references a
+source file change (e.g. "updated `run_agent()` signature"), the DOCUMENTER
+updates the companion. If `DOCS: none`, the companion is left as-is.
+
 ---
 
 ### Named detail files for topics
