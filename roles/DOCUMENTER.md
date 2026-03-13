@@ -94,6 +94,31 @@ resolved questions in place.
 
 ---
 
+### Heading hierarchy
+
+Heading levels are relative within each file, not absolute across the
+documentation system. File names and the README file index serve the role
+that H1 would serve in a monolithic document — once inside a file, internal
+heading hierarchy takes over.
+
+**Convention:**
+- **H1** — file topic (appears once, at the top)
+- **H2** — major concepts within this file
+- **H3** — specific details within a major concept
+- **H4** — signal that the file is too large or the concept needs its own file
+
+**In a README specifically:** if a section reaches H3, that is a strong
+signal to extract it to a detail file and replace with a one-line summary
+and link. H3 in a README means the content is getting too detailed for an
+index.
+
+**Navigation contract:** a README's H2 section names should map predictably
+to detail file names. If there is a `## Routing` section in the README,
+readers — human and AI — should expect `routing.md` to exist. This naming
+correspondence lets AIs navigate without reading every file.
+
+---
+
 ### Source material hierarchy
 
 When documenting a directory, draw from:
