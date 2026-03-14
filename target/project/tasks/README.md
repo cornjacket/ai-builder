@@ -26,8 +26,8 @@ project/tasks/
         restore-task.sh         # reverse a soft-delete
         show-task.sh            # print a task README to stdout
         list-tasks.sh           # display the task tree
+        wont-do-subtask.sh      # mark a subtask wont-do: sets Status, removes from parent list
         task-template.md        # README template for top-level tasks
-        subtask-template.md     # README template for subtasks
 ```
 
 ---
@@ -134,4 +134,8 @@ project/tasks/scripts/set-current-job.sh \
 
 # Check whether a task is the last (integration) subtask (exit 0 = yes, 1 = no)
 project/tasks/scripts/is-last-task.sh <path-to-task-README.md>
+
+# Mark a subtask as wont-do (sets Status, removes from parent list, keeps directory)
+project/tasks/scripts/wont-do-subtask.sh --epic main --folder in-progress \
+    --parent my-task --name my-subtask
 ```

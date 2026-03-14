@@ -26,8 +26,8 @@ project/tasks/
         restore-task.sh         # reverse a soft-delete: unhides directory, re-adds to parent README
         show-task.sh            # print a task's README to stdout
         list-tasks.sh           # display the task tree (--depth, --root, --folder, --all)
+        wont-do-subtask.sh      # mark a subtask wont-do: sets Status, removes from parent list
         task-template.md        # README template for top-level tasks
-        subtask-template.md     # README template for subtasks
 ```
 
 ---
@@ -162,6 +162,10 @@ project/tasks/scripts/delete-task.sh --epic main --folder draft \
 # Restore a soft-deleted task (unhides directory, re-appends to parent README)
 project/tasks/scripts/restore-task.sh --epic main --folder draft --name my-task
 project/tasks/scripts/restore-task.sh --epic main --folder draft \
+    --parent my-task --name my-subtask
+
+# Mark a subtask as wont-do (sets Status, removes from parent list, keeps directory)
+project/tasks/scripts/wont-do-subtask.sh --epic main --folder in-progress \
     --parent my-task --name my-subtask
 
 # List incomplete tasks in an epic (default)

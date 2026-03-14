@@ -36,7 +36,6 @@ any implementation decisions made during this work.
 - [x] [0551e4-update-architect-prompt-for-decomposition](0551e4-update-architect-prompt-for-decomposition/)
 - [ ] [de4588-pipeline-restructure](de4588-pipeline-restructure/)
 - [ ] [d5dad2-add-decomposition-regression-test](d5dad2-add-decomposition-regression-test/)
-- [ ] [3cbd2e-702059-add-start-role-flag-to-orchestrator](3cbd2e-702059-add-start-role-flag-to-orchestrator/)
 <!-- subtask-list-end -->
 
 ## Notes

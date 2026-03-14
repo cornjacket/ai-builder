@@ -106,8 +106,9 @@ project/tasks/scripts/complete-task.sh  --epic main --folder <status> --name <ta
 project/tasks/scripts/complete-task.sh  --epic main --folder <status> --parent <task> --name <subtask>
 project/tasks/scripts/show-task.sh      --epic main --folder <status> --name <task>
 project/tasks/scripts/delete-task.sh    --epic main --folder <status> --name <task>
-project/tasks/scripts/restore-task.sh   --epic main --folder <status> --name <task>
-project/tasks/scripts/list-tasks.sh     --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>]
+project/tasks/scripts/restore-task.sh      --epic main --folder <status> --name <task>
+project/tasks/scripts/wont-do-subtask.sh   --epic main --folder <status> --parent <task> --name <subtask>
+project/tasks/scripts/list-tasks.sh        --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>]
 ```
 
 ---
