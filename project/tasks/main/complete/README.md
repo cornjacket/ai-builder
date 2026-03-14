@@ -11,4 +11,5 @@
 - [7e7184-design-decomposition-protocol](7e7184-design-decomposition-protocol/)
 - [d3616d-rename-pipeline-outcomes-for-clarity](d3616d-rename-pipeline-outcomes-for-clarity/)
 - [0be578-add-role-iteration-limit-to-orchestrator](0be578-add-role-iteration-limit-to-orchestrator/)
+- [8eea17-implement-decomposition-in-orchestrator](8eea17-implement-decomposition-in-orchestrator/)
 <!-- task-list-end -->
