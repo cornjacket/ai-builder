@@ -74,19 +74,25 @@ if [[ -n "$PARENT" ]]; then
     fi
 
     if [[ "$UNDO" == true ]]; then
-        if ! grep -q "\- \[x\] \[$NAME\]" "$PARENT_README"; then
+        if ! grep -q "\- \[x\].*$NAME" "$PARENT_README"; then
             echo "Subtask '$NAME' is not marked complete in $PARENT_README"
             exit 1
         fi
+        # Handle linked format: - [x] [NAME](path/)
         sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
-        sed -i '' "s/| Status *|[^|]*|/| Status | $FOLDER |/" "$SUBTASK_README"
+        # Handle plain format: - [x] NAME
+        sed -i '' "s|- \[x\] $NAME$|- [ ] $NAME|" "$PARENT_README"
+        sed -i '' "s/| Status *|[^|]*|/| Status | — |/" "$SUBTASK_README"
         echo "Marked incomplete: $NAME"
     else
-        if ! grep -q "\- \[ \] \[$NAME\]" "$PARENT_README"; then
+        if ! grep -q "\- \[ \].*$NAME" "$PARENT_README"; then
             echo "Subtask '$NAME' not found or already complete in $PARENT_README"
             exit 1
         fi
+        # Handle linked format: - [ ] [NAME](path/)
         sed -i '' "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
+        # Handle plain format: - [ ] NAME
+        sed -i '' "s|- \[ \] $NAME$|- [x] $NAME|" "$PARENT_README"
         sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_README"
         echo "Marked complete: $NAME"
     fi

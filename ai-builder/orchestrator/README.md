@@ -12,8 +12,6 @@ document from input to tested implementation through specialist agents.
 | `orchestrator.py` | Main pipeline loop: routes between roles, manages state, parses outcomes |
 | `agent_wrapper.py` | Spawns agent CLI subprocesses, streams output, returns results |
 | `JOB-TEMPLATE.md` | Job template for direct (non-decomposition) pipeline runs |
-| `JOB-service-build.md` | Job template for ARCHITECT decompose mode — produces component table |
-| `JOB-component-design.md` | Job template for ARCHITECT design mode — produces Design + Acceptance Criteria |
 | `orchestrator.md` | Code companion: inputs, outputs, internals for orchestrator.py |
 | `agent_wrapper.md` | Code companion: inputs, outputs, internals for agent_wrapper.py |
 | `job-format.md` | Job document format and agent output field specification |
@@ -34,20 +32,20 @@ routes between agents based on that outcome.
 - **Non-TM mode** (`--job`): single job document, pipeline runs once.
   Starts at ARCHITECT, terminates when TESTER passes.
 
-- **TM mode** (`--target-repo`): Oracle-driven outer loop. The Oracle
-  prepares a job document and invokes the orchestrator. The pipeline always
-  starts at ARCHITECT. TASK_MANAGER runs only at the end to update the task
-  system. The Oracle reads the result and decides whether to start another
-  pipeline run.
+- **TM mode** (`--target-repo`): Oracle-driven outer loop. The Oracle places
+  the top-level task in `in-progress/` and writes its README path to
+  `current-job.txt`, then invokes the orchestrator. Task READMEs are the job
+  documents at every level — TASK_MANAGER fills in Goal/Context for component
+  subtasks and updates `current-job.txt` to point at the next task README.
 
 **Roles and agents:**
 
 | Role | Agent | Responsibility |
 |------|-------|----------------|
-| ARCHITECT | claude | Designs the solution; fills Design + Acceptance Criteria |
+| ARCHITECT | gemini | Designs the solution; fills Design + Acceptance Criteria |
 | IMPLEMENTOR | gemini | Implements exactly what ARCHITECT designed |
-| TESTER | claude | Verifies implementation against Acceptance Criteria |
-| TASK_MANAGER | claude | Updates task system after a successful implementation run |
+| TESTER | gemini | Verifies implementation against Acceptance Criteria |
+| TASK_MANAGER | gemini | Updates task system after a successful implementation run |
 
 ---
 
@@ -124,8 +122,9 @@ All pipeline artifacts are written to `--output-dir`:
     <generated files>   whatever the IMPLEMENTOR and TESTER produce
 ```
 
-In TM mode, `current-job.txt` in the output directory holds the path to the
-active job document (written by TASK_MANAGER, read by the orchestrator).
+In TM mode, `current-job.txt` in the output directory holds the absolute path
+to the active task README (the job document). Written by Oracle at startup and
+by TASK_MANAGER via `set-current-job.sh` when advancing to the next task.
 
 ---
 

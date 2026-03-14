@@ -1,24 +1,43 @@
 # Task: {{NAME}}
 
-| Field    | Value                |
-|----------|----------------------|
-| Status   | {{FOLDER}}           |
-| Epic     | {{EPIC}}             |
-| Tags     | {{TAGS}}             |
-| Parent   | {{PARENT}}           |
-| Priority | {{PRIORITY}}         |
+| Field       | Value         |
+|-------------|---------------|
+| Status      | {{STATUS}}    |
+| Epic        | {{EPIC}}      |
+| Tags        | {{TAGS}}      |
+| Parent      | {{PARENT}}    |
+| Priority    | {{PRIORITY}}  |
+| Complexity  | —             |
+| Stop-after  | false         |
+| Last-task   | false         |
 
-## Description
+## Goal
 
 _To be written._
 
-## Documentation
+## Context
 
-_Decide what needs to be documented publicly and where (e.g. `project/tasks/README.md`, `CLAUDE.md`, inline comments). Write "none needed" if not applicable._
+_To be written._
+
+## Components
+
+_To be completed by the ARCHITECT._
+
+## Design
+
+_To be completed by the ARCHITECT._
+
+## Acceptance Criteria
+
+_To be completed by the ARCHITECT._
+
+## Suggested Tools
+
+_To be completed by the ARCHITECT._
 
 ## Subtasks
 
-<!-- When a subtask is finished, run complete-subtask.sh to mark it [x] before moving on. -->
+<!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 <!-- subtask-list-end -->
 

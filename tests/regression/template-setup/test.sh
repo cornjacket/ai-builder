@@ -10,7 +10,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-TARGET=/tmp/ai-builder-target
+TARGET="$REPO_ROOT/sandbox/template-setup-target"
 EPIC="main"
 
 PASS=0

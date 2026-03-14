@@ -1,15 +1,14 @@
-# Task: {{NAME}}
+# Task: test-subtask
 
 | Field       | Value         |
 |-------------|---------------|
-| Status      | {{STATUS}}    |
-| Epic        | {{EPIC}}      |
-| Tags        | {{TAGS}}      |
-| Parent      | {{PARENT}}    |
-| Priority    | {{PRIORITY}}  |
+| Status      | —    |
+| Epic        | main      |
+| Tags        | —      |
+| Parent      | 8d2bcb-test-unified-template    |
+| Priority    | —  |
 | Complexity  | —             |
 | Stop-after  | false         |
-| Last-task   | false         |
 
 ## Goal
 

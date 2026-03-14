@@ -18,9 +18,22 @@ import (
 
 const (
 	serviceAddr = "http://localhost:8080"
-	outputDir   = "/tmp/ai-builder-test-user-service-output"
-	binaryPath  = "/tmp/user-service-gold-bin"
 )
+
+var (
+	outputDir  string
+	binaryPath string
+)
+
+func init() {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	root := filepath.Clean(filepath.Join(wd, "../../../../"))
+	outputDir = filepath.Join(root, "sandbox/user-service-output")
+	binaryPath = filepath.Join(root, "sandbox/user-service-bin")
+}
 
 // ---------------------------------------------------------------------------
 // Test setup: find, build, and start the generated service

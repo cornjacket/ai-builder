@@ -88,34 +88,33 @@ else:
 
 AGENTS = {
     "TASK_MANAGER": "claude",
-    "ARCHITECT":       "claude",
-    "IMPLEMENTOR":     "gemini",
-    "TESTER":          "claude",
+    "ARCHITECT":    "claude",
+    "IMPLEMENTOR":  "claude",
+    "TESTER":       "claude",
 }
 
 ROUTES = {
-    ("ARCHITECT",   "DONE"):                "IMPLEMENTOR",
-    ("ARCHITECT",   "NEED_HELP"):           None,
-    ("IMPLEMENTOR", "IMPLEMENTATION_DONE"): "TESTER",
-    ("IMPLEMENTOR", "NEEDS_ARCHITECT"):     "ARCHITECT",
-    ("IMPLEMENTOR", "NEED_HELP"):           None,
-    ("TESTER",      "TESTS_FAIL"):          "IMPLEMENTOR",
-    ("TESTER",      "NEED_HELP"):           None,
+    ("ARCHITECT",   "ARCHITECT_DESIGN_READY"):           "IMPLEMENTOR",
+    ("ARCHITECT",   "ARCHITECT_NEED_HELP"):              None,
+    ("IMPLEMENTOR", "IMPLEMENTOR_IMPLEMENTATION_DONE"):  "TESTER",
+    ("IMPLEMENTOR", "IMPLEMENTOR_NEEDS_ARCHITECT"):      "ARCHITECT",
+    ("IMPLEMENTOR", "IMPLEMENTOR_NEED_HELP"):            None,
+    ("TESTER",      "TESTER_TESTS_FAIL"):                "IMPLEMENTOR",
+    ("TESTER",      "TESTER_NEED_HELP"):                 None,
 }
 
 if TM_MODE:
     ROUTES.update({
-        ("ARCHITECT",    "COMPONENTS_READY"): "TASK_MANAGER",
-        ("ARCHITECT",    "COMPONENT_READY"):  "IMPLEMENTOR",
-        ("ARCHITECT",    "NEEDS_REVISION"):   "ARCHITECT",
-        ("TASK_MANAGER", "JOBS_READY"):       "ARCHITECT",
-        ("TASK_MANAGER", "ALL_DONE"):         None,
-        ("TASK_MANAGER", "STOP_AFTER"):       None,
-        ("TASK_MANAGER", "NEED_HELP"):        None,
-        ("TESTER",       "TESTS_PASS"):       "TASK_MANAGER",
+        ("ARCHITECT",    "ARCHITECT_DECOMPOSITION_READY"): "TASK_MANAGER",
+        ("ARCHITECT",    "ARCHITECT_NEEDS_REVISION"):      "ARCHITECT",
+        ("TASK_MANAGER", "TM_SUBTASKS_READY"):             "ARCHITECT",
+        ("TASK_MANAGER", "TM_ALL_DONE"):                   None,
+        ("TASK_MANAGER", "TM_STOP_AFTER"):                 None,
+        ("TASK_MANAGER", "TM_NEED_HELP"):                  None,
+        ("TESTER",       "TESTER_TESTS_PASS"):             "TASK_MANAGER",
     })
 else:
-    ROUTES[("TESTER", "TESTS_PASS")] = None  # halt on completion in non-TM mode
+    ROUTES[("TESTER", "TESTER_TESTS_PASS")] = None  # halt on completion in non-TM mode
 
 
 # ---------------------------------------------------------------------------
@@ -129,65 +128,49 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             "\n\n---\n\n".join(handoff_history)
 
     if role == "TASK_MANAGER":
-        is_first_run = not CURRENT_JOB_FILE.exists()
-        if is_first_run:
-            request_text = REQUEST or "(no request file provided)"
+        current_job_path = CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else "<job doc path>"
+        if last_outcome == "ARCHITECT_DECOMPOSITION_READY":
             role_instructions = f"""\
 You are the TASK MANAGER for the ai-builder pipeline.
 
 Target repository : {TARGET_REPO}
 Epic              : {EPIC}
-Job state file    : {CURRENT_JOB_FILE}
+Current job doc   : {current_job_path}
 
-Project request:
-{request_text}
-
-Your job:
-1. If the task system is not yet installed in the target repo, run:
-     {SETUP_SCRIPT} {TARGET_REPO} --epic {EPIC}
-     {INIT_SCRIPT} {TARGET_REPO}
-2. Decompose the project request into tasks. For each task:
-     {PM_SCRIPTS_DIR}/new-task.sh --epic {EPIC} --folder draft --name <task-name>
-3. Refine and order tasks, moving them to backlog/ by priority:
-     {PM_SCRIPTS_DIR}/move-task.sh --epic {EPIC} --name <id-task-name> --from draft --to backlog
-4. Move the first task to in-progress/:
-     {PM_SCRIPTS_DIR}/move-task.sh --epic {EPIC} --name <id-task-name> --from backlog --to in-progress
-5. Create a job document for the first task using the template at:
-     {REPO_ROOT}/ai-builder/orchestrator/JOB-TEMPLATE.md
-   Write the job document to: {output_dir}/<task-name>.md
-   Populate the Goal section from the task README Description.
-6. Write the absolute path to the job document to: {CURRENT_JOB_FILE}
-
-Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
-"""
-        elif last_outcome == "COMPONENTS_READY":
-            role_instructions = f"""\
-You are the TASK MANAGER for the ai-builder pipeline.
-
-Target repository : {TARGET_REPO}
-Epic              : {EPIC}
-Job state file    : {CURRENT_JOB_FILE}
-
-The ARCHITECT has completed a decomposition pass (COMPONENTS_READY).
-The job document contains a completed component table in the Components section.
+The ARCHITECT has decomposed a service (ARCHITECT_DECOMPOSITION_READY).
+The current job doc is the parent service task README. It contains a completed
+Components table in the ## Components section.
 
 Your job:
-1. Read the component table from the job document at:
-     {CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else '<job doc path>'}
-   The table format is: | Name | Complexity | Description |
-2. For each component row, create a subtask:
-     {PM_SCRIPTS_DIR}/new-task.sh --epic {EPIC} --folder draft --parent <parent-task-name> --name <component-name>
-   Then set the Complexity field in the subtask README to the value from the table.
-3. Order subtasks by implementation priority (dependencies first).
-4. Move the first subtask to in-progress/:
-     {PM_SCRIPTS_DIR}/move-task.sh --epic {EPIC} --name <id-subtask-name> --from draft --to in-progress
-5. Determine the correct job template for the first subtask:
-   - If Complexity is "atomic": use {REPO_ROOT}/ai-builder/orchestrator/JOB-component-design.md
-   - If Complexity is "composite": use {REPO_ROOT}/ai-builder/orchestrator/JOB-service-build.md
-6. Create the job document from the template. Write it to: {output_dir}/<subtask-name>.md
-   Populate the Goal from the subtask README Description and Context from the
-   parent service description.
-7. Write the absolute path to the job document to: {CURRENT_JOB_FILE}
+1. Read the Components table from the current job doc.
+   Table format: | Name | Complexity | Description |
+   The parent task's directory name (id-name) is the last path segment of the
+   current job doc's directory — you will need it for --parent below.
+
+2. For each component row, create a subtask directly in in-progress:
+     {PM_SCRIPTS_DIR}/new-task.sh --epic {EPIC} --folder in-progress --parent <parent-id-name> --name <component-name>
+
+3. For each created subtask, edit its README to fill in:
+   - The ## Goal section: the component's one-line description from the table
+   - The ## Context section: the parent service's Goal/Context
+   - The Complexity field in the metadata table: value from the Components table
+
+4. For the LAST subtask only (the integration component), also set:
+   - The Last-task field in the metadata table to: true
+   (Change `| Last-task   | false |` to `| Last-task   | true |`)
+
+5. Order subtasks by implementation dependency (foundations first).
+   The integration subtask must always be last.
+
+6. Point the pipeline at the first subtask:
+     {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <first-subtask-readme-path>
+
+7. Output OUTCOME: TM_SUBTASKS_READY
+
+Available tools:
+  {PM_SCRIPTS_DIR}/new-task.sh          --epic {EPIC} --folder in-progress --parent <parent> --name <name>
+  {PM_SCRIPTS_DIR}/set-current-job.sh   --output-dir {output_dir} <task-readme-path>
+  {PM_SCRIPTS_DIR}/list-tasks.sh        --epic {EPIC} --folder in-progress --depth 2
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
@@ -197,38 +180,45 @@ You are the TASK MANAGER for the ai-builder pipeline.
 
 Target repository : {TARGET_REPO}
 Epic              : {EPIC}
-Job state file    : {CURRENT_JOB_FILE}
+Current job doc   : {current_job_path}
 
-The pipeline just completed a job. Review the handoff notes below.
+The TESTER has just completed a subtask (TESTER_TESTS_PASS).
+The current job doc is the completed subtask's README. Read it to identify
+the subtask id-name and its Parent field.
 
 Your job:
-1. Identify the completed subtask from the handoff notes and mark it done:
-     {PM_SCRIPTS_DIR}/complete-task.sh --epic {EPIC} --folder in-progress --parent <parent-task> --name <id-subtask-name>
-2. Check the completed subtask's Stop-after field in its README.
+1. Mark the completed subtask done:
+     {PM_SCRIPTS_DIR}/complete-task.sh --epic {EPIC} --folder in-progress --parent <parent-id-name> --name <subtask-id-name>
+
+2. Check the subtask's Stop-after field in its README.
    If Stop-after is true:
-   - Output OUTCOME: STOP_AFTER
+   - Output OUTCOME: TM_STOP_AFTER
    - Include in HANDOFF: which subtask completed, what was implemented,
      TESTER results, and that Oracle intervention is required before continuing.
    If Stop-after is false, continue to step 3.
-3. Check for remaining subtasks:
-     {PM_SCRIPTS_DIR}/list-tasks.sh --epic {EPIC} --folder in-progress --depth 2
-   Also check backlog for any not yet started:
-     {PM_SCRIPTS_DIR}/list-tasks.sh --epic {EPIC} --folder backlog --depth 2
-4. If subtasks remain:
-   - Move the next subtask to in-progress/ if needed
-   - Determine the correct job template:
-     * Complexity "atomic"    → {REPO_ROOT}/ai-builder/orchestrator/JOB-component-design.md
-     * Complexity "composite" → {REPO_ROOT}/ai-builder/orchestrator/JOB-service-build.md
-   - Create the job document and write it to: {output_dir}/<subtask-name>.md
-   - Write its absolute path to: {CURRENT_JOB_FILE}
-   - Output OUTCOME: JOBS_READY
-5. If no subtasks remain, check for remaining top-level tasks in backlog/.
-   If top-level tasks remain: move next to in-progress/, create job doc, output OUTCOME: JOBS_READY
-6. If nothing remains: output OUTCOME: ALL_DONE
+
+3. Check whether this was the last (integration) subtask:
+     {PM_SCRIPTS_DIR}/is-last-task.sh <completed-subtask-readme-path>
+   Exit 0 = this was the last subtask. Exit 1 = more subtasks remain.
+
+4. If more subtasks remain (exit 1):
+   - Identify the next incomplete subtask using list-tasks.sh
+   - Point the pipeline at it:
+       {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <next-subtask-readme-path>
+   - Output OUTCOME: TM_SUBTASKS_READY
+
+5. If this was the last subtask (exit 0):
+   - Output OUTCOME: TM_ALL_DONE
+
+Available tools:
+  {PM_SCRIPTS_DIR}/complete-task.sh   --epic {EPIC} --folder in-progress --parent <parent> --name <id-name>
+  {PM_SCRIPTS_DIR}/is-last-task.sh    <task-readme-path>
+  {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <task-readme-path>
+  {PM_SCRIPTS_DIR}/list-tasks.sh      --epic {EPIC} --folder in-progress --depth 2
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
-        valid_outcomes = "JOBS_READY | ALL_DONE | STOP_AFTER | NEED_HELP"
+        valid_outcomes = "TM_SUBTASKS_READY | TM_ALL_DONE | TM_STOP_AFTER | TM_NEED_HELP"
         job_section = ""
 
     else:
@@ -237,16 +227,23 @@ Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
             else "Complete the work described in the job document."
         if role == "ARCHITECT":
             job_content = job_doc.read_text() if job_doc and job_doc.exists() else ""
-            if "## Components" in job_content:
-                valid_outcomes = "COMPONENTS_READY | NEEDS_REVISION | NEED_HELP"
+            complexity_match = re.search(r'\|\s*Complexity\s*\|\s*(\S+)\s*\|', job_content)
+            complexity = complexity_match.group(1) if complexity_match else "—"
+            if complexity == "atomic":
+                # Component subtask created by TM: design mode
+                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
+            elif "## Components" in job_content:
+                # Service or composite task: decompose mode
+                valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
             elif "## Design" in job_content and "## Acceptance Criteria" in job_content:
-                valid_outcomes = "COMPONENT_READY | NEEDS_REVISION | NEED_HELP"
+                # Legacy standalone job doc (no Components section): design mode
+                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
             else:
-                valid_outcomes = "DONE | NEED_HELP"
+                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEED_HELP"
         elif role == "IMPLEMENTOR":
-            valid_outcomes = "IMPLEMENTATION_DONE | NEEDS_ARCHITECT | NEED_HELP"
+            valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
         elif role == "TESTER":
-            valid_outcomes = "TESTS_PASS | TESTS_FAIL | NEED_HELP"
+            valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
         else:
             valid_outcomes = "DONE | NEED_HELP"
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
@@ -336,7 +333,7 @@ while current_role is not None:
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
 
-    if outcome == "NEED_HELP":
+    if outcome.endswith("_NEED_HELP"):
         print(f"\n[orchestrator] {current_role} needs human help. Halting.")
         if job_doc:
             print(f"    Review the job document: {job_doc}")
@@ -346,8 +343,8 @@ while current_role is not None:
         print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
         sys.exit(1)
 
-    # After TM signals JOBS_READY, read the current job path for downstream agents
-    if current_role == "TASK_MANAGER" and outcome == "JOBS_READY":
+    # After TM signals TM_SUBTASKS_READY, read the current job path for downstream agents
+    if current_role == "TASK_MANAGER" and outcome == "TM_SUBTASKS_READY":
         if not CURRENT_JOB_FILE.exists():
             print(f"\n[orchestrator] TM did not write job path to {CURRENT_JOB_FILE}. Halting.")
             sys.exit(1)

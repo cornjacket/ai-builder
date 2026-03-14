@@ -21,7 +21,6 @@ set -euo pipefail
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
 TASK_TEMPLATE="$SCRIPTS_DIR/task-template.md"
-SUBTASK_TEMPLATE="$SCRIPTS_DIR/subtask-template.md"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -60,12 +59,13 @@ STATUS_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER"
 if [[ -n "$PARENT" ]]; then
     PARENT_DIR="$STATUS_DIR/$PARENT"
     PARENT_FIELD="$PARENT"
-    TEMPLATE="$SUBTASK_TEMPLATE"
+    STATUS="—"
 else
     PARENT_DIR="$STATUS_DIR"
     PARENT_FIELD="—"
-    TEMPLATE="$TASK_TEMPLATE"
+    STATUS="$FOLDER"
 fi
+TEMPLATE="$TASK_TEMPLATE"
 
 # Generate a short unique ID and build the directory name
 ID="$(openssl rand -hex 3)"
@@ -87,7 +87,7 @@ mkdir -p "$TASK_DIR"
 
 sed \
     -e "s/{{NAME}}/$NAME/g" \
-    -e "s/{{FOLDER}}/$FOLDER/g" \
+    -e "s/{{STATUS}}/$STATUS/g" \
     -e "s/{{EPIC}}/$EPIC/g" \
     -e "s/{{TAGS}}/$TAGS/g" \
     -e "s/{{PARENT}}/$PARENT_FIELD/g" \

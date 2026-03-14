@@ -29,15 +29,15 @@ Key changes:
 
 <!-- When a subtask is finished, run complete-subtask.sh to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] a1b2c3-rename-outcomes-with-role-prefix
-- [ ] b2c3d4-merge-task-templates-into-unified-template
-- [ ] c3d4e5-add-set-current-job-script
-- [ ] d4e5f6-add-subtasks-complete-script
-- [ ] e5f6a7-update-tm-prompt
-- [ ] f6a7b8-update-architect-prompt
-- [ ] a7b8c9-retire-standalone-job-templates
-- [ ] b8c9d0-add-tm-last-subtask-tests-pass-route
-- [ ] c9d0e1-update-regression-test-reset
+- [x] a1b2c3-rename-outcomes-with-role-prefix
+- [x] b2c3d4-merge-task-templates-into-unified-template
+- [x] c3d4e5-add-set-current-job-script
+- [x] d4e5f6-add-subtasks-complete-script
+- [x] e5f6a7-update-tm-prompt
+- [x] f6a7b8-update-architect-prompt
+- [x] a7b8c9-retire-standalone-job-templates
+- [x] b8c9d0-add-tm-last-subtask-tests-pass-route
+- [x] c9d0e1-update-regression-test-reset
 <!-- subtask-list-end -->
 
 ## Notes

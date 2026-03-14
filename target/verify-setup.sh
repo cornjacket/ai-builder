@@ -84,7 +84,6 @@ check_exec "$TARGET/project/tasks/scripts/list-tasks.sh"
 echo ""
 echo "--- templates ---"
 check_file "$TARGET/project/tasks/scripts/task-template.md"
-check_file "$TARGET/project/tasks/scripts/subtask-template.md"
 
 echo ""
 echo "--- CLAUDE.md / GEMINI.md ---"

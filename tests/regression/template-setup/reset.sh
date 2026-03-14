@@ -4,7 +4,9 @@
 
 set -euo pipefail
 
-TARGET=/tmp/ai-builder-target
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
+TARGET="$REPO_ROOT/sandbox/template-setup-target"
 
 if [[ -d "$TARGET" ]]; then
     rm -rf "$TARGET"
@@ -14,4 +16,4 @@ else
 fi
 
 echo "Ready to run:"
-echo "  tests/regression/template-setup/test.sh"
+echo "  tests/regression/template-setup/test.sh  (from repo root)"

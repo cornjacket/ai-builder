@@ -112,18 +112,19 @@ Acceptance Criteria).
 
 ---
 
-## Job Templates Per Phase
+## Job Document Per Phase
 
-Different phases use different job document shapes. The template signals
-to the ARCHITECT what mode it is in:
+The job document at every level is the task README, pointed to by
+`current-job.txt`. ARCHITECT mode is determined by the `Complexity` field
+in the task metadata and the sections present:
 
-| Template | ARCHITECT mode | Output |
-|----------|---------------|--------|
-| `JOB-service-build` | Decompose | Structured component list |
-| `JOB-component-design` | Design | Design + Acceptance Criteria for one component |
+| Complexity field | ARCHITECT mode | Sections filled |
+|-----------------|----------------|-----------------|
+| `—` or `composite` | Decompose | `## Components`, `## Suggested Tools` |
+| `atomic` | Design | `## Design`, `## Acceptance Criteria`, `## Suggested Tools` |
 
-TASK_MANAGER selects the template when creating each job. The template
-constrains the ARCHITECT's output format.
+TM fills `Complexity`, `Goal`, and `Context` when creating component subtasks.
+ARCHITECT fills the remaining sections in place.
 
 ---
 
@@ -230,11 +231,11 @@ Content producers write *what* the system does. DOCUMENTER writes *the document*
 | TESTER | Acceptance test cases, documented alongside test files |
 | **DOCUMENTER** | **All README files — formats, organises, and maintains** |
 
-Each job template specifies what content the producing role must provide:
+Content required per role per phase:
 
-| Template | Role | Content required |
-|----------|------|-----------------|
-| `JOB-service-build` | ARCHITECT | Data flow description + component list with responsibilities |
-| `JOB-component-design` | ARCHITECT | Interface contracts + data structures + dependencies |
-| `JOB-component-implement` | IMPLEMENTOR | Implementation notes + usage examples + known limitations |
-| `JOB-component-test` | TESTER | Acceptance test cases documented alongside test files |
+| Role | Phase | Content required |
+|------|-------|-----------------|
+| ARCHITECT | Decompose | Data flow description + component table (`## Components`) |
+| ARCHITECT | Design | Interface contracts + data structures + dependencies (`## Design`, `## Acceptance Criteria`) |
+| IMPLEMENTOR | — | Implementation of the Design section |
+| TESTER | — | Acceptance test cases verified against `## Acceptance Criteria` |

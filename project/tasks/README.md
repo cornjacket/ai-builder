@@ -178,6 +178,14 @@ project/tasks/scripts/list-tasks.sh --epic main --tag backend --depth 2 --all
 
 # List tasks rooted at a specific directory
 project/tasks/scripts/list-tasks.sh --root main/in-progress/my-task --depth 3
+
+# Write the absolute path of a task README to current-job.txt (for pipeline use)
+project/tasks/scripts/set-current-job.sh \
+    --output-dir <pipeline-output-dir> \
+    <path-to-task-README.md>
+
+# Check whether a task is the last (integration) subtask (exit 0 = yes, 1 = no)
+project/tasks/scripts/is-last-task.sh <path-to-task-README.md>
 ```
 
 ---

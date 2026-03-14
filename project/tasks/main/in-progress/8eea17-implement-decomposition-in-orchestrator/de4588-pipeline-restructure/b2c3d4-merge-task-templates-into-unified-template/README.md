@@ -2,7 +2,7 @@
 
 | Field       | Value                                                                 |
 |-------------|-----------------------------------------------------------------------|
-| Status      | —                                                                     |
+| Status      | complete                                                              |
 | Epic        | main                                                                  |
 | Tags        | —                                                                     |
 | Parent      | 8eea17-implement-decomposition-in-orchestrator/de4588-pipeline-restructure |

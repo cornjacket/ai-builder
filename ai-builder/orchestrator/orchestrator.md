@@ -93,11 +93,11 @@ while current_role is not None:
     handoff_history.append(f"[{current_role}] {handoff}")
     log_run(current_role, agent, outcome, handoff)
 
-    if outcome == "NEED_HELP": → halt (sys.exit 0, human required)
-    if outcome not in ROUTES:  → halt (sys.exit 1, unrecognised outcome)
+    if outcome.endswith("_NEED_HELP"): → halt (sys.exit 0, human required)
+    if outcome not in ROUTES:          → halt (sys.exit 1, unrecognised outcome)
 
-    # TM mode: read job path after TM signals JOBS_READY
-    if current_role == "TASK_MANAGER" and outcome == "JOBS_READY":
+    # TM mode: read job path after TM signals TM_SUBTASKS_READY
+    if current_role == "TASK_MANAGER" and outcome == "TM_SUBTASKS_READY":
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
 
     next_role = ROUTES.get((current_role, outcome))
@@ -113,8 +113,8 @@ while current_role is not None:
     current_role = next_role
 ```
 
-`NEED_HELP` exits with code 0 (expected halt, not an error). All other
-halts exit with code 1.
+Any outcome ending in `_NEED_HELP` exits with code 0 (expected halt, not an
+error). All other halts exit with code 1.
 
 ---
 
@@ -127,17 +127,16 @@ halts exit with code 1.
 | Read | `current-job.txt` | TM mode startup — if present, initialises `job_doc` for the first ARCHITECT call (Oracle pre-seeds this before invoking the orchestrator) |
 | Read | `roles/<ROLE>.md` | each `build_prompt()` call for non-TM roles |
 | Write | `execution.log` | after every role run (append) |
-| Write | `current-job.txt` | by TASK_MANAGER after `JOBS_READY` — path to the next job document |
-| Read | `current-job.txt` | by orchestrator after TASK_MANAGER emits `JOBS_READY` — updates `job_doc` for downstream roles |
+| Write | `current-job.txt` | by TASK_MANAGER after `TM_SUBTASKS_READY` — path to the next job document |
+| Read | `current-job.txt` | by orchestrator after TASK_MANAGER emits `TM_SUBTASKS_READY` — updates `job_doc` for downstream roles |
 
 **Oracle contract (TM mode):** before invoking the orchestrator, Oracle must:
 1. Place the top-level task in `in-progress/` in the target repo's task system
-2. Write the job document to `OUTPUT_DIR/<task-name>.md`
-3. Write its absolute path to `OUTPUT_DIR/current-job.txt`
+2. Use `set-current-job.sh` to write the task README's absolute path to
+   `OUTPUT_DIR/current-job.txt`
 
 The orchestrator reads `current-job.txt` at startup and uses it as `job_doc`
-for the first ARCHITECT call. If `current-job.txt` is absent, `job_doc` is
-`None` and TASK_MANAGER runs first to bootstrap the task system.
+for the first ARCHITECT call.
 
 ---
 

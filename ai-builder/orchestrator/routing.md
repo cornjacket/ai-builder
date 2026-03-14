@@ -12,45 +12,61 @@ or `None` (halt).
 
 | From | Outcome | To |
 |------|---------|----|
-| ARCHITECT | `DONE` | [DOCUMENTER hook] → IMPLEMENTOR |
-| ARCHITECT | `COMPONENTS_READY` | [DOCUMENTER hook] → TASK_MANAGER |
-| ARCHITECT | `COMPONENT_READY` | [DOCUMENTER hook] → IMPLEMENTOR |
-| ARCHITECT | `NEEDS_REVISION` | ARCHITECT *(self-loop — iteration limit applies)* |
-| ARCHITECT | `NEED_HELP` | halt |
-| IMPLEMENTOR | `IMPLEMENTATION_DONE` | [DOCUMENTER hook] → TESTER |
-| IMPLEMENTOR | `NEEDS_ARCHITECT` | ARCHITECT |
-| IMPLEMENTOR | `NEED_HELP` | halt |
-| TESTER | `TESTS_PASS` | [DOCUMENTER hook] → TASK_MANAGER |
-| TESTER | `TESTS_FAIL` | IMPLEMENTOR |
-| TESTER | `NEED_HELP` | halt |
-| TASK_MANAGER | `JOBS_READY` | ARCHITECT |
-| TASK_MANAGER | `ALL_DONE` | halt |
-| TASK_MANAGER | `STOP_AFTER` | halt *(Oracle intervention required)* |
-| TASK_MANAGER | `NEED_HELP` | halt |
+| ARCHITECT | `ARCHITECT_DESIGN_READY` | [DOCUMENTER hook] → IMPLEMENTOR |
+| ARCHITECT | `ARCHITECT_DECOMPOSITION_READY` | [DOCUMENTER hook] → TASK_MANAGER |
+| ARCHITECT | `ARCHITECT_NEEDS_REVISION` | ARCHITECT *(self-loop — iteration limit applies)* |
+| ARCHITECT | `ARCHITECT_NEED_HELP` | halt |
+| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | [DOCUMENTER hook] → TESTER |
+| IMPLEMENTOR | `IMPLEMENTOR_NEEDS_ARCHITECT` | ARCHITECT |
+| IMPLEMENTOR | `IMPLEMENTOR_NEED_HELP` | halt |
+| TESTER | `TESTER_TESTS_PASS` | [DOCUMENTER hook] → TASK_MANAGER |
+| TESTER | `TESTER_TESTS_FAIL` | IMPLEMENTOR |
+| TESTER | `TESTER_NEED_HELP` | halt |
+| TASK_MANAGER | `TM_SUBTASKS_READY` | ARCHITECT |
+| TASK_MANAGER | `TM_ALL_DONE` | halt |
+| TASK_MANAGER | `TM_STOP_AFTER` | halt *(Oracle intervention required)* |
+| TASK_MANAGER | `TM_NEED_HELP` | halt |
 
 ### Non-TM Mode
 
 | From | Outcome | To |
 |------|---------|----|
-| ARCHITECT | `DONE` | IMPLEMENTOR |
-| ARCHITECT | `NEED_HELP` | halt |
-| IMPLEMENTOR | `IMPLEMENTATION_DONE` | TESTER |
-| IMPLEMENTOR | `NEEDS_ARCHITECT` | ARCHITECT |
-| IMPLEMENTOR | `NEED_HELP` | halt |
-| TESTER | `TESTS_PASS` | halt (pipeline complete) |
-| TESTER | `TESTS_FAIL` | IMPLEMENTOR |
-| TESTER | `NEED_HELP` | halt |
+| ARCHITECT | `ARCHITECT_DESIGN_READY` | IMPLEMENTOR |
+| ARCHITECT | `ARCHITECT_NEED_HELP` | halt |
+| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | TESTER |
+| IMPLEMENTOR | `IMPLEMENTOR_NEEDS_ARCHITECT` | ARCHITECT |
+| IMPLEMENTOR | `IMPLEMENTOR_NEED_HELP` | halt |
+| TESTER | `TESTER_TESTS_PASS` | halt (pipeline complete) |
+| TESTER | `TESTER_TESTS_FAIL` | IMPLEMENTOR |
+| TESTER | `TESTER_NEED_HELP` | halt |
 
 DOCUMENTER hook does not run in non-TM mode.
 
 ---
 
+## Last-task Detection
+
+When TESTER passes for a subtask, TM checks whether it was the integration
+(last) subtask by running `is-last-task.sh` on the completed subtask's README.
+The `Last-task` field in the task metadata is set to `true` by TM when creating
+subtasks — the final component (the integration step) gets `Last-task: true`,
+all others get `false`.
+
+- Exit 0 (`Last-task: true`) → `TM_ALL_DONE`
+- Exit 1 (`Last-task: false`) → find next subtask → `TM_SUBTASKS_READY`
+
+This avoids traversing the parent's subtask list at runtime. The intent is
+embedded in the task itself at creation time.
+
+---
+
 ## NEED_HELP Handling
 
-`NEED_HELP` from any role is handled before the ROUTES lookup. The
-orchestrator prints a message, optionally prints the job document path, and
-exits with code 0. It is not an error — it signals that human intervention
-is required and the pipeline is paused, not failed.
+Any outcome ending in `_NEED_HELP` (e.g. `ARCHITECT_NEED_HELP`,
+`TESTER_NEED_HELP`) is handled before the ROUTES lookup. The orchestrator
+prints a message, optionally prints the job document path, and exits with
+code 0. It is not an error — it signals that human intervention is required
+and the pipeline is paused, not failed.
 
 ---
 
