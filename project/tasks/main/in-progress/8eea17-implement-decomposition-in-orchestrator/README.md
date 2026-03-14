@@ -34,6 +34,7 @@ any implementation decisions made during this work.
 - [x] [7f8d69-expand-tm-prompt-for-stop-after](7f8d69-expand-tm-prompt-for-stop-after/)
 - [x] [47412e-create-decomposition-job-templates](47412e-create-decomposition-job-templates/)
 - [x] [0551e4-update-architect-prompt-for-decomposition](0551e4-update-architect-prompt-for-decomposition/)
+- [ ] [de4588-pipeline-restructure](de4588-pipeline-restructure/)
 - [ ] [d5dad2-add-decomposition-regression-test](d5dad2-add-decomposition-regression-test/)
 - [ ] [3cbd2e-702059-add-start-role-flag-to-orchestrator](3cbd2e-702059-add-start-role-flag-to-orchestrator/)
 <!-- subtask-list-end -->
