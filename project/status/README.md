@@ -13,7 +13,7 @@ next up, and key decisions made.
 
 | Date | Summary |
 |------|---------|
-| [2026-03-14](2026-03-14.md) | Closed 8eea17 (decomposition pipeline); wont-do-subtask.sh added; regression tests moved to sandbox/; back on claude after Gemini 429s |
+| [2026-03-14](2026-03-14.md) | Closed f7a6af (three task types, typed scripts); closed d9c12f (orchestrator review); regression test clean; 0838a5-tm-tree-traversal created |
 | [2026-03-13](2026-03-13.md) | Decomposition regression test complete (user-service, 8 gold tests pass); 4 orchestrator bugs fixed; design decisions: task README = job doc, main not a component, Oracle contract for current-job.txt |
 | [2026-03-11](2026-03-11.md) | Completed 6fdb3a (role extraction, agent_wrapper fixes); multi-level decomposition and DOCUMENTER design brainstorm |
 | [2026-03-10](2026-03-10.md) | verify-setup.sh refactor; CLAUDE.md hierarchy and agent operation design discussions; MCP integration task created |
