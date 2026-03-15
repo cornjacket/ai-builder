@@ -6,11 +6,70 @@ by both human developers and AI coding agents.
 
 ---
 
+## Task Types
+
+There are three distinct task types. Every task README identifies its type
+via a `Task-type` field in the metadata table.
+
+### USER-TASK
+
+Top-level task owned by the human or Oracle. All top-level work must be a
+user-task. Long-lived. Captures intent, context, and decisions.
+
+- No `Parent` field (it has no parent — it is the root)
+- No pipeline sections (Components, Design, AC, Suggested Tools)
+- Can contain **user-subtasks** and/or **pipeline-subtasks**
+- Template: `user-task-template.md` | Script: `new-user-task.sh`
+
+### USER-SUBTASK
+
+Human/Oracle-owned subtask. Used for planning steps, reviews, approvals,
+research — any work the human manages directly. Does not go to the pipeline.
+
+- Has a `Parent` field
+- No pipeline sections
+- Can contain **user-subtasks** and/or **pipeline-subtasks**
+- Template: `user-subtask-template.md` | Script: `new-user-subtask.sh`
+
+### PIPELINE-SUBTASK
+
+The pipeline's unit of work. A `build-N` entry point authored by the Oracle
+and submitted to the orchestrator, or a pipeline-internal node (component,
+integrate, test) created by the TM agent. Pipeline-owned once submitted.
+
+- Has a `Parent` field (can point to a user-task, user-subtask, or pipeline-subtask)
+- Contains pipeline sections (Components, Design, AC, Suggested Tools)
+- Can only contain **pipeline-subtasks** — no human-owned children
+- Template: `pipeline-build-template.md` | Script: `new-pipeline-subtask.sh`
+
+---
+
+## Hierarchy Rules
+
+```
+user-task
+├── user-subtask          (human planning step)
+│   ├── user-subtask      (can nest further)
+│   └── pipeline-subtask  (build-N handed off to pipeline)
+│       └── pipeline-subtask (component, integrate, test, ...)
+└── pipeline-subtask      (build-N handed off to pipeline)
+    └── pipeline-subtask  (component)
+        └── pipeline-subtask (sub-component, if composite)
+```
+
+- All top-level work must be a **user-task**
+- **user-task** can contain user-subtasks and/or pipeline-subtasks
+- **user-subtask** can contain user-subtasks and/or pipeline-subtasks
+- **pipeline-subtask** can only contain pipeline-subtasks
+- No human-owned node may appear under a pipeline-owned node
+
+---
+
 ## Structure
 
 ```
 project/tasks/
-    <epic>/                     # one directory per epic (e.g. main, dashboard)
+    <epic>/                     # one directory per epic (e.g. main)
         README.md               # epic description and status summary
         inbox/                  # raw ideas, not yet evaluated
         draft/                  # being written up, incomplete
@@ -19,50 +78,85 @@ project/tasks/
         complete/               # done and verified
         wont-do/                # explicitly decided against, kept for reference
     scripts/
-        new-task.sh             # create a task or subtask (--parent for subtasks)
-        move-task.sh            # move a task to a different status
-        complete-task.sh        # mark a task or subtask done/undone (--parent for subtasks)
+        new-user-task.sh        # create a top-level user-task
+        new-user-subtask.sh     # create a human-owned subtask
+        new-pipeline-subtask.sh # create a pipeline entry point or internal node
+        move-task.sh            # move a task to a different status folder
+        complete-task.sh        # mark a task or subtask done/undone
         delete-task.sh          # soft-delete: hides directory, removes from parent README
-        restore-task.sh         # reverse a soft-delete: unhides directory, re-adds to parent README
-        show-task.sh            # print a task's README to stdout
-        list-tasks.sh           # display the task tree (--depth, --root, --folder, --all)
+        restore-task.sh         # reverse a soft-delete
+        show-task.sh            # print a task README to stdout
+        list-tasks.sh           # display the task tree
         wont-do-subtask.sh      # mark a subtask wont-do: sets Status, removes from parent list
-        task-template.md        # README template for top-level tasks
+        next-subtask.sh         # print the path of the next incomplete subtask
+        user-task-template.md
+        user-subtask-template.md
+        pipeline-build-template.md
 ```
+
+---
+
+## Long-running Services (`project/projects/`)
+
+For services that span multiple pipeline builds, use `project/projects/`:
+
+```
+project/projects/
+    my-project/              ← USER-TASK
+        README.md
+        build-1/             ← PIPELINE-SUBTASK
+            README.md
+        build-2/             ← PIPELINE-SUBTASK
+            README.md
+```
+
+Use `new-user-task.sh` for the service directory, `new-pipeline-subtask.sh`
+for each build.
 
 ---
 
 ## Task Format
 
 Each task is a **directory** containing a `README.md` that describes the task.
-The directory name is the task name in kebab-case. Tasks are not numbered —
-order within a status is determined by position in the status `README.md`.
+The directory name is the task name in kebab-case, prefixed with a short
+unique ID (e.g. `a3f2c1-my-task`).
 
-**Task directory structure:**
-
-```
-some-task/
-    README.md           # task description, metadata, subtask list
-    subtask-one/        # subtask (same structure as a task)
-        README.md
-    subtask-two/
-        README.md
-```
-
-**Task README.md header:**
-
-Every task README begins with a metadata table:
-
+**USER-TASK header:**
 ```markdown
-# Task: <name>
+| Field       | Value       |
+|-------------|-------------|
+| Task-type   | USER-TASK   |
+| Status      | draft       |
+| Epic        | main        |
+| Tags        | —           |
+| Priority    | HIGH        |
+```
 
-| Field    | Value  |
-|----------|--------|
-| Status   | draft  |
-| Epic     | main   |
-| Tags     | —      |
-| Parent   | —      |
-| Priority | HIGH   |
+**USER-SUBTASK header:**
+```markdown
+| Field       | Value          |
+|-------------|----------------|
+| Task-type   | USER-SUBTASK   |
+| Status      | —              |
+| Epic        | main           |
+| Tags        | —              |
+| Parent      | my-parent-task |
+| Priority    | —              |
+```
+
+**PIPELINE-SUBTASK header:**
+```markdown
+| Field       | Value              |
+|-------------|--------------------|
+| Task-type   | PIPELINE-SUBTASK   |
+| Status      | —                  |
+| Epic        | main               |
+| Tags        | —                  |
+| Parent      | my-parent-task     |
+| Priority    | —                  |
+| Complexity  | —                  |
+| Stop-after  | false              |
+| Last-task   | false              |
 ```
 
 Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).
@@ -77,13 +171,6 @@ Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).
 
 Use `complete-task.sh --parent` to mark a subtask done; this updates both the
 `Status` field and the `[x]` checkbox in the parent README.
-
-Followed by `## Description`, `## Documentation`, `## Subtasks`, and `## Notes` sections
-for top-level tasks. Subtask READMEs have `## Description` and `## Notes` only.
-
-The `## Documentation` section is where the author records what public documentation
-(if any) this task requires and where it belongs (e.g. this README, `CLAUDE.md`,
-inline code comments). Write "none needed" if the task requires no external documentation.
 
 ---
 
@@ -123,15 +210,16 @@ All scripts are in `project/tasks/scripts/` and should be run from the
 **repo root**.
 
 ```bash
-# Create a new top-level task
-project/tasks/scripts/new-task.sh --epic main --folder draft --name my-task
+# Create a new top-level user-task
+project/tasks/scripts/new-user-task.sh --epic main --folder draft --name my-project
 
-# Create a task with priority
-project/tasks/scripts/new-task.sh --epic main --folder draft --name my-task --priority HIGH
+# Create a human-owned subtask (review, planning step, etc.)
+project/tasks/scripts/new-user-subtask.sh --epic main --folder in-progress \
+    --parent my-project --name design-review
 
-# Create a subtask under an existing task
-project/tasks/scripts/new-task.sh --epic main --folder draft \
-    --parent my-task --name my-subtask
+# Create a pipeline entry point (build-N)
+project/tasks/scripts/new-pipeline-subtask.sh --epic main --folder in-progress \
+    --parent my-project --name build-1
 
 # Move a task (and all its subtasks) to a different status
 project/tasks/scripts/move-task.sh --epic main --name my-task \
@@ -151,37 +239,37 @@ project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
 
 # Print a task's README to stdout
 project/tasks/scripts/show-task.sh --epic main --folder in-progress --name my-task
-project/tasks/scripts/show-task.sh --epic main --folder in-progress \
-    --parent my-task --name my-subtask
 
 # Soft-delete a task (hides directory, removes from parent README)
 project/tasks/scripts/delete-task.sh --epic main --folder draft --name my-task
-project/tasks/scripts/delete-task.sh --epic main --folder draft \
-    --parent my-task --name my-subtask
 
-# Restore a soft-deleted task (unhides directory, re-appends to parent README)
+# Restore a soft-deleted task
 project/tasks/scripts/restore-task.sh --epic main --folder draft --name my-task
-project/tasks/scripts/restore-task.sh --epic main --folder draft \
-    --parent my-task --name my-subtask
 
 # Mark a subtask as wont-do (sets Status, removes from parent list, keeps directory)
 project/tasks/scripts/wont-do-subtask.sh --epic main --folder in-progress \
     --parent my-task --name my-subtask
 
-# List incomplete tasks in an epic (default)
-project/tasks/scripts/list-tasks.sh --epic main
+# List incomplete tasks in an epic
+project/tasks/scripts/list-tasks.sh --epic main --folder draft
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog
+project/tasks/scripts/list-tasks.sh --epic main --folder in-progress
 
-# List all tasks including completed subtasks
+# List all tasks including completed
 project/tasks/scripts/list-tasks.sh --epic main --all
 
-# List incomplete tasks in a specific status, with subtask depth
+# List tasks with subtask depth
 project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --depth 2
 
-# Filter by tag across all statuses
+# Filter by tag
 project/tasks/scripts/list-tasks.sh --epic main --tag backend --depth 2 --all
 
 # List tasks rooted at a specific directory
 project/tasks/scripts/list-tasks.sh --root main/in-progress/my-task --depth 3
+
+# Get the next incomplete subtask (prints absolute path to README, exit 1 if all done)
+project/tasks/scripts/next-subtask.sh --epic main --folder in-progress \
+    --parent my-task
 
 # Write the absolute path of a task README to current-job.txt (for pipeline use)
 project/tasks/scripts/set-current-job.sh \

@@ -46,7 +46,7 @@ SCRIPTS="$TARGET_REPO/project/tasks/scripts"
 
 echo "[3/4] Creating user-service task in in-progress/ ..."
 
-"$SCRIPTS/new-task.sh" --epic "$EPIC" --folder in-progress --name "$TASK_NAME"
+"$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$TASK_NAME"
 
 # Find the generated task directory (it gets a short hash prefix)
 TASK_DIR=$(find "$TARGET_REPO/project/tasks/$EPIC/in-progress" -maxdepth 1 -type d -name "*-$TASK_NAME" | head -1)

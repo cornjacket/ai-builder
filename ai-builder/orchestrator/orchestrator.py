@@ -148,7 +148,7 @@ Your job:
    current job doc's directory — you will need it for --parent below.
 
 2. For each component row, create a subtask directly in in-progress:
-     {PM_SCRIPTS_DIR}/new-task.sh --epic {EPIC} --folder in-progress --parent <parent-id-name> --name <component-name>
+     {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-id-name> --name <component-name>
 
 3. For each created subtask, edit its README to fill in:
    - The ## Goal section: the component's one-line description from the table
@@ -168,9 +168,9 @@ Your job:
 7. Output OUTCOME: TM_SUBTASKS_READY
 
 Available tools:
-  {PM_SCRIPTS_DIR}/new-task.sh          --epic {EPIC} --folder in-progress --parent <parent> --name <name>
-  {PM_SCRIPTS_DIR}/set-current-job.sh   --output-dir {output_dir} <task-readme-path>
-  {PM_SCRIPTS_DIR}/list-tasks.sh        --epic {EPIC} --folder in-progress --depth 2
+  {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent> --name <name>
+  {PM_SCRIPTS_DIR}/set-current-job.sh      --output-dir {output_dir} <task-readme-path>
+  {PM_SCRIPTS_DIR}/list-tasks.sh           --epic {EPIC} --folder in-progress --depth 2
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
@@ -202,9 +202,10 @@ Your job:
    Exit 0 = this was the last subtask. Exit 1 = more subtasks remain.
 
 4. If more subtasks remain (exit 1):
-   - Identify the next incomplete subtask using list-tasks.sh
+   - Get the next incomplete subtask:
+       NEXT=$({PM_SCRIPTS_DIR}/next-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-id-name>)
    - Point the pipeline at it:
-       {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <next-subtask-readme-path>
+       {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} $NEXT
    - Output OUTCOME: TM_SUBTASKS_READY
 
 5. If this was the last subtask (exit 0):
@@ -213,8 +214,8 @@ Your job:
 Available tools:
   {PM_SCRIPTS_DIR}/complete-task.sh   --epic {EPIC} --folder in-progress --parent <parent> --name <id-name>
   {PM_SCRIPTS_DIR}/is-last-task.sh    <task-readme-path>
+  {PM_SCRIPTS_DIR}/next-subtask.sh    --epic {EPIC} --folder in-progress --parent <parent-id-name>
   {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <task-readme-path>
-  {PM_SCRIPTS_DIR}/list-tasks.sh      --epic {EPIC} --folder in-progress --depth 2
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """

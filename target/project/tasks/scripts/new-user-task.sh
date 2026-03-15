@@ -1,26 +1,21 @@
 #!/usr/bin/env bash
-# Create a new task or subtask directory with a template README.md.
-# Updates the parent directory's README.md task list.
-#
-# The parent of any task is always its containing directory:
-#   - Top-level task: parent = project/tasks/<epic>/<folder>/
-#   - Subtask:        parent = project/tasks/<epic>/<folder>/<parent-task>/
+# Create a new top-level user-task directory with a user-task-template README.md.
+# Updates the status folder's README.md task list.
 #
 # Usage:
-#   new-task.sh --epic <epic> --folder <status> --name <task-name> [--tags <tags>] [--priority <p>]
-#   new-task.sh --epic <epic> --folder <status> --parent <task> --name <name> [--tags <tags>] [--priority <p>]
+#   new-user-task.sh --epic <epic> --folder <status> --name <task-name> [--tags <tags>] [--priority <p>]
 #
 # Priority values: CRITICAL, HIGH, MED, LOW (default: —)
 #
 # Examples:
-#   new-task.sh --epic main --folder draft --name my-feature
-#   new-task.sh --epic main --folder in-progress --parent my-feature --name my-subtask --priority HIGH
+#   new-user-task.sh --epic main --folder draft --name my-feature
+#   new-user-task.sh --epic main --folder in-progress --name my-feature --priority HIGH
 
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
-TASK_TEMPLATE="$SCRIPTS_DIR/task-template.md"
+TASK_TEMPLATE="$SCRIPTS_DIR/user-task-template.md"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -28,7 +23,6 @@ TASK_TEMPLATE="$SCRIPTS_DIR/task-template.md"
 
 EPIC="main"
 FOLDER=""
-PARENT=""
 NAME=""
 TAGS="—"
 PRIORITY="—"
@@ -37,7 +31,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --epic)     EPIC="$2";     shift 2 ;;
         --folder)   FOLDER="$2";   shift 2 ;;
-        --parent)   PARENT="$2";   shift 2 ;;
         --name)     NAME="$2";     shift 2 ;;
         --tags)     TAGS="$2";     shift 2 ;;
         --priority) PRIORITY="$2"; shift 2 ;;
@@ -46,7 +39,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$FOLDER" || -z "$NAME" ]]; then
-    echo "Usage: new-task.sh --folder <status> --name <task-name> [--epic <epic>] [--parent <parent-task>] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
+    echo "Usage: new-user-task.sh --folder <status> --name <task-name> [--epic <epic>] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
     exit 1
 fi
 
@@ -56,28 +49,19 @@ fi
 
 STATUS_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER"
 
-if [[ -n "$PARENT" ]]; then
-    PARENT_DIR="$STATUS_DIR/$PARENT"
-    PARENT_FIELD="$PARENT"
-    STATUS="—"
-else
-    PARENT_DIR="$STATUS_DIR"
-    PARENT_FIELD="—"
-    STATUS="$FOLDER"
+if [[ ! -d "$STATUS_DIR" ]]; then
+    echo "Status directory not found: $STATUS_DIR"
+    exit 1
 fi
-TEMPLATE="$TASK_TEMPLATE"
+
+STATUS="$FOLDER"
 
 # Generate a short unique ID and build the directory name
 ID="$(openssl rand -hex 3)"
 DIRNAME="$ID-$NAME"
 
-TASK_DIR="$PARENT_DIR/$DIRNAME"
-PARENT_README="$PARENT_DIR/README.md"
-
-if [[ ! -d "$PARENT_DIR" ]]; then
-    echo "Parent directory not found: $PARENT_DIR"
-    exit 1
-fi
+TASK_DIR="$STATUS_DIR/$DIRNAME"
+PARENT_README="$STATUS_DIR/README.md"
 
 # ---------------------------------------------------------------------------
 # Create task directory and README
@@ -90,9 +74,8 @@ sed \
     -e "s/{{STATUS}}/$STATUS/g" \
     -e "s/{{EPIC}}/$EPIC/g" \
     -e "s/{{TAGS}}/$TAGS/g" \
-    -e "s/{{PARENT}}/$PARENT_FIELD/g" \
     -e "s/{{PRIORITY}}/$PRIORITY/g" \
-    "$TEMPLATE" > "$TASK_DIR/README.md"
+    "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------
 # Create parent README if it doesn't exist (status directory case)
@@ -111,12 +94,10 @@ EOF
 fi
 
 # ---------------------------------------------------------------------------
-# Append to parent README using whichever marker is present
+# Append to parent README
 # ---------------------------------------------------------------------------
 
-if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
-    sed -i '' "s|<!-- subtask-list-end -->|- [ ] [$DIRNAME]($DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
-elif grep -q "<!-- task-list-end -->" "$PARENT_README"; then
+if grep -q "<!-- task-list-end -->" "$PARENT_README"; then
     sed -i '' "s|<!-- task-list-end -->|- [$DIRNAME]($DIRNAME/)\n<!-- task-list-end -->|" "$PARENT_README"
 else
     echo "Warning: no task list markers found in $PARENT_README — add the entry manually."
@@ -126,9 +107,5 @@ fi
 # Done
 # ---------------------------------------------------------------------------
 
-if [[ -n "$PARENT" ]]; then
-    echo "Created subtask: project/tasks/$EPIC/$FOLDER/$PARENT/$DIRNAME/"
-else
-    echo "Created task:    project/tasks/$EPIC/$FOLDER/$DIRNAME/"
-fi
-echo "Updated:         $PARENT_README"
+echo "Created user-task: project/tasks/$EPIC/$FOLDER/$DIRNAME/"
+echo "Updated:           $PARENT_README"

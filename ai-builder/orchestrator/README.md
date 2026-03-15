@@ -11,7 +11,6 @@ document from input to tested implementation through specialist agents.
 |------|-------------|
 | `orchestrator.py` | Main pipeline loop: routes between roles, manages state, parses outcomes |
 | `agent_wrapper.py` | Spawns agent CLI subprocesses, streams output, returns results |
-| `JOB-TEMPLATE.md` | Job template for direct (non-decomposition) pipeline runs |
 | `orchestrator.md` | Code companion: inputs, outputs, internals for orchestrator.py |
 | `agent_wrapper.md` | Code companion: inputs, outputs, internals for agent_wrapper.py |
 | `job-format.md` | Job document format and agent output field specification |
@@ -42,10 +41,10 @@ routes between agents based on that outcome.
 
 | Role | Agent | Responsibility |
 |------|-------|----------------|
-| ARCHITECT | gemini | Designs the solution; fills Design + Acceptance Criteria |
-| IMPLEMENTOR | gemini | Implements exactly what ARCHITECT designed |
-| TESTER | gemini | Verifies implementation against Acceptance Criteria |
-| TASK_MANAGER | gemini | Updates task system after a successful implementation run |
+| ARCHITECT | claude | Designs the solution; fills Design + Acceptance Criteria |
+| IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed |
+| TESTER | claude | Verifies implementation against Acceptance Criteria |
+| TASK_MANAGER | claude | Updates task system after a successful implementation run |
 
 ---
 
@@ -86,7 +85,6 @@ routes between agents based on that outcome.
           |
           v
     orchestrator loop        HANDOFF appended to handoff_history[]
-          |                  DOCS triggers DOCUMENTER hook (TM mode)
           |                  OUTCOME looked up in ROUTES table
           |
           v
@@ -95,16 +93,17 @@ routes between agents based on that outcome.
 
 ---
 
-## DOCUMENTER Hook
+## DOCUMENTER Hook *(planned, not yet implemented)*
 
-In TM mode, the orchestrator runs a DOCUMENTER post-step after ARCHITECT,
+In TM mode, the orchestrator will run a DOCUMENTER post-step after ARCHITECT,
 IMPLEMENTOR, and TESTER — before routing to the next role. DOCUMENTER is not
-a node in the ROUTES table; it is inserted automatically by the orchestrator.
+a node in the ROUTES table; it will be inserted automatically by the orchestrator.
 
-The hook runs only when the triggering role emits a non-empty `DOCS:` field.
-If `DOCS:` is absent or `none`, the hook is skipped for that step.
+The hook will run only when the triggering role emits a non-empty `DOCS:` field.
+If `DOCS:` is absent or `none`, the hook will be skipped for that step.
 
-See [`routing.md`](routing.md) for the full routing table and hook details.
+This hook is not present in the current `orchestrator.py`. See
+[`routing.md`](routing.md) for the intended design.
 
 ---
 
@@ -136,5 +135,4 @@ by TASK_MANAGER via `set-current-job.sh` when advancing to the next task.
 - [`orchestrator.md`](orchestrator.md) — orchestrator.py internals
 - [`agent_wrapper.md`](agent_wrapper.md) — agent_wrapper.py internals
 - [`open-questions.md`](open-questions.md) — unresolved design questions
-- [`../oracle/README.md`](../oracle/README.md) — Oracle role and outer loop coordination
 - [`../roles/`](../roles/) — role prompt files loaded by build_prompt()

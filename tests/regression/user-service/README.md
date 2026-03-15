@@ -59,16 +59,16 @@ service's HTTP behaviour end-to-end.
 tests/regression/user-service/reset.sh
 ```
 
-Creates a fresh target repo at `/tmp/ai-builder-test-user-service/`, installs
+Creates a fresh target repo at `sandbox/user-service-target/`, installs
 the task system, places the `user-service` task in `in-progress/`, and
-restores the job document.
+writes `current-job.txt` (simulating Oracle).
 
 **Step 2 — Run the pipeline** (from repo root):
 
 ```bash
 python3 ai-builder/orchestrator/orchestrator.py \
-    --target-repo /tmp/ai-builder-test-user-service \
-    --output-dir  /tmp/ai-builder-test-user-service-output \
+    --target-repo sandbox/user-service-target \
+    --output-dir  sandbox/user-service-output \
     --epic        main
 ```
 

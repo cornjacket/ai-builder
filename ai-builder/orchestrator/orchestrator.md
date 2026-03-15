@@ -42,10 +42,21 @@ mutually exclusive: `--job` is required in non-TM mode and ignored in TM mode.
 
 Constructs the full prompt sent to an agent for a given role invocation.
 
-**TASK_MANAGER:** prompt is built inline as an f-string. Detects first vs.
-subsequent runs by checking whether `CURRENT_JOB_FILE` exists. First run
-instructs TM to set up the task system and decompose the request. Subsequent
-runs instruct TM to mark the completed task done and pick the next one.
+**TASK_MANAGER:** prompt is built inline as an f-string with two branches:
+- `last_outcome == "ARCHITECT_DECOMPOSITION_READY"`: TM reads the Components
+  table, creates subtasks with `new-pipeline-subtask.sh`, and points the
+  pipeline at the first.
+- All other cases (i.e. `TESTER_TESTS_PASS`): TM marks the completed subtask
+  done, checks `Stop-after` and `is-last-task.sh`, and advances or halts.
+
+**Design decision — TM prompt stays inline:** The TM prompt is not loaded
+from a static `roles/TASK_MANAGER.md` file like other roles. This is
+intentional: the prompt contains two distinct procedural branches with
+deeply embedded runtime values (`TARGET_REPO`, `EPIC`, `PM_SCRIPTS_DIR`,
+`output_dir`). Extracting it to a static file would require a template
+engine. The inline f-string approach keeps the logic and the runtime context
+co-located and readable. Other roles have static prompts because their
+instructions don't change at runtime.
 
 **All other roles:** loads `roles/<ROLE>.md` as role instructions. Falls back
 to a generic instruction string if the file does not exist.

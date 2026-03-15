@@ -12,14 +12,14 @@ or `None` (halt).
 
 | From | Outcome | To |
 |------|---------|----|
-| ARCHITECT | `ARCHITECT_DESIGN_READY` | [DOCUMENTER hook] → IMPLEMENTOR |
-| ARCHITECT | `ARCHITECT_DECOMPOSITION_READY` | [DOCUMENTER hook] → TASK_MANAGER |
+| ARCHITECT | `ARCHITECT_DESIGN_READY` | IMPLEMENTOR |
+| ARCHITECT | `ARCHITECT_DECOMPOSITION_READY` | TASK_MANAGER |
 | ARCHITECT | `ARCHITECT_NEEDS_REVISION` | ARCHITECT *(self-loop — iteration limit applies)* |
 | ARCHITECT | `ARCHITECT_NEED_HELP` | halt |
-| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | [DOCUMENTER hook] → TESTER |
+| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | TESTER |
 | IMPLEMENTOR | `IMPLEMENTOR_NEEDS_ARCHITECT` | ARCHITECT |
 | IMPLEMENTOR | `IMPLEMENTOR_NEED_HELP` | halt |
-| TESTER | `TESTER_TESTS_PASS` | [DOCUMENTER hook] → TASK_MANAGER |
+| TESTER | `TESTER_TESTS_PASS` | TASK_MANAGER |
 | TESTER | `TESTER_TESTS_FAIL` | IMPLEMENTOR |
 | TESTER | `TESTER_NEED_HELP` | halt |
 | TASK_MANAGER | `TM_SUBTASKS_READY` | ARCHITECT |
@@ -78,7 +78,7 @@ catches cases where an agent emits a malformed or unexpected OUTCOME string.
 
 ---
 
-## DOCUMENTER Hook
+## DOCUMENTER Hook *(planned, not yet implemented)*
 
 In TM mode, the orchestrator inserts a DOCUMENTER post-step between certain
 roles and their routing destination. DOCUMENTER is not a node in the ROUTES
@@ -120,7 +120,7 @@ If `DOCS:` is absent or `none`, step 3 is skipped entirely.
 AGENTS = {
     "TASK_MANAGER": "claude",
     "ARCHITECT":    "claude",
-    "IMPLEMENTOR":  "gemini",
+    "IMPLEMENTOR":  "claude",
     "TESTER":       "claude",
 }
 ```

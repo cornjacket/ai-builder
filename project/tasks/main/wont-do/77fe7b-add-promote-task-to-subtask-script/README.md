@@ -2,7 +2,7 @@
 
 | Field    | Value                |
 |----------|----------------------|
-| Status   | backlog           |
+| Status | wont-do |
 | Epic     | main             |
 | Tags     | task-management, scripts             |
 | Parent   | —           |

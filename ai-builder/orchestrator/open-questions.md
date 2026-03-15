@@ -24,16 +24,11 @@ for testing. This blocks deterministic testing of conditional paths like
 
 ## Decomposition
 
-**New ARCHITECT outcomes not yet implemented**
-The decomposition protocol requires `COMPONENTS_READY`, `COMPONENT_READY`,
-and `NEEDS_REVISION` outcomes. These are not yet in the ROUTES table or
-the orchestrator. See `decomposition.md`.
-
-**How does TASK_MANAGER know which mode it is in?**
-Decompose mode vs. design mode needs a signal. Options:
-- Job template type signals it (preferred — template = intent)
-- Explicit `## Mode:` field in the job document
-- Instruction injected by Oracle in the job doc
+**Composite decomposition not yet implemented**
+The pipeline only handles all-atomic flat component lists. When ARCHITECT
+marks a component `composite`, the TM has no branch for it and the pipeline
+produces garbage or fails. See `sandbox/brainstorm-composite-decomposition-gap.md`
+for the full design gap analysis.
 
 
 **Component list format: markdown table vs. structured data**
@@ -57,13 +52,6 @@ losing position or skipping nodes if the navigation logic is not well-defined.
 Does the Oracle need a formal `roles/ORACLE.md` prompt file, or is it fully
 defined by the target repo's `CLAUDE.md`? Given its scope (discovery, phase
 coordination, review management), a dedicated role file is probably warranted.
-See `oracle/README.md`.
-
-**Planning tools for ARCHITECT**
-What tools should be available to ARCHITECT during Planning that are not
-appropriate during Implementation (codebase context, review history,
-dependency analysis)? How are they scoped — via `--allowedTools` in the
-orchestrator, or a separate Planning role definition?
 
 ---
 

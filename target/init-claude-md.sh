@@ -50,7 +50,10 @@ GEMINI_MD="$TARGET_REPO/GEMINI.md"
 # Build the task management section
 # ---------------------------------------------------------------------------
 
-SECTION=$(cat <<'EOF'
+SECTION_FILE=$(mktemp)
+trap 'rm -f "$SECTION_FILE"' EXIT
+
+cat > "$SECTION_FILE" <<'HEREDOC'
 <!-- task-management-start -->
 ## Task Management
 
@@ -59,6 +62,37 @@ system. Before starting any work, check the task system to understand current
 priorities and status.
 
 **Full documentation:** [`project/tasks/README.md`](project/tasks/README.md)
+
+### Task Types
+
+There are three task types. Every task README has a `Task-type` field.
+
+**USER-TASK** — top-level, human/Oracle-owned. All top-level work must be a
+user-task. No Parent field, no pipeline sections. Created with `new-user-task.sh`.
+
+**USER-SUBTASK** — human/Oracle-owned subtask. Planning steps, reviews,
+approvals, research. Does not go to the pipeline. Can contain further
+user-subtasks or pipeline-subtasks. Created with `new-user-subtask.sh`.
+
+**PIPELINE-SUBTASK** — the pipeline's unit of work. A `build-N` entry point
+authored by the Oracle and submitted to the orchestrator, or a pipeline-internal
+node (component, integrate, test) created by the TM. Pipeline-owned once
+submitted. Can only contain pipeline-subtasks. Created with `new-pipeline-subtask.sh`.
+
+**Hierarchy rules:**
+- All top-level work must be a user-task
+- user-task → user-subtasks and/or pipeline-subtasks
+- user-subtask → user-subtasks and/or pipeline-subtasks
+- pipeline-subtask → pipeline-subtasks only
+- No human-owned node may appear under a pipeline-owned node
+
+**Domain ownership:**
+- **Frontend AI** (Oracle/human assistant): creates user-tasks, user-subtasks,
+  and `build-N` pipeline-subtasks. Does NOT edit pipeline-internal subtasks
+  once a build is submitted.
+- **Orchestrator / TM**: operates on pipeline-subtasks and their internal
+  children. Fills in Components, Design, AC. Creates component subtasks.
+  Does NOT touch user-task or user-subtask READMEs.
 
 ### Workflow Rules
 
@@ -87,36 +121,32 @@ add `--parent` for subtasks.
 Run from the repo root:
 
 ```bash
-project/tasks/scripts/new-task.sh       --epic main --folder draft --name <task>
-project/tasks/scripts/new-task.sh       --epic main --folder draft --parent <task> --name <subtask>
-project/tasks/scripts/move-task.sh      --epic main --name <task> --from <status> --to <status>
-project/tasks/scripts/complete-task.sh  --epic main --folder <status> --name <task>
-project/tasks/scripts/complete-task.sh  --epic main --folder <status> --parent <task> --name <subtask>
-project/tasks/scripts/show-task.sh      --epic main --folder <status> --name <task>
-project/tasks/scripts/delete-task.sh    --epic main --folder <status> --name <task>
-project/tasks/scripts/restore-task.sh   --epic main --folder <status> --name <task>
-project/tasks/scripts/list-tasks.sh     --epic main [--folder <status>] [--depth <n>] [--all] [--tag <tag>]
+project/tasks/scripts/new-user-task.sh        --epic main --folder draft --name <task>
+project/tasks/scripts/new-user-subtask.sh     --epic main --folder <status> --parent <task> --name <subtask>
+project/tasks/scripts/new-pipeline-subtask.sh --epic main --folder <status> --parent <task> --name <subtask>
+project/tasks/scripts/move-task.sh            --epic main --name <task> --from <status> --to <status>
+project/tasks/scripts/complete-task.sh        --epic main --folder <status> --name <task>
+project/tasks/scripts/complete-task.sh        --epic main --folder <status> --parent <task> --name <subtask>
+project/tasks/scripts/show-task.sh            --epic main --folder <status> --name <task>
+project/tasks/scripts/delete-task.sh          --epic main --folder <status> --name <task>
+project/tasks/scripts/restore-task.sh         --epic main --folder <status> --name <task>
+project/tasks/scripts/list-tasks.sh           --epic main [--folder <status>] [--depth <n>] [--all] [--tag <tag>]
 ```
 <!-- task-management-end -->
-EOF
-)
+HEREDOC
 
 # ---------------------------------------------------------------------------
 # Create or append CLAUDE.md
 # ---------------------------------------------------------------------------
 
 if [[ ! -f "$CLAUDE_MD" ]]; then
-    cat > "$CLAUDE_MD" <<EOF
-# AI Agent Instructions
-
-$SECTION
-EOF
+    { printf '# AI Agent Instructions\n\n'; cat "$SECTION_FILE"; printf '\n'; } > "$CLAUDE_MD"
     echo "Created: CLAUDE.md"
 else
     if grep -q "<!-- task-management-start -->" "$CLAUDE_MD"; then
         echo "Task management section already present in CLAUDE.md — skipping."
     else
-        printf "\n%s\n" "$SECTION" >> "$CLAUDE_MD"
+        { printf '\n'; cat "$SECTION_FILE"; printf '\n'; } >> "$CLAUDE_MD"
         echo "Updated: CLAUDE.md (task management section appended)"
     fi
 fi

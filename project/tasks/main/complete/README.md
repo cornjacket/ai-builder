@@ -12,4 +12,7 @@
 - [d3616d-rename-pipeline-outcomes-for-clarity](d3616d-rename-pipeline-outcomes-for-clarity/)
 - [0be578-add-role-iteration-limit-to-orchestrator](0be578-add-role-iteration-limit-to-orchestrator/)
 - [8eea17-implement-decomposition-in-orchestrator](8eea17-implement-decomposition-in-orchestrator/)
+- [452116-optimize-tm-agent-prompt](452116-optimize-tm-agent-prompt/)
+- [f7a6af-redefine-task-system-human-pipeline-boundary](f7a6af-redefine-task-system-human-pipeline-boundary/)
+- [d9c12f-review-orchestrator-routing-and-flow](d9c12f-review-orchestrator-routing-and-flow/)
 <!-- task-list-end -->

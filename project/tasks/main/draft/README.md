@@ -15,4 +15,7 @@
 - [99c172-add-task-manipulation-scripts](99c172-add-task-manipulation-scripts/)
 - [e6c37d-add-stub-role-injection-for-pipeline-testing](e6c37d-add-stub-role-injection-for-pipeline-testing/)
 - [b1c374-document-oracle-and-n-phase-model](b1c374-document-oracle-and-n-phase-model/)
+- [2da360-document-flexible-task-system-usage](2da360-document-flexible-task-system-usage/)
+- [f48538-add-project-flag-to-task-scripts](f48538-add-project-flag-to-task-scripts/)
+- [0838a5-tm-tree-traversal](0838a5-tm-tree-traversal/)
 <!-- task-list-end -->
