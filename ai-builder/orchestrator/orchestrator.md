@@ -14,10 +14,15 @@ encounters an unrecoverable state.
 | `--job` | non-TM mode | Path to the job document |
 | `--target-repo` | TM mode | Path to target repository; enables TM mode |
 | `--epic` | TM mode | Epic name in the task system (default: `main`) |
-| `--request` | TM mode | Path to project request file passed to TASK_MANAGER |
+| `--state-machine` | optional | Path to a JSON machine file; defaults to `machines/default.json` (TM mode) or `machines/simple.json` (non-TM mode) |
+| `--start-state` | optional | Override the machine's `start_state` at runtime; must be a role defined in the loaded machine |
 
 `TM_MODE` is true when `--target-repo` is provided. The two modes are
 mutually exclusive: `--job` is required in non-TM mode and ignored in TM mode.
+
+`--state-machine` and `--start-state` are orthogonal to the two modes and can
+be combined freely. `--start-state` is useful for testing a specific role in
+isolation or resuming a pipeline after a partial run.
 
 ---
 
@@ -27,39 +32,76 @@ mutually exclusive: `--job` is required in non-TM mode and ignored in TM mode.
 |------|-------|---------|
 | `TIMEOUT_MINUTES` | 5 | Per-role subprocess timeout |
 | `MAX_ROLE_ITERATIONS` | 3 | Max consecutive self-routes before halting with error |
-| `AGENTS` | dict | Maps role name → agent CLI name (`claude` or `gemini`) |
-| `ROUTES` | dict | Maps `(role, outcome)` → next role or `None` (halt) |
+| `AGENTS` | dict | Maps role name → agent CLI name; populated from machine file |
+| `ROUTES` | dict | Maps `(role, outcome)` → next role or `None`; populated from machine file |
+| `ROLE_PROMPTS` | dict | Maps role name → prompt `Path` or `None` (dynamic); populated from machine file |
 | `REPO_ROOT` | Path | Absolute path to the ai-builder repo root |
-| `ROLES_DIR` | Path | `REPO_ROOT/roles/` — where role prompt files live |
+| `ROLES_DIR` | Path | `REPO_ROOT/roles/` — default location for role prompt files |
+| `MACHINES_DIR` | Path | `orchestrator/machines/` — built-in machine file directory |
 | `EXECUTION_LOG` | Path | `OUTPUT_DIR/execution.log` |
 | `CURRENT_JOB_FILE` | Path | `OUTPUT_DIR/current-job.txt` (TM mode only) |
 
 ---
 
+## TM Mode Handlers
+
+In TM mode two handler roles replace the old single `TASK_MANAGER` role:
+
+| Role | Trigger | Purpose |
+|------|---------|---------|
+| `DECOMPOSE_HANDLER` | `ARCHITECT_DECOMPOSITION_READY` | Creates subtasks from the Components table; points pipeline at the first subtask |
+| `LEAF_COMPLETE_HANDLER` | `TESTER_TESTS_PASS` | Marks the completed subtask done, advances to next subtask or halts |
+
+Valid outcomes for each handler:
+
+| Role | Outcomes |
+|------|---------|
+| `DECOMPOSE_HANDLER` | `HANDLER_SUBTASKS_READY`, `HANDLER_NEED_HELP` |
+| `LEAF_COMPLETE_HANDLER` | `HANDLER_SUBTASKS_READY`, `HANDLER_ALL_DONE`, `HANDLER_STOP_AFTER`, `HANDLER_NEED_HELP` |
+
+---
+
 ## Functions
+
+### `load_state_machine(machine_file) -> (agents, routes, start_state, role_prompts)`
+
+Loads and validates a JSON machine file. Returns four values used by the
+orchestrator to drive the pipeline:
+
+- `agents` — `{role: agent_cli_name}` dict
+- `routes` — `{(role, outcome): next_role_or_None}` dict
+- `start_state` — default entry role (overridable with `--start-state`)
+- `role_prompts` — `{role: Path | None}` dict (`None` = dynamic generation)
+
+Validation checks:
+- All three top-level keys present (`start_state`, `roles`, `transitions`)
+- `start_state` appears in `roles`
+- All source roles in `transitions` appear in `roles`
+- All next-role values (non-null) in `transitions` appear in `roles`
+
+Relative prompt paths are resolved against `REPO_ROOT`.
+Exits with code 1 on any validation failure.
+
+---
 
 ### `build_prompt(role, job_doc, output_dir, handoff_history) -> str`
 
 Constructs the full prompt sent to an agent for a given role invocation.
 
-**TASK_MANAGER:** prompt is built inline as an f-string with two branches:
-- `last_outcome == "ARCHITECT_DECOMPOSITION_READY"`: TM reads the Components
-  table, creates subtasks with `new-pipeline-subtask.sh`, and points the
-  pipeline at the first.
-- All other cases (i.e. `TESTER_TESTS_PASS`): TM marks the completed subtask
-  done, checks `Stop-after` and `is-last-task.sh`, and advances or halts.
+**DECOMPOSE_HANDLER / LEAF_COMPLETE_HANDLER:** prompts are built inline as
+f-strings with deeply embedded runtime values (`TARGET_REPO`, `EPIC`,
+`PM_SCRIPTS_DIR`, `output_dir`). Each handler has exactly one prompt with no
+branching.
 
-**Design decision — TM prompt stays inline:** The TM prompt is not loaded
-from a static `roles/TASK_MANAGER.md` file like other roles. This is
-intentional: the prompt contains two distinct procedural branches with
-deeply embedded runtime values (`TARGET_REPO`, `EPIC`, `PM_SCRIPTS_DIR`,
-`output_dir`). Extracting it to a static file would require a template
-engine. The inline f-string approach keeps the logic and the runtime context
-co-located and readable. Other roles have static prompts because their
-instructions don't change at runtime.
+**Design decision — handler prompts stay inline:** Other roles have static
+prompts because their instructions don't change at runtime. Handler prompts
+embed runtime values (`TARGET_REPO`, `EPIC`, paths). Once a template variable
+injection system exists (see task `7eec4a`), handlers can be extracted to
+static files.
 
-**All other roles:** loads `roles/<ROLE>.md` as role instructions. Falls back
-to a generic instruction string if the file does not exist.
+**All other roles:** checks `ROLE_PROMPTS[role]` first (set from machine file);
+falls back to `roles/<ROLE>.md` if not set; falls back to a generic instruction
+string if neither file exists.
 
 **All roles:** appends `## Handoff Notes from Previous Agents` section
 containing all prior handoff messages, separated by `---`.
@@ -87,10 +129,10 @@ and handoff. Append-only — never overwrites prior entries.
 ## Main Loop
 
 ```
-current_role = "ARCHITECT" (always — TM only runs when routed to it)
+current_role = "ARCHITECT" (always — handlers only run when routed to them)
 job_doc      = --job path (non-TM mode)
              | current-job.txt contents if pre-seeded by Oracle (TM mode)
-             | None if Oracle has not yet written current-job.txt (TM mode, first TM run)
+             | None if Oracle has not yet written current-job.txt (TM mode, first handler run)
 
 while current_role is not None:
     agent  = AGENTS[current_role]
@@ -107,8 +149,8 @@ while current_role is not None:
     if outcome.endswith("_NEED_HELP"): → halt (sys.exit 0, human required)
     if outcome not in ROUTES:          → halt (sys.exit 1, unrecognised outcome)
 
-    # TM mode: read job path after TM signals TM_SUBTASKS_READY
-    if current_role == "TASK_MANAGER" and outcome == "TM_SUBTASKS_READY":
+    # TM mode: read job path after a handler signals HANDLER_SUBTASKS_READY
+    if current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER") and outcome == "HANDLER_SUBTASKS_READY":
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
 
     next_role = ROUTES.get((current_role, outcome))
@@ -134,12 +176,12 @@ error). All other halts exit with code 1.
 | Operation | File | When |
 |-----------|------|------|
 | Read | `--job` (job document) | non-TM mode startup |
-| Read | `--request` (project request) | TM mode, passed to TASK_MANAGER prompt |
+
 | Read | `current-job.txt` | TM mode startup — if present, initialises `job_doc` for the first ARCHITECT call (Oracle pre-seeds this before invoking the orchestrator) |
 | Read | `roles/<ROLE>.md` | each `build_prompt()` call for non-TM roles |
 | Write | `execution.log` | after every role run (append) |
-| Write | `current-job.txt` | by TASK_MANAGER after `TM_SUBTASKS_READY` — path to the next job document |
-| Read | `current-job.txt` | by orchestrator after TASK_MANAGER emits `TM_SUBTASKS_READY` — updates `job_doc` for downstream roles |
+| Write | `current-job.txt` | by `DECOMPOSE_HANDLER` or `LEAF_COMPLETE_HANDLER` after `HANDLER_SUBTASKS_READY` — path to the next job document |
+| Read | `current-job.txt` | by orchestrator after a handler emits `HANDLER_SUBTASKS_READY` — updates `job_doc` for downstream roles |
 
 **Oracle contract (TM mode):** before invoking the orchestrator, Oracle must:
 1. Place the top-level task in `in-progress/` in the target repo's task system

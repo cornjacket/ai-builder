@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 import sys
 from datetime import datetime
@@ -34,9 +35,15 @@ parser.add_argument(
     help="Epic name for the task system (TM mode only, default: main)",
 )
 parser.add_argument(
-    "--request",
+    "--state-machine",
     type=Path,
-    help="Path to project request file (TM mode only)",
+    metavar="FILE",
+    help="Path to a JSON state machine file (optional; default inferred from mode)",
+)
+parser.add_argument(
+    "--start-state",
+    metavar="ROLE",
+    help="Override the machine's start_state at runtime (e.g. for testing or resuming)",
 )
 args = parser.parse_args()
 
@@ -46,9 +53,7 @@ if TM_MODE:
     if not args.target_repo.exists():
         print(f"[orchestrator] Target repo not found: {args.target_repo}")
         sys.exit(1)
-    if args.request and not args.request.exists():
-        print(f"[orchestrator] Request file not found: {args.request}")
-        sys.exit(1)
+
 else:
     if not args.job:
         print("[orchestrator] --job is required when not using --target-repo")
@@ -59,6 +64,7 @@ else:
 
 REPO_ROOT       = Path(__file__).resolve().parent.parent.parent
 ROLES_DIR       = REPO_ROOT / "roles"
+MACHINES_DIR    = Path(__file__).resolve().parent / "machines"
 OUTPUT_DIR      = args.output_dir.resolve()
 TIMEOUT_MINUTES = 5
 
@@ -69,7 +75,6 @@ CURRENT_JOB_FILE = OUTPUT_DIR / "current-job.txt"
 if TM_MODE:
     TARGET_REPO    = args.target_repo.resolve()
     EPIC           = args.epic
-    REQUEST        = args.request.read_text() if args.request else None
     PM_SCRIPTS_DIR = TARGET_REPO / "project" / "tasks" / "scripts"
     SETUP_SCRIPT   = REPO_ROOT / "target" / "setup-project.sh"
     INIT_SCRIPT    = REPO_ROOT / "target" / "init-claude-md.sh"
@@ -83,55 +88,100 @@ else:
 
 
 # ---------------------------------------------------------------------------
-# Pipeline config
+# State machine loader
 # ---------------------------------------------------------------------------
 
-AGENTS = {
-    "TASK_MANAGER": "claude",
-    "ARCHITECT":    "claude",
-    "IMPLEMENTOR":  "claude",
-    "TESTER":       "claude",
-}
+def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict]:
+    """Load and validate a machine JSON file.
 
-ROUTES = {
-    ("ARCHITECT",   "ARCHITECT_DESIGN_READY"):           "IMPLEMENTOR",
-    ("ARCHITECT",   "ARCHITECT_NEED_HELP"):              None,
-    ("IMPLEMENTOR", "IMPLEMENTOR_IMPLEMENTATION_DONE"):  "TESTER",
-    ("IMPLEMENTOR", "IMPLEMENTOR_NEEDS_ARCHITECT"):      "ARCHITECT",
-    ("IMPLEMENTOR", "IMPLEMENTOR_NEED_HELP"):            None,
-    ("TESTER",      "TESTER_TESTS_FAIL"):                "IMPLEMENTOR",
-    ("TESTER",      "TESTER_NEED_HELP"):                 None,
-}
+    Returns (agents, routes, start_state, role_prompts) where:
+      agents      — maps role name → agent CLI name
+      routes      — maps (role, outcome) → next role or None
+      start_state — default entry role
+      role_prompts — maps role → Path (prompt file) or None (dynamic generation)
+    """
+    try:
+        data = json.loads(machine_file.read_text())
+    except Exception as e:
+        print(f"[orchestrator] Failed to load machine file {machine_file}: {e}")
+        sys.exit(1)
 
-if TM_MODE:
-    ROUTES.update({
-        ("ARCHITECT",    "ARCHITECT_DECOMPOSITION_READY"): "TASK_MANAGER",
-        ("ARCHITECT",    "ARCHITECT_NEEDS_REVISION"):      "ARCHITECT",
-        ("TASK_MANAGER", "TM_SUBTASKS_READY"):             "ARCHITECT",
-        ("TASK_MANAGER", "TM_ALL_DONE"):                   None,
-        ("TASK_MANAGER", "TM_STOP_AFTER"):                 None,
-        ("TASK_MANAGER", "TM_NEED_HELP"):                  None,
-        ("TESTER",       "TESTER_TESTS_PASS"):             "TASK_MANAGER",
-    })
+    missing = [k for k in ("start_state", "roles", "transitions") if k not in data]
+    if missing:
+        print(f"[orchestrator] Machine file {machine_file} missing keys: {missing}")
+        sys.exit(1)
+
+    start_state = data["start_state"]
+    roles       = data["roles"]
+    transitions = data["transitions"]
+
+    if start_state not in roles:
+        print(f"[orchestrator] Machine file error: start_state '{start_state}' not in roles")
+        sys.exit(1)
+
+    agents = {role: cfg["agent"] for role, cfg in roles.items()}
+
+    routes: dict = {}
+    for role, outcomes in transitions.items():
+        if role not in roles:
+            print(f"[orchestrator] Machine file error: transition source '{role}' not in roles")
+            sys.exit(1)
+        for outcome, next_role in outcomes.items():
+            if next_role is not None and next_role not in roles:
+                print(f"[orchestrator] Machine file error: transition {role}/{outcome} → "
+                      f"'{next_role}' not in roles")
+                sys.exit(1)
+            routes[(role, outcome)] = next_role
+
+    role_prompts: dict[str, Path | None] = {}
+    for role, cfg in roles.items():
+        if cfg["prompt"] is None:
+            role_prompts[role] = None
+        else:
+            p = Path(cfg["prompt"])
+            role_prompts[role] = p if p.is_absolute() else REPO_ROOT / p
+
+    return agents, routes, start_state, role_prompts
+
+
+# ---------------------------------------------------------------------------
+# Pipeline config — load state machine
+# ---------------------------------------------------------------------------
+
+if args.state_machine:
+    _machine_file = args.state_machine.resolve()
+    if not _machine_file.exists():
+        print(f"[orchestrator] Machine file not found: {_machine_file}")
+        sys.exit(1)
+elif TM_MODE:
+    _machine_file = MACHINES_DIR / "default.json"
 else:
-    ROUTES[("TESTER", "TESTER_TESTS_PASS")] = None  # halt on completion in non-TM mode
+    _machine_file = MACHINES_DIR / "simple.json"
+
+AGENTS, ROUTES, _start_state, ROLE_PROMPTS = load_state_machine(_machine_file)
+
+if args.start_state:
+    if args.start_state not in AGENTS:
+        print(f"[orchestrator] --start-state '{args.start_state}' is not a valid role. "
+              f"Valid roles: {', '.join(AGENTS)}")
+        sys.exit(1)
+    _start_state = args.start_state
 
 
 # ---------------------------------------------------------------------------
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str], last_outcome: str = "") -> str:
+def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str]) -> str:
     history_section = ""
     if handoff_history:
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
             "\n\n---\n\n".join(handoff_history)
 
-    if role == "TASK_MANAGER":
+    if role == "DECOMPOSE_HANDLER" and ROLE_PROMPTS.get(role) is None:
         current_job_path = CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else "<job doc path>"
-        if last_outcome == "ARCHITECT_DECOMPOSITION_READY":
-            role_instructions = f"""\
-You are the TASK MANAGER for the ai-builder pipeline.
+        role_instructions = f"""\
+You are the DECOMPOSE HANDLER for the ai-builder pipeline.
 
 Target repository : {TARGET_REPO}
 Epic              : {EPIC}
@@ -172,7 +222,7 @@ Your job:
 7. Point the pipeline at the first subtask:
      {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <first-subtask-readme-path>
 
-8. Output OUTCOME: TM_SUBTASKS_READY
+8. Output OUTCOME: HANDLER_SUBTASKS_READY
 
 Available tools:
   {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-rel-path> --name <name>
@@ -181,9 +231,13 @@ Available tools:
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
-        else:
-            role_instructions = f"""\
-You are the TASK MANAGER for the ai-builder pipeline.
+        valid_outcomes = "HANDLER_SUBTASKS_READY | HANDLER_NEED_HELP"
+        job_section = ""
+
+    elif role == "LEAF_COMPLETE_HANDLER" and ROLE_PROMPTS.get(role) is None:
+        current_job_path = CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else "<job doc path>"
+        role_instructions = f"""\
+You are the LEAF COMPLETE HANDLER for the ai-builder pipeline.
 
 Target repository : {TARGET_REPO}
 Epic              : {EPIC}
@@ -197,9 +251,9 @@ Your job:
      RESULT=$({PM_SCRIPTS_DIR}/on-task-complete.sh --current <current-job-doc> --output-dir {output_dir} --epic {EPIC})
 
 2. Interpret the result:
-   - "NEXT <path>"  → more subtasks remain; output OUTCOME: TM_SUBTASKS_READY
-   - "DONE"         → all subtasks complete; output OUTCOME: TM_ALL_DONE
-   - "STOP_AFTER"   → human review required; output OUTCOME: TM_STOP_AFTER
+   - "NEXT <path>"  → more subtasks remain; output OUTCOME: HANDLER_SUBTASKS_READY
+   - "DONE"         → all subtasks complete; output OUTCOME: HANDLER_ALL_DONE
+   - "STOP_AFTER"   → human review required; output OUTCOME: HANDLER_STOP_AFTER
                       Include in HANDOFF: which subtask completed, what was
                       implemented, TESTER results, and that Oracle intervention
                       is required before continuing.
@@ -209,11 +263,11 @@ Available tools:
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
-        valid_outcomes = "TM_SUBTASKS_READY | TM_ALL_DONE | TM_STOP_AFTER | TM_NEED_HELP"
+        valid_outcomes = "HANDLER_SUBTASKS_READY | HANDLER_ALL_DONE | HANDLER_STOP_AFTER | HANDLER_NEED_HELP"
         job_section = ""
 
     else:
-        role_file = ROLES_DIR / f"{role}.md"
+        role_file = ROLE_PROMPTS.get(role) or (ROLES_DIR / f"{role}.md")
         role_instructions = role_file.read_text() if role_file.exists() \
             else "Complete the work described in the job document."
         if role == "ARCHITECT":
@@ -280,20 +334,20 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 
 MAX_ROLE_ITERATIONS = 3
 
-current_role = "ARCHITECT"  # always starts at ARCHITECT; TM only runs when routed to it
+current_role = _start_state
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
 role_iteration_counts: dict[str, int] = {}
-last_outcome: str = ""
 
 print("=== Orchestrator: starting ===")
 if TM_MODE:
     print(f"    mode:          TM")
     print(f"    target repo:   {TARGET_REPO}")
     print(f"    epic:          {EPIC}")
-    print(f"    request:       {args.request or '(none)'}")
 else:
     print(f"    job doc:       {job_doc}")
+print(f"    machine file:  {_machine_file}")
+print(f"    start state:   {current_role}")
 print(f"    output dir:    {OUTPUT_DIR}")
 print(f"    execution log: {EXECUTION_LOG}\n")
 
@@ -305,7 +359,7 @@ while current_role is not None:
 
     print(f"\n>>> [{current_role} / {agent}]")
 
-    prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history, last_outcome)
+    prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
     result: AgentResult = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
 
     if result.exit_code == 2:
@@ -318,7 +372,6 @@ while current_role is not None:
     outcome, handoff = parse_outcome(result.response)
     handoff_history.append(f"[{current_role}] {handoff}")
     log_run(current_role, agent, outcome, handoff)
-    last_outcome = outcome
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
 
@@ -332,10 +385,10 @@ while current_role is not None:
         print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
         sys.exit(1)
 
-    # After TM signals TM_SUBTASKS_READY, read the current job path for downstream agents
-    if current_role == "TASK_MANAGER" and outcome == "TM_SUBTASKS_READY":
+    # After a handler signals HANDLER_SUBTASKS_READY, read the current job path for downstream agents
+    if current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER") and outcome == "HANDLER_SUBTASKS_READY":
         if not CURRENT_JOB_FILE.exists():
-            print(f"\n[orchestrator] TM did not write job path to {CURRENT_JOB_FILE}. Halting.")
+            print(f"\n[orchestrator] Handler did not write job path to {CURRENT_JOB_FILE}. Halting.")
             sys.exit(1)
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
         if not job_doc.exists():

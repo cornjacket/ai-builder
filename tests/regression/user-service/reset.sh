@@ -63,14 +63,12 @@ cat > "$TASK_DIR/README.md" <<'TASKEOF'
 
 | Field       | Value           |
 |-------------|-----------------|
+| Task-type   | USER-TASK       |
 | Status      | in-progress     |
 | Epic        | main            |
 | Tags        | regression-test |
 | Parent      | —               |
 | Priority    | MED             |
-| Complexity  | —               |
-| Stop-after  | false           |
-| Last-task   | false           |
 
 ## Goal
 
@@ -139,9 +137,10 @@ echo "Output dir  : $OUTPUT_DIR"
 echo ""
 echo "Run the pipeline:"
 echo "  python3 $REPO_ROOT/ai-builder/orchestrator/orchestrator.py \\"
-echo "      --target-repo $TARGET_REPO \\"
-echo "      --output-dir  $OUTPUT_DIR \\"
-echo "      --epic        $EPIC"
+echo "      --target-repo   $TARGET_REPO \\"
+echo "      --output-dir    $OUTPUT_DIR \\"
+echo "      --epic          $EPIC \\"
+echo "      --state-machine $REPO_ROOT/ai-builder/orchestrator/machines/default.json"
 echo ""
 echo "Then run the gold test:"
 echo "  cd $DIR/gold && go test -tags regression ./..."

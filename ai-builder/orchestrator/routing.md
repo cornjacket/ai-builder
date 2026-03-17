@@ -13,19 +13,21 @@ or `None` (halt).
 | From | Outcome | To |
 |------|---------|----|
 | ARCHITECT | `ARCHITECT_DESIGN_READY` | IMPLEMENTOR |
-| ARCHITECT | `ARCHITECT_DECOMPOSITION_READY` | TASK_MANAGER |
+| ARCHITECT | `ARCHITECT_DECOMPOSITION_READY` | DECOMPOSE_HANDLER |
 | ARCHITECT | `ARCHITECT_NEEDS_REVISION` | ARCHITECT *(self-loop — iteration limit applies)* |
 | ARCHITECT | `ARCHITECT_NEED_HELP` | halt |
 | IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | TESTER |
 | IMPLEMENTOR | `IMPLEMENTOR_NEEDS_ARCHITECT` | ARCHITECT |
 | IMPLEMENTOR | `IMPLEMENTOR_NEED_HELP` | halt |
-| TESTER | `TESTER_TESTS_PASS` | TASK_MANAGER |
+| TESTER | `TESTER_TESTS_PASS` | LEAF_COMPLETE_HANDLER |
 | TESTER | `TESTER_TESTS_FAIL` | IMPLEMENTOR |
 | TESTER | `TESTER_NEED_HELP` | halt |
-| TASK_MANAGER | `TM_SUBTASKS_READY` | ARCHITECT |
-| TASK_MANAGER | `TM_ALL_DONE` | halt |
-| TASK_MANAGER | `TM_STOP_AFTER` | halt *(Oracle intervention required)* |
-| TASK_MANAGER | `TM_NEED_HELP` | halt |
+| DECOMPOSE_HANDLER | `HANDLER_SUBTASKS_READY` | ARCHITECT |
+| DECOMPOSE_HANDLER | `HANDLER_NEED_HELP` | halt |
+| LEAF_COMPLETE_HANDLER | `HANDLER_SUBTASKS_READY` | ARCHITECT |
+| LEAF_COMPLETE_HANDLER | `HANDLER_ALL_DONE` | halt |
+| LEAF_COMPLETE_HANDLER | `HANDLER_STOP_AFTER` | halt *(Oracle intervention required)* |
+| LEAF_COMPLETE_HANDLER | `HANDLER_NEED_HELP` | halt |
 
 ### Non-TM Mode
 
@@ -46,8 +48,8 @@ DOCUMENTER hook does not run in non-TM mode.
 
 ## Task Completion and Tree Traversal
 
-When TESTER passes for a subtask, TM calls `on-task-complete.sh` with the
-completed subtask's README. This script handles three operations atomically:
+When TESTER passes for a subtask, `LEAF_COMPLETE_HANDLER` calls `on-task-complete.sh`
+with the completed subtask's README. This script handles three operations atomically:
 
 1. Marks the subtask complete (`[x]`) in its parent's subtask list.
 2. Checks `Stop-after: true` — if set, returns `STOP_AFTER`.
@@ -57,11 +59,11 @@ completed subtask's README. This script handles three operations atomically:
      complete, and continues upward until a sibling is found or the pipeline
      boundary (a human-owned `USER-TASK` or `USER-SUBTASK`) is reached.
 
-| `on-task-complete.sh` output | TM outcome |
-|-----------------------------|------------|
-| `NEXT <path>` | `TM_SUBTASKS_READY` |
-| `DONE` | `TM_ALL_DONE` |
-| `STOP_AFTER` | `TM_STOP_AFTER` |
+| `on-task-complete.sh` output | Handler outcome |
+|-----------------------------|-----------------|
+| `NEXT <path>` | `HANDLER_SUBTASKS_READY` |
+| `DONE` | `HANDLER_ALL_DONE` |
+| `STOP_AFTER` | `HANDLER_STOP_AFTER` |
 
 The `Last-task` field is set at creation time — the final component (the
 integration step) gets `Last-task: true`, all others get `false`. This
@@ -100,8 +102,8 @@ table — it is managed directly by the orchestrator loop.
 DOCUMENTER_TRIGGERS = {"ARCHITECT", "IMPLEMENTOR", "TESTER"}
 ```
 
-TASK_MANAGER is excluded — it updates task metadata only and produces no
-documentation artifacts.
+Handlers (`DECOMPOSE_HANDLER`, `LEAF_COMPLETE_HANDLER`) are excluded — they update task
+metadata only and produce no documentation artifacts.
 
 **Hook logic:**
 ```
@@ -129,10 +131,11 @@ If `DOCS:` is absent or `none`, step 3 is skipped entirely.
 
 ```python
 AGENTS = {
-    "TASK_MANAGER": "claude",
-    "ARCHITECT":    "claude",
-    "IMPLEMENTOR":  "claude",
-    "TESTER":       "claude",
+    "DECOMPOSE_HANDLER":     "claude",
+    "LEAF_COMPLETE_HANDLER": "claude",
+    "ARCHITECT":             "claude",
+    "IMPLEMENTOR":           "claude",
+    "TESTER":                "claude",
 }
 ```
 

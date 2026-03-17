@@ -24,11 +24,11 @@ A service is decomposed into components, each implemented in sequence.
 
 ```
 ARCHITECT (decompose)
-    → TM creates component subtasks
+    → DECOMPOSE_HANDLER creates component subtasks
     → for each component:
         ARCHITECT (design) → IMPLEMENTOR → TESTER
-        → TM advances to next component
-    → last component done → TM_ALL_DONE
+        → LEAF_COMPLETE_HANDLER advances to next component
+    → last component done → HANDLER_ALL_DONE
 ```
 
 ### Multi-Level Decomposition
@@ -36,19 +36,19 @@ ARCHITECT (decompose)
 A composite component is itself decomposed further. The tree can nest to
 any depth. The pipeline navigates this tree without the orchestrator knowing
 the structure — all navigation is handled by `on-task-complete.sh` and the
-TM prompt.
+handler prompts.
 
 ```
 ARCHITECT (decompose: service)
-    → TM creates [component-A, component-B, integrate]
+    → DECOMPOSE_HANDLER creates [component-A, component-B, integrate]
     → component-A: ARCHITECT (decompose: component-A)
-        → TM creates [sub-1, sub-2, integrate-A]
-        → sub-1: ARCHITECT (design) → IMPLEMENTOR → TESTER → TM advances
-        → sub-2: ARCHITECT (design) → IMPLEMENTOR → TESTER → TM advances
+        → DECOMPOSE_HANDLER creates [sub-1, sub-2, integrate-A]
+        → sub-1: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
+        → sub-2: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
         → integrate-A: ARCHITECT (design) → IMPLEMENTOR → TESTER
             → on-task-complete: last at this level → walk up
-            → TM advances to component-B
-    → component-B: ARCHITECT (design) → IMPLEMENTOR → TESTER → TM advances
+            → LEAF_COMPLETE_HANDLER advances to component-B
+    → component-B: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
     → integrate: ARCHITECT (design) → IMPLEMENTOR → TESTER
         → on-task-complete: last at service level, parent is USER-TASK → DONE
 ```
@@ -100,7 +100,7 @@ before invoking the ARCHITECT. No AI interpretation at routing time.
 
 ## Tree Traversal Algorithm
 
-After a leaf task completes (TESTER passes), the TM calls `on-task-complete.sh`.
+After a leaf task completes (TESTER passes), `LEAF_COMPLETE_HANDLER` calls `on-task-complete.sh`.
 This script encapsulates three operations:
 
 1. **`complete-task.sh`** — marks the leaf `[x]` in its parent's subtask list.
@@ -165,11 +165,11 @@ inspect sibling state at runtime.
 
 ## on-task-complete.sh Return Values
 
-| Return | TM outcome |
-|--------|------------|
-| `NEXT <path>` | More subtasks remain. `current-job.txt` updated. → `TM_SUBTASKS_READY` |
-| `DONE` | All subtasks in this pipeline tree complete. → `TM_ALL_DONE` |
-| `STOP_AFTER` | `Stop-after: true` on completed task. Human review required. → `TM_STOP_AFTER` |
+| Return | Handler outcome |
+|--------|-----------------|
+| `NEXT <path>` | More subtasks remain. `current-job.txt` updated. → `HANDLER_SUBTASKS_READY` |
+| `DONE` | All subtasks in this pipeline tree complete. → `HANDLER_ALL_DONE` |
+| `STOP_AFTER` | `Stop-after: true` on completed task. Human review required. → `HANDLER_STOP_AFTER` |
 
 ---
 
@@ -180,8 +180,8 @@ Any pipeline-subtask can request a pause after completion by setting
 on a specific `build-N` task to inspect results before the pipeline continues.
 
 When `on-task-complete.sh` detects `Stop-after: true`, it returns `STOP_AFTER`
-before running tree traversal. The TM emits `TM_STOP_AFTER`, the orchestrator
-halts with exit 0, and Oracle must resume manually.
+before running tree traversal. `LEAF_COMPLETE_HANDLER` emits `HANDLER_STOP_AFTER`,
+the orchestrator halts with exit 0, and Oracle must resume manually.
 
 ---
 
@@ -194,10 +194,10 @@ ARCHITECT ───────────────────────�
   outcome: ARCHITECT_DECOMPOSITION_READY
       │
       ▼
-TASK_MANAGER ─────────────────────── create subtasks
+DECOMPOSE_HANDLER ─────────────────── create subtasks
   creates: [auth-handler(atomic), user-store(atomic), integrate(TOP,Last-task:true)]
   current-job.txt → auth-handler
-  outcome: TM_SUBTASKS_READY
+  outcome: HANDLER_SUBTASKS_READY
       │
       ▼
 ARCHITECT ─────────────────────────── design auth-handler (atomic)
@@ -206,21 +206,21 @@ ARCHITECT ───────────────────────�
 IMPLEMENTOR → TESTER ─────────────── TESTER_TESTS_PASS
       │
       ▼
-TASK_MANAGER ─────────────────────── on-task-complete(auth-handler)
+LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(auth-handler)
   → complete auth-handler [x]
   → Last-task=false → NEXT user-store
   current-job.txt → user-store
-  outcome: TM_SUBTASKS_READY
+  outcome: HANDLER_SUBTASKS_READY
       │
       ▼
 ARCHITECT → IMPLEMENTOR → TESTER ─── TESTER_TESTS_PASS (user-store)
       │
       ▼
-TASK_MANAGER ─────────────────────── on-task-complete(user-store)
+LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(user-store)
   → complete user-store [x]
   → Last-task=false → NEXT integrate
   current-job.txt → integrate
-  outcome: TM_SUBTASKS_READY
+  outcome: HANDLER_SUBTASKS_READY
       │
       ▼
 ARCHITECT (integrate, Level=TOP) ─── design with e2e tests
@@ -229,11 +229,11 @@ ARCHITECT (integrate, Level=TOP) ─── design with e2e tests
 IMPLEMENTOR → TESTER ─────────────── TESTER_TESTS_PASS (integrate)
       │
       ▼
-TASK_MANAGER ─────────────────────── on-task-complete(integrate)
+LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(integrate)
   → complete integrate [x]
   → Last-task=true → walk up
   → parent (auth-service) is USER-TASK → DONE
-  outcome: TM_ALL_DONE
+  outcome: HANDLER_ALL_DONE
 
 Orchestrator halts (exit 0).
 ```

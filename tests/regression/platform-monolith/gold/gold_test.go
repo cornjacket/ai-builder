@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 	// The networked monolith requires exactly one main package at cmd/platform/.
 	platformPkg := filepath.Join(outputDir, "cmd", "platform")
 	if _, err := os.Stat(platformPkg); err != nil {
-		fmt.Fprintf(os.Stderr, "FAIL: cmd/platform/ not found in target repo %s\n", targetDir)
+		fmt.Fprintf(os.Stderr, "FAIL: cmd/platform/ not found in output dir %s\n", outputDir)
 		os.Exit(1)
 	}
 

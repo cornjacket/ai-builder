@@ -10,8 +10,3 @@ ai-builder/**/*.pyc
 ai-builder/TASK-*.md
 !ai-builder/TASK-TEMPLATE.md
 
-# Regression test: generated artifacts (produced by the pipeline at test time)
-tests/regression/fibonacci/work/fibonacci/
-tests/regression/fibonacci/work/logs/
-tests/regression/fibonacci/work/execution.log
-tests/regression/fibonacci/work/TASK-*.md
