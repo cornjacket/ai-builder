@@ -11,7 +11,7 @@
 # Priority values: CRITICAL, HIGH, MED, LOW (default: —)
 #
 # Examples:
-#   new-pipeline-subtask.sh --epic main --folder in-progress --parent my-project --name build-1
+#   new-pipeline-subtask.sh --epic main --folder in-progress --parent my-project --name build-1 --level TOP
 #   new-pipeline-subtask.sh --epic main --folder in-progress --parent my-project/build-1 --name auth-component
 
 set -euo pipefail
@@ -30,6 +30,7 @@ PARENT=""
 NAME=""
 TAGS="—"
 PRIORITY="—"
+LEVEL="INTERNAL"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -39,12 +40,13 @@ while [[ $# -gt 0 ]]; do
         --name)     NAME="$2";     shift 2 ;;
         --tags)     TAGS="$2";     shift 2 ;;
         --priority) PRIORITY="$2"; shift 2 ;;
+        --level)    LEVEL="$2";    shift 2 ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
 
 if [[ -z "$FOLDER" || -z "$PARENT" || -z "$NAME" ]]; then
-    echo "Usage: new-pipeline-subtask.sh --folder <status> --parent <task> --name <name> [--epic <epic>] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
+    echo "Usage: new-pipeline-subtask.sh --folder <status> --parent <task> --name <name> [--epic <epic>] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>] [--level <TOP|INTERNAL>]"
     exit 1
 fi
 
@@ -83,6 +85,7 @@ sed \
     -e "s/{{TAGS}}/$TAGS/g" \
     -e "s/{{PARENT}}/$PARENT_NAME/g" \
     -e "s/{{PRIORITY}}/$PRIORITY/g" \
+    -e "s/{{LEVEL}}/$LEVEL/g" \
     "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------

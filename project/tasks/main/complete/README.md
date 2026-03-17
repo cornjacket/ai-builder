@@ -15,4 +15,8 @@
 - [452116-optimize-tm-agent-prompt](452116-optimize-tm-agent-prompt/)
 - [f7a6af-redefine-task-system-human-pipeline-boundary](f7a6af-redefine-task-system-human-pipeline-boundary/)
 - [d9c12f-review-orchestrator-routing-and-flow](d9c12f-review-orchestrator-routing-and-flow/)
+- [3f059a-add-platform-monolith-regression-test](3f059a-add-platform-monolith-regression-test/)
+- [285e84-write-regression-test-sop](285e84-write-regression-test-sop/)
+- [0838a5-tm-tree-traversal](0838a5-tm-tree-traversal/)
+- [cc2203-resolve-pipeline-spec-adherence-failure](cc2203-resolve-pipeline-spec-adherence-failure/)
 <!-- task-list-end -->

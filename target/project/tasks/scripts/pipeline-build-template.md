@@ -11,6 +11,7 @@
 | Complexity  | —                      |
 | Stop-after  | false                  |
 | Last-task   | false                  |
+| Level       | {{LEVEL}}              |
 
 ## Goal
 

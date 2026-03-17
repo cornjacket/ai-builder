@@ -5,5 +5,9 @@
 <!-- When a task is finished, run move-task.sh --to complete before moving on. -->
 <!-- task-list-start -->
 - [59d31e-add-completion-summary-to-target-claude-md](59d31e-add-completion-summary-to-target-claude-md/)
-- [2faff3-add-configurable-start-state-and-routes-to-orchestrator](2faff3-add-configurable-start-state-and-routes-to-orchestrator/)
+- [697e5a-add-rename-task-script](697e5a-add-rename-task-script/)
+- [b13566-review-regression-test-readmes](b13566-review-regression-test-readmes/)
+- [ef40e2-add-session-context-document](ef40e2-add-session-context-document/)
+- [a09648-optimize-pipeline-tm-prompt](a09648-optimize-pipeline-tm-prompt/)
+- [4dfdf2-improve-regression-test-infrastructure](4dfdf2-improve-regression-test-infrastructure/)
 <!-- task-list-end -->
