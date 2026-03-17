@@ -36,8 +36,8 @@ as needed.
 <!-- subtask-list-start -->
 - [ ] [7226c5-define-oracle-role](7226c5-define-oracle-role/)
 - [ ] [9b9d18-design-reviews-directory](9b9d18-design-reviews-directory/)
-- [ ] [dcdf24-add-stop-after-to-subtask-template](dcdf24-add-stop-after-to-subtask-template/)
 - [ ] [dd2d56-add-reviews-directory-to-target](dd2d56-add-reviews-directory-to-target/)
+- [x] [dcdf24-add-stop-after-to-subtask-template](dcdf24-add-stop-after-to-subtask-template/)
 - [ ] [918f07-design-planning-mode-outcomes](918f07-design-planning-mode-outcomes/)
 - [ ] [f58844-design-planning-tools-for-architect](f58844-design-planning-tools-for-architect/)
 - [ ] [5e26c5-design-pipeline-mode-signalling](5e26c5-design-pipeline-mode-signalling/)

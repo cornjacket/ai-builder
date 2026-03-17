@@ -29,19 +29,24 @@ need distinct outcomes to signal planning-specific states.
 
 - Should planning outcomes be entirely separate from implementation outcomes,
   or can `DONE` be reused with the TM interpreting context from the job doc?
-- How does the orchestrator know it's in Planning mode vs Implementation mode
-  to route `PLAN_READY` to terminate rather than continue? Options:
-  - TM instruction in the job document (Oracle crafts it per phase)
-  - A `## Mode: plan | implement` field in the job document
-  - A `--mode` CLI flag on the orchestrator
+- How does the orchestrator know it's in Planning mode? With ROUTES moving
+  toward external config, Planning mode is likely a separate ROUTES config
+  file rather than a hardcoded branch — `PLAN_READY` would simply not appear
+  in the implementation ROUTES config and vice versa.
 - Should `NEEDS_REVISION` loop back to ARCHITECT indefinitely, or should
-  there be a max iteration count to prevent infinite loops?
+  there be a max iteration count? (The existing `MAX_ROLE_ITERATIONS` guard
+  already handles self-routing loops — verify it covers this case.)
+
+**Updated direction (2026-03-16):** Planning mode outcomes belong in a
+Planning-mode ROUTES config, not hardcoded in `orchestrator.py`. Design
+should be done in conjunction with `5e26c5-design-pipeline-mode-signalling`
+and `2faff3-add-configurable-start-state-and-routes`.
 
 **Deliverables:**
 
-- Updated ROUTES table in `orchestrator.py` to handle planning-mode outcomes
-- Updated ARCHITECT prompt in `build_prompt()` to include planning-mode
-  outcome options when in Planning mode
+- Defined planning-mode outcomes and their routing in a config format
+- Updated ARCHITECT prompt to include planning-mode outcome options when
+  in Planning mode (or a separate `roles/ARCHITECT_PLAN.md`)
 - Updated TM prompt to handle `PLAN_READY` termination
 - Updated `ai-builder/FLOW.md` with the planning-mode routing table
 

@@ -26,26 +26,29 @@ more explicit and reliable.
 | `--mode plan\|implement` CLI flag | Unambiguous, enforced at orchestrator level | Requires CLI change; Oracle must pass it correctly |
 | Separate orchestrator entry points | Maximum clarity, no ambiguity | More complex, harder to extend for N phases |
 
-**Recommendation to evaluate:** A `## Mode` field in the job document is
-likely the right balance — it is explicit and structured without requiring
-a new CLI flag, and it gives the TM clear instructions without relying on
-prose interpretation.
+**Updated direction (2026-03-16):** The `## Mode` field in the job document
+remains a reasonable signal, but the framing has shifted. ROUTES and AGENTS
+are moving toward external configuration files (see `2faff3` and the pipeline
+flexibility brainstorm). Mode signalling should be designed with that in mind:
+Planning mode is a different ROUTES config, not a hardcoded branch in
+`orchestrator.py`.
 
 **Questions to resolve:**
 
 - Does mode affect only the TM, or does it also change ARCHITECT behaviour
-  (e.g. allowed tools, available outcomes)?
+  (allowed tools, available outcomes)?
 - Can a single pipeline run span multiple modes, or is mode fixed per run?
-- How does mode interact with `--start-role`? (e.g. starting at ARCHITECT
-  in Planning mode vs Implementation mode)
+- Is mode best expressed as a separate ROUTES config file, a `## Mode` field
+  in the job doc, or a `--mode` CLI flag? Must be consistent with the
+  external config direction.
+- How does this interact with `2faff3-add-configurable-start-state-and-routes`?
 
 **Deliverables:**
 
-- A decision on the mode signalling mechanism
-- Updated `JOB-TEMPLATE.md` if a `## Mode` field is chosen
-- Updated `orchestrator.py` and `build_prompt()` to read and act on mode
-- Updated `ai-builder/FLOW.md` to document the mode field
+- A decision on mode signalling consistent with the external config direction
+- Updated orchestrator or config format to support Planning mode routes
 - Updated Oracle role (`roles/ORACLE.md`) with instructions on setting mode
+- Updated `ai-builder/FLOW.md` to document the mode field
 
 ## Notes
 

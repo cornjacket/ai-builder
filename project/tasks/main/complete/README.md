@@ -19,4 +19,5 @@
 - [285e84-write-regression-test-sop](285e84-write-regression-test-sop/)
 - [0838a5-tm-tree-traversal](0838a5-tm-tree-traversal/)
 - [cc2203-resolve-pipeline-spec-adherence-failure](cc2203-resolve-pipeline-spec-adherence-failure/)
+- [2faff3-add-configurable-start-state-and-routes-to-orchestrator](2faff3-add-configurable-start-state-and-routes-to-orchestrator/)
 <!-- task-list-end -->

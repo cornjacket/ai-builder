@@ -2,7 +2,7 @@
 
 | Field    | Value                                        |
 |----------|----------------------------------------------|
-| Status | in-progress |
+| Status | complete |
 | Epic     | main                                         |
 | Tags     | orchestrator, pipeline, flexibility          |
 | Parent   | —                                            |
@@ -109,7 +109,7 @@ usage examples, and the routes JSON format.
 - [x] [7a860d-remove-request-functionality](7a860d-remove-request-functionality/)
 - [x] [ec4004-regression-test-start-state-scenarios](ec4004-regression-test-start-state-scenarios/)
 - [x] [d05f90-split-task-manager-into-handlers](d05f90-split-task-manager-into-handlers/)
-- [ ] [00f0ec-update-optimize-pipeline-task-for-handler-split](00f0ec-update-optimize-pipeline-task-for-handler-split/)
+- [x] [00f0ec-update-optimize-pipeline-task-for-handler-split](00f0ec-update-optimize-pipeline-task-for-handler-split/)
 - [x] [2b14b2-update-tm-acronym-references](2b14b2-update-tm-acronym-references/)
 <!-- subtask-list-end -->
 

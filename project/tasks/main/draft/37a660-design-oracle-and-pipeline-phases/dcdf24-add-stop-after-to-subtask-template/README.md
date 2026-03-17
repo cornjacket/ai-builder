@@ -2,7 +2,7 @@
 
 | Field    | Value                |
 |----------|----------------------|
-| Status   | —                    |
+| Status | complete |
 | Epic     | main             |
 | Tags     | oracle, tooling             |
 | Parent   | 37a660-design-oracle-and-pipeline-phases           |
