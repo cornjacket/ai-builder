@@ -144,33 +144,40 @@ Components table in the ## Components section.
 Your job:
 1. Read the Components table from the current job doc.
    Table format: | Name | Complexity | Description |
-   The parent task's directory name (id-name) is the last path segment of the
-   current job doc's directory — you will need it for --parent below.
 
-2. For each component row, create a subtask directly in in-progress:
-     {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-id-name> --name <component-name>
+   Determine the parent's path relative to in-progress/:
+     current job doc path: <TARGET_REPO>/project/tasks/<epic>/in-progress/<rel-path>/README.md
+     parent rel path     : <rel-path>   (everything between in-progress/ and /README.md)
+   You will need this for --parent below.
 
-3. For each created subtask, edit its README to fill in:
+2. Read the parent task's Level field from its metadata table (TOP or INTERNAL).
+
+3. For each component row, create a subtask directly in in-progress:
+     {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-rel-path> --name <component-name>
+
+4. For each created subtask, edit its README to fill in:
    - The ## Goal section: the component's one-line description from the table
    - The ## Context section: the parent service's Goal/Context
    - The Complexity field in the metadata table: value from the Components table
 
-4. For the LAST subtask only (the integration component), also set:
+5. For the LAST subtask only (the integration component), also set:
    - The Last-task field in the metadata table to: true
    (Change `| Last-task   | false |` to `| Last-task   | true |`)
+   - The Level field to the parent task's Level value read in step 2
+   (Change `| Level       | INTERNAL |` to `| Level       | <parent-level> |`)
 
-5. Order subtasks by implementation dependency (foundations first).
+6. Order subtasks by implementation dependency (foundations first).
    The integration subtask must always be last.
 
-6. Point the pipeline at the first subtask:
+7. Point the pipeline at the first subtask:
      {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <first-subtask-readme-path>
 
-7. Output OUTCOME: TM_SUBTASKS_READY
+8. Output OUTCOME: TM_SUBTASKS_READY
 
 Available tools:
-  {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent> --name <name>
+  {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-rel-path> --name <name>
   {PM_SCRIPTS_DIR}/set-current-job.sh      --output-dir {output_dir} <task-readme-path>
-  {PM_SCRIPTS_DIR}/list-tasks.sh           --epic {EPIC} --folder in-progress --depth 2
+  {PM_SCRIPTS_DIR}/list-tasks.sh           --epic {EPIC} --folder in-progress --depth 4
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
@@ -183,39 +190,22 @@ Epic              : {EPIC}
 Current job doc   : {current_job_path}
 
 The TESTER has just completed a subtask (TESTER_TESTS_PASS).
-The current job doc is the completed subtask's README. Read it to identify
-the subtask id-name and its Parent field.
+The current job doc is the completed subtask's README.
 
 Your job:
-1. Mark the completed subtask done:
-     {PM_SCRIPTS_DIR}/complete-task.sh --epic {EPIC} --folder in-progress --parent <parent-id-name> --name <subtask-id-name>
+1. Run on-task-complete.sh with the current job doc path:
+     RESULT=$({PM_SCRIPTS_DIR}/on-task-complete.sh --current <current-job-doc> --output-dir {output_dir} --epic {EPIC})
 
-2. Check the subtask's Stop-after field in its README.
-   If Stop-after is true:
-   - Output OUTCOME: TM_STOP_AFTER
-   - Include in HANDOFF: which subtask completed, what was implemented,
-     TESTER results, and that Oracle intervention is required before continuing.
-   If Stop-after is false, continue to step 3.
-
-3. Check whether this was the last (integration) subtask:
-     {PM_SCRIPTS_DIR}/is-last-task.sh <completed-subtask-readme-path>
-   Exit 0 = this was the last subtask. Exit 1 = more subtasks remain.
-
-4. If more subtasks remain (exit 1):
-   - Get the next incomplete subtask:
-       NEXT=$({PM_SCRIPTS_DIR}/next-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-id-name>)
-   - Point the pipeline at it:
-       {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} $NEXT
-   - Output OUTCOME: TM_SUBTASKS_READY
-
-5. If this was the last subtask (exit 0):
-   - Output OUTCOME: TM_ALL_DONE
+2. Interpret the result:
+   - "NEXT <path>"  → more subtasks remain; output OUTCOME: TM_SUBTASKS_READY
+   - "DONE"         → all subtasks complete; output OUTCOME: TM_ALL_DONE
+   - "STOP_AFTER"   → human review required; output OUTCOME: TM_STOP_AFTER
+                      Include in HANDOFF: which subtask completed, what was
+                      implemented, TESTER results, and that Oracle intervention
+                      is required before continuing.
 
 Available tools:
-  {PM_SCRIPTS_DIR}/complete-task.sh   --epic {EPIC} --folder in-progress --parent <parent> --name <id-name>
-  {PM_SCRIPTS_DIR}/is-last-task.sh    <task-readme-path>
-  {PM_SCRIPTS_DIR}/next-subtask.sh    --epic {EPIC} --folder in-progress --parent <parent-id-name>
-  {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <task-readme-path>
+  {PM_SCRIPTS_DIR}/on-task-complete.sh --current <readme-path> --output-dir {output_dir} --epic {EPIC}
 
 Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
 """
@@ -231,16 +221,14 @@ Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
             complexity_match = re.search(r'\|\s*Complexity\s*\|\s*(\S+)\s*\|', job_content)
             complexity = complexity_match.group(1) if complexity_match else "—"
             if complexity == "atomic":
-                # Component subtask created by TM: design mode
+                # Atomic component subtask: design mode
                 valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
-            elif "## Components" in job_content:
-                # Service or composite task: decompose mode
+            elif complexity in ("composite", "—"):
+                # composite = needs further decomposition; — = top-level service (unset)
                 valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
-            elif "## Design" in job_content and "## Acceptance Criteria" in job_content:
-                # Legacy standalone job doc (no Components section): design mode
-                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
             else:
-                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEED_HELP"
+                # Fallback for legacy job docs without a Complexity field
+                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
         elif role == "IMPLEMENTOR":
             valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
         elif role == "TESTER":

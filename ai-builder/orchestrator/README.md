@@ -15,6 +15,7 @@ document from input to tested implementation through specialist agents.
 | `agent_wrapper.md` | Code companion: inputs, outputs, internals for agent_wrapper.py |
 | `job-format.md` | Job document format and agent output field specification |
 | `routing.md` | ROUTES table, outcome values per role, DOCUMENTER hook |
+| `pipeline-behavior.md` | End-to-end pipeline flow: modes, Level field, tree traversal algorithm |
 | `decomposition.md` | Multi-level decomposition protocol, task tree navigation |
 | `open-questions.md` | Unresolved design questions |
 
@@ -131,6 +132,7 @@ by TASK_MANAGER via `set-current-job.sh` when advancing to the next task.
 
 - [`routing.md`](routing.md) — full ROUTES table, outcome values, DOCUMENTER hook
 - [`job-format.md`](job-format.md) — job document structure, agent output fields
+- [`pipeline-behavior.md`](pipeline-behavior.md) — end-to-end pipeline flow, Level field, tree traversal
 - [`decomposition.md`](decomposition.md) — multi-level decomposition, task tree navigation
 - [`orchestrator.md`](orchestrator.md) — orchestrator.py internals
 - [`agent_wrapper.md`](agent_wrapper.md) — agent_wrapper.py internals

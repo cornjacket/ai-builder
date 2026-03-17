@@ -13,7 +13,8 @@ sections untouched.
 
 ## Decompose Mode
 
-**Trigger:** the job document contains a `## Components` section.
+**Trigger:** the job document has `Complexity: —` (top-level service, unset)
+or `Complexity: composite` (a composite component needing further decomposition).
 
 Your job:
 1. Read the `## Goal` and `## Context` sections.
@@ -29,15 +30,53 @@ Your job:
 
 | Name | Complexity | Description |
 |------|------------|-------------|
-| <name> | atomic | <one-line responsibility> |
-| <name> | composite | <one-line responsibility> |
-| integrate | atomic | Connect all components into a runnable service and verify end-to-end behaviour |
+| <name> | atomic | <full API contract — see requirements below> |
+| <name> | composite | <one-line responsibility; sub-contracts defined at next decomposition level> |
+| integrate | atomic | Wire all components into a cohesive unit and verify this level's acceptance criteria |
 ```
 
-   **The final row must always be an integration component** named `integrate`
-   (or similar). Its job is to wire all preceding components together, ensure
-   the entry point exists (e.g. `main.go`), and serve as the target for
-   service-level acceptance tests. It is always `atomic`.
+   **Description column requirements:**
+
+   TM copies each component's description verbatim into its Goal. The
+   design-mode ARCHITECT will only see that Goal — if a contract is missing
+   or summarised here, it will be invented incorrectly downstream.
+
+   What to include depends on the component's role:
+
+   - **HTTP-handling components** (handlers, routers, API layers): include the
+     full API contract — every endpoint assigned to this component (method,
+     path, success and error status codes) plus the complete parameter models
+     for each endpoint (request body field names and types, response field
+     names and types). Do not paraphrase or abbreviate field names — copy them
+     exactly from the parent spec.
+
+     Example:
+     ```
+     POST /users {"username":string,"password":string} → 201 {"id":string,"username":string};
+     GET /users/{id} → 200 {"id":string,"username":string} or 404;
+     DELETE /users/{id} → 204 or 404
+     ```
+
+   - **Internal components** (stores, validators, processors): omit HTTP routes.
+     Include only the data models this component operates on — the struct fields
+     and types it stores, validates, or transforms. These are typically derived
+     from the parameter models of the HTTP-handling component that calls them.
+
+   - **Composite components**: one line is sufficient — the sub-contracts will
+     be defined when that component is decomposed in a subsequent pass.
+
+   **The final row must always be an integration component** named `integrate`.
+   It is always `atomic`. Its scope depends on the `Level` field of the job document:
+
+   - **`Level: TOP`** — produce a runnable entry point (e.g. `main.go`), verify
+     end-to-end acceptance criteria for the full service.
+   - **`Level: INTERNAL`** — wire the preceding components into a cohesive unit
+     that satisfies this composite's interface contract. It may not be
+     independently runnable. Tests verify the assembled unit's component
+     contract only, not full service behaviour.
+
+   The `integrate` component inherits the `Level` of the current job document.
+   Read the `Level` field from the metadata table to determine which scope applies.
 
 5. Fill in the `## Suggested Tools` section with the language-agnostic
    build and test commands for this service, sourced from the target
@@ -52,8 +91,7 @@ Your job:
 
 ## Design Mode
 
-**Trigger:** the job document contains `## Design` and `## Acceptance Criteria`
-sections (but no `## Components` section).
+**Trigger:** the job document has `Complexity: atomic`.
 
 Your job:
 1. Read the `## Goal` and `## Context` sections.

@@ -44,19 +44,30 @@ DOCUMENTER hook does not run in non-TM mode.
 
 ---
 
-## Last-task Detection
+## Task Completion and Tree Traversal
 
-When TESTER passes for a subtask, TM checks whether it was the integration
-(last) subtask by running `is-last-task.sh` on the completed subtask's README.
-The `Last-task` field in the task metadata is set to `true` by TM when creating
-subtasks — the final component (the integration step) gets `Last-task: true`,
-all others get `false`.
+When TESTER passes for a subtask, TM calls `on-task-complete.sh` with the
+completed subtask's README. This script handles three operations atomically:
 
-- Exit 0 (`Last-task: true`) → `TM_ALL_DONE`
-- Exit 1 (`Last-task: false`) → find next subtask → `TM_SUBTASKS_READY`
+1. Marks the subtask complete (`[x]`) in its parent's subtask list.
+2. Checks `Stop-after: true` — if set, returns `STOP_AFTER`.
+3. Runs upward tree traversal (`advance-pipeline.sh`):
+   - If `Last-task: false` → finds the next sibling → returns `NEXT <path>`
+   - If `Last-task: true` → walks up to the parent composite node, marks it
+     complete, and continues upward until a sibling is found or the pipeline
+     boundary (a human-owned `USER-TASK` or `USER-SUBTASK`) is reached.
 
-This avoids traversing the parent's subtask list at runtime. The intent is
-embedded in the task itself at creation time.
+| `on-task-complete.sh` output | TM outcome |
+|-----------------------------|------------|
+| `NEXT <path>` | `TM_SUBTASKS_READY` |
+| `DONE` | `TM_ALL_DONE` |
+| `STOP_AFTER` | `TM_STOP_AFTER` |
+
+The `Last-task` field is set at creation time — the final component (the
+integration step) gets `Last-task: true`, all others get `false`. This
+embeds traversal intent in the task, avoiding runtime sibling-list inspection.
+
+See `pipeline-behavior.md` for the full traversal algorithm.
 
 ---
 
