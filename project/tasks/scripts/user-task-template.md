@@ -7,6 +7,7 @@
 | Epic        | {{EPIC}}               |
 | Tags        | {{TAGS}}               |
 | Priority    | {{PRIORITY}}           |
+| Next-subtask-id | 0000               |
 
 ## Goal
 

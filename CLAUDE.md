@@ -78,6 +78,14 @@ Tasks are organized by epic and status. Each task is a directory containing a
 `README.md` that describes the work. Subtasks are subdirectories of their
 parent task.
 
+**Naming convention:**
+- Top-level tasks: `{6-char-hex-id}-{name}` (e.g. `a3f2c1-my-task`)
+- Subtasks: `{parent-short-id}-{NNNN}-{name}` (e.g. `a3f2c1-0001-design-review`)
+
+The `NNNN` counter is stored in the parent's `Next-subtask-id` metadata field and
+incremented automatically by the creation scripts. When a subtask is marked complete,
+its directory is renamed with an `X-` prefix (e.g. `X-a3f2c1-0001-design-review`).
+
 ```
 project/tasks/
     <epic>/
@@ -110,6 +118,12 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 > `README.md` files to add or remove subtasks, and never manually move task
 > directories between status folders. The scripts keep the filesystem and
 > documentation in sync.
+
+> **Rule:** Never create task directories or write task README files directly
+> using shell commands (`cat`, `mkdir`, heredocs, etc.). Always use the
+> provided scripts (`new-user-task.sh`, `new-user-subtask.sh`,
+> `new-pipeline-subtask.sh`). Use `Edit` or `Write` only to fill in content
+> sections (Goal, Context, Notes) after a script has created the file.
 
 > **Rule:** When a subtask is finished, always run `complete-task.sh --parent`
 > to mark it `[x]` before moving on to the next subtask.

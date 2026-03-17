@@ -16,6 +16,8 @@ set -euo pipefail
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
 TASK_TEMPLATE="$SCRIPTS_DIR/user-subtask-template.md"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -56,12 +58,13 @@ if [[ ! -d "$PARENT_DIR" ]]; then
     exit 1
 fi
 
-# Generate a short unique ID and build the directory name
-ID="$(openssl rand -hex 3)"
-DIRNAME="$ID-$NAME"
+# Derive incremental ID from parent
+PARENT_README="$PARENT_DIR/README.md"
+PARENT_SHORT_ID="$(get_parent_short_id "$PARENT_DIR")"
+NEXT_ID="$(get_next_subtask_id "$PARENT_README")"
+DIRNAME="$PARENT_SHORT_ID-$NEXT_ID-$NAME"
 
 TASK_DIR="$PARENT_DIR/$DIRNAME"
-PARENT_README="$PARENT_DIR/README.md"
 
 # ---------------------------------------------------------------------------
 # Create subtask directory and README
@@ -86,6 +89,9 @@ if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
 else
     echo "Warning: no subtask list markers found in $PARENT_README — add the entry manually."
 fi
+
+# Increment Next-subtask-id in parent
+increment_subtask_id "$PARENT_README"
 
 # ---------------------------------------------------------------------------
 # Done

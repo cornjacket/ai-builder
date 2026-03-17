@@ -7,7 +7,7 @@
 | Tags     | oracle, orchestrator, design             |
 | Parent   | —           |
 | Priority | HIGH         |
-
+| Next-subtask-id | 0009               |
 ## Description
 
 Design and implement the Oracle (front-end AI) and the N-phase pipeline
@@ -34,15 +34,15 @@ as needed.
 
 <!-- When a subtask is finished, run complete-subtask.sh to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [7226c5-define-oracle-role](7226c5-define-oracle-role/)
-- [ ] [9b9d18-design-reviews-directory](9b9d18-design-reviews-directory/)
-- [ ] [dd2d56-add-reviews-directory-to-target](dd2d56-add-reviews-directory-to-target/)
-- [x] [dcdf24-add-stop-after-to-subtask-template](dcdf24-add-stop-after-to-subtask-template/)
-- [ ] [918f07-design-planning-mode-outcomes](918f07-design-planning-mode-outcomes/)
-- [ ] [f58844-design-planning-tools-for-architect](f58844-design-planning-tools-for-architect/)
-- [ ] [5e26c5-design-pipeline-mode-signalling](5e26c5-design-pipeline-mode-signalling/)
-- [ ] [e975fc-design-pipeline-regression-test](e975fc-design-pipeline-regression-test/)
-- [ ] [2c2130-design-subagent-cwd-convention](2c2130-design-subagent-cwd-convention/)
+- [ ] [37a660-0000-define-oracle-role](37a660-0000-define-oracle-role/)
+- [ ] [37a660-0001-design-reviews-directory](37a660-0001-design-reviews-directory/)
+- [ ] [37a660-0002-add-reviews-directory-to-target](37a660-0002-add-reviews-directory-to-target/)
+- [x] [X-37a660-0003-add-stop-after-to-subtask-template](X-37a660-0003-add-stop-after-to-subtask-template/)
+- [ ] [37a660-0004-design-planning-mode-outcomes](37a660-0004-design-planning-mode-outcomes/)
+- [ ] [37a660-0005-design-planning-tools-for-architect](37a660-0005-design-planning-tools-for-architect/)
+- [ ] [37a660-0006-design-pipeline-mode-signalling](37a660-0006-design-pipeline-mode-signalling/)
+- [ ] [37a660-0007-design-pipeline-regression-test](37a660-0007-design-pipeline-regression-test/)
+- [ ] [37a660-0008-design-subagent-cwd-convention](37a660-0008-design-subagent-cwd-convention/)
 <!-- subtask-list-end -->
 
 ## Notes

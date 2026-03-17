@@ -7,7 +7,7 @@
 | Tags     | documentation, architecture    |
 | Parent   | —                              |
 | Priority | HIGH                           |
-
+| Next-subtask-id | 0003               |
 ## Description
 
 Establish a formal, version-controlled documentation structure for the
@@ -29,9 +29,9 @@ The output of this task is the documentation itself. Once complete, update
 
 <!-- When a subtask is finished, run complete-subtask.sh to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [7e44fc-design-documentation-structure](7e44fc-design-documentation-structure/)
-- [ ] [60ae18-create-docs-from-brainstorms](60ae18-create-docs-from-brainstorms/)
-- [ ] [329663-audit-task-and-readme-references](329663-audit-task-and-readme-references/)
+- [ ] [f1b8a0-0000-design-documentation-structure](f1b8a0-0000-design-documentation-structure/)
+- [ ] [f1b8a0-0001-create-docs-from-brainstorms](f1b8a0-0001-create-docs-from-brainstorms/)
+- [ ] [f1b8a0-0002-audit-task-and-readme-references](f1b8a0-0002-audit-task-and-readme-references/)
 <!-- subtask-list-end -->
 
 ## Notes

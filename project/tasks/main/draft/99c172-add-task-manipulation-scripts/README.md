@@ -7,7 +7,7 @@
 | Tags     | tooling, task-management     |
 | Parent   | —                            |
 | Priority | MED                          |
-
+| Next-subtask-id | 0003               |
 ## Description
 
 Add three structural manipulation scripts to the task management system
@@ -50,9 +50,9 @@ and the `CLAUDE.md` scripts reference section.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [674af4-implement-rename-task](674af4-implement-rename-task/)
-- [ ] [7fdec0-implement-promote-to-subtask](7fdec0-implement-promote-to-subtask/)
-- [ ] [c0ee85-implement-promote-to-task](c0ee85-implement-promote-to-task/)
+- [ ] [99c172-0000-implement-rename-task](99c172-0000-implement-rename-task/)
+- [ ] [99c172-0001-implement-convert-task](99c172-0001-implement-convert-task/)
+- [ ] [99c172-0002-implement-promote-task](99c172-0002-implement-promote-task/)
 <!-- subtask-list-end -->
 
 ## Notes

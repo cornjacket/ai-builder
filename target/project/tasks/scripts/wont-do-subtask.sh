@@ -15,6 +15,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -40,17 +42,20 @@ if [[ -z "$FOLDER" || -z "$PARENT" || -z "$NAME" ]]; then
     exit 1
 fi
 
-PARENT_README="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT/README.md"
-SUBTASK_README="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT/$NAME/README.md"
+PARENT_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT"
+PARENT_README="$PARENT_DIR/README.md"
 
 if [[ ! -f "$PARENT_README" ]]; then
     echo "Parent task not found: project/tasks/$EPIC/$FOLDER/$PARENT"
     exit 1
 fi
-if [[ ! -f "$SUBTASK_README" ]]; then
+
+SUBTASK_DIR="$(resolve_subtask_dir "$PARENT_DIR" "$NAME")"
+if [[ -z "$SUBTASK_DIR" ]]; then
     echo "Subtask not found: project/tasks/$EPIC/$FOLDER/$PARENT/$NAME"
     exit 1
 fi
+SUBTASK_README="$SUBTASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------
 # Set Status to wont-do in subtask README
@@ -62,10 +67,12 @@ sed -i '' "s/| Status *|[^|]*|/| Status | wont-do |/" "$SUBTASK_README"
 # Remove entry from parent README subtask list (any format, any check state)
 # ---------------------------------------------------------------------------
 
-# Linked format:  - [ ] [NAME](path/)  or  - [x] [NAME](path/)
+# Linked format: - [ ] [NAME](NAME/)  or  - [x] [X-NAME](X-NAME/)
 sed -i '' "/- \[.\] \[$NAME\]($NAME\/)/d" "$PARENT_README"
-# Plain format:   - [ ] NAME  or  - [x] NAME
+sed -i '' "/- \[.\] \[X-$NAME\](X-$NAME\/)/d" "$PARENT_README"
+# Plain format:   - [ ] NAME  or  - [x] X-NAME
 sed -i '' "/- \[.\] $NAME$/d" "$PARENT_README"
+sed -i '' "/- \[.\] X-$NAME$/d" "$PARENT_README"
 
 echo "Marked wont-do: $NAME"
 echo "Updated:        $PARENT_README"

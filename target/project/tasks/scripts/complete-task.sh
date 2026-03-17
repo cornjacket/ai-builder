@@ -27,6 +27,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -73,14 +75,29 @@ if [[ -n "$PARENT" ]]; then
         exit 1
     fi
 
+    SUBTASK_DIR="$TASKS_DIR/$FOLDER/$PARENT/$NAME"
+    XNAME="X-$NAME"
+    XSUBTASK_DIR="$TASKS_DIR/$FOLDER/$PARENT/$XNAME"
+
     if [[ "$UNDO" == true ]]; then
-        if ! grep -q "\- \[x\].*$NAME" "$PARENT_README"; then
+        # Accept either X-NAME (already renamed) or NAME (not yet renamed)
+        if grep -q "\- \[x\].*$XNAME" "$PARENT_README"; then
+            CURRENT_SUBTASK_DIR="$XSUBTASK_DIR"
+            CURRENT_README="$XSUBTASK_DIR/README.md"
+        elif grep -q "\- \[x\].*$NAME" "$PARENT_README"; then
+            CURRENT_SUBTASK_DIR="$SUBTASK_DIR"
+            CURRENT_README="$SUBTASK_README"
+        else
             echo "Subtask '$NAME' is not marked complete in $PARENT_README"
             exit 1
         fi
-        # Handle linked format: - [x] [NAME](path/)
+        # Rename X-NAME back to NAME on disk if needed
+        if [[ -d "$XSUBTASK_DIR" ]]; then
+            mv "$XSUBTASK_DIR" "$SUBTASK_DIR"
+        fi
+        # Restore checkbox and link in parent README
+        sed -i '' "s|- \[x\] \[$XNAME\](X-$NAME/)|- [ ] [$NAME]($NAME/)|" "$PARENT_README"
         sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
-        # Handle plain format: - [x] NAME
         sed -i '' "s|- \[x\] $NAME$|- [ ] $NAME|" "$PARENT_README"
         sed -i '' "s/| Status *|[^|]*|/| Status | — |/" "$SUBTASK_README"
         echo "Marked incomplete: $NAME"
@@ -89,11 +106,13 @@ if [[ -n "$PARENT" ]]; then
             echo "Subtask '$NAME' not found or already complete in $PARENT_README"
             exit 1
         fi
-        # Handle linked format: - [ ] [NAME](path/)
-        sed -i '' "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
-        # Handle plain format: - [ ] NAME
-        sed -i '' "s|- \[ \] $NAME$|- [x] $NAME|" "$PARENT_README"
-        sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_README"
+        # Rename directory: NAME → X-NAME
+        mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
+        # Update checkbox and link in parent README
+        sed -i '' "s|- \[ \] \[$NAME\]($NAME/)|- [x] [$XNAME](X-$NAME/)|" "$PARENT_README"
+        # Handle plain format: - [ ] NAME (no link)
+        sed -i '' "s|- \[ \] $NAME$|- [x] $XNAME|" "$PARENT_README"
+        sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$XSUBTASK_DIR/README.md"
         echo "Marked complete: $NAME"
     fi
     exit 0

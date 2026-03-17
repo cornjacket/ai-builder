@@ -1,13 +1,13 @@
-# Task: {{NAME}}
+# Task: test-subtask-delete-me
 
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
 | Status      | —                      |
-| Epic        | {{EPIC}}               |
-| Tags        | {{TAGS}}               |
-| Parent      | {{PARENT}}             |
-| Priority    | {{PRIORITY}}           |
+| Epic        | main               |
+| Tags        | —               |
+| Parent      | c98d7b-incremental-subtask-ids             |
+| Priority    | —           |
 | Next-subtask-id | 0000               |
 
 ## Goal

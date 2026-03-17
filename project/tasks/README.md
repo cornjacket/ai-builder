@@ -89,6 +89,7 @@ project/tasks/
         list-tasks.sh           # display the task tree
         wont-do-subtask.sh      # mark a subtask wont-do: sets Status, removes from parent list
         next-subtask.sh         # print the path of the next incomplete subtask
+        task-id-helpers.sh      # shared helper: get/increment Next-subtask-id, resolve X- prefix
         user-task-template.md
         user-subtask-template.md
         pipeline-build-template.md
@@ -118,45 +119,55 @@ for each build.
 ## Task Format
 
 Each task is a **directory** containing a `README.md` that describes the task.
-The directory name is the task name in kebab-case, prefixed with a short
-unique ID (e.g. `a3f2c1-my-task`).
+
+**Top-level task** directory names are `{6-char-hex-id}-{name}` (e.g. `a3f2c1-my-task`).
+
+**Subtask** directory names are `{parent-short-id}-{NNNN}-{name}` where `{NNNN}` is a
+zero-padded 4-digit counter (e.g. `a3f2c1-0001-design-review`). The parent's
+`Next-subtask-id` field is incremented automatically by `new-user-subtask.sh` and
+`new-pipeline-subtask.sh`. When a subtask is marked complete, its directory is renamed
+with an `X-` prefix (e.g. `X-a3f2c1-0001-design-review`) to signal completion at the
+filesystem level.
 
 **USER-TASK header:**
 ```markdown
-| Field       | Value       |
-|-------------|-------------|
-| Task-type   | USER-TASK   |
-| Status      | draft       |
-| Epic        | main        |
-| Tags        | —           |
-| Priority    | HIGH        |
+| Field           | Value       |
+|-----------------|-------------|
+| Task-type       | USER-TASK   |
+| Status          | draft       |
+| Epic            | main        |
+| Tags            | —           |
+| Priority        | HIGH        |
+| Next-subtask-id | 0000        |
 ```
 
 **USER-SUBTASK header:**
 ```markdown
-| Field       | Value          |
-|-------------|----------------|
-| Task-type   | USER-SUBTASK   |
-| Status      | —              |
-| Epic        | main           |
-| Tags        | —              |
-| Parent      | my-parent-task |
-| Priority    | —              |
+| Field           | Value          |
+|-----------------|----------------|
+| Task-type       | USER-SUBTASK   |
+| Status          | —              |
+| Epic            | main           |
+| Tags            | —              |
+| Parent          | my-parent-task |
+| Priority        | —              |
+| Next-subtask-id | 0000           |
 ```
 
 **PIPELINE-SUBTASK header:**
 ```markdown
-| Field       | Value              |
-|-------------|--------------------|
-| Task-type   | PIPELINE-SUBTASK   |
-| Status      | —                  |
-| Epic        | main               |
-| Tags        | —                  |
-| Parent      | my-parent-task     |
-| Priority    | —                  |
-| Complexity  | —                  |
-| Stop-after  | false              |
-| Last-task   | false              |
+| Field           | Value              |
+|-----------------|--------------------|
+| Task-type       | PIPELINE-SUBTASK   |
+| Status          | —                  |
+| Epic            | main               |
+| Tags            | —                  |
+| Parent          | my-parent-task     |
+| Priority        | —                  |
+| Next-subtask-id | 0000               |
+| Complexity      | —                  |
+| Stop-after      | false              |
+| Last-task       | false              |
 ```
 
 Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).

@@ -19,6 +19,8 @@ set -euo pipefail
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
 TASK_TEMPLATE="$SCRIPTS_DIR/pipeline-build-template.md"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -62,13 +64,13 @@ if [[ ! -d "$PARENT_DIR" ]]; then
 fi
 
 # For pipeline-internal nodes the name is typically descriptive (e.g. build-1,
-# auth-component) rather than id-prefixed. Generate an ID prefix anyway for
-# consistency — the TM uses this when creating component subtasks.
-ID="$(openssl rand -hex 3)"
-DIRNAME="$ID-$NAME"
+# auth-component) rather than id-prefixed. Use incremental IDs for consistency.
+PARENT_README="$PARENT_DIR/README.md"
+PARENT_SHORT_ID="$(get_parent_short_id "$PARENT_DIR")"
+NEXT_ID="$(get_next_subtask_id "$PARENT_README")"
+DIRNAME="$PARENT_SHORT_ID-$NEXT_ID-$NAME"
 
 TASK_DIR="$PARENT_DIR/$DIRNAME"
-PARENT_README="$PARENT_DIR/README.md"
 
 # Extract just the immediate parent name for the Parent field
 PARENT_NAME="$(basename "$PARENT")"
@@ -97,6 +99,8 @@ if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
 else
     echo "Warning: no subtask list markers found in $PARENT_README — add the entry manually."
 fi
+
+increment_subtask_id "$PARENT_README"
 
 # ---------------------------------------------------------------------------
 # Done

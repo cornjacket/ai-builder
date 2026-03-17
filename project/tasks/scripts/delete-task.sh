@@ -19,6 +19,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -56,14 +58,26 @@ else
     PARENT_DIR="$STATUS_DIR"
 fi
 
-TASK_DIR="$PARENT_DIR/$NAME"
-HIDDEN_DIR="$PARENT_DIR/.$NAME"
 PARENT_README="$PARENT_DIR/README.md"
 
-if [[ ! -d "$TASK_DIR" ]]; then
-    echo "Task not found: $TASK_DIR"
-    exit 1
+# Resolve actual directory name (may have X- prefix if already completed)
+if [[ -n "$PARENT" ]]; then
+    RESOLVED_DIR="$(resolve_subtask_dir "$PARENT_DIR" "$NAME")"
+    if [[ -z "$RESOLVED_DIR" ]]; then
+        echo "Task not found: $PARENT_DIR/$NAME"
+        exit 1
+    fi
+else
+    RESOLVED_DIR="$PARENT_DIR/$NAME"
+    if [[ ! -d "$RESOLVED_DIR" ]]; then
+        echo "Task not found: $RESOLVED_DIR"
+        exit 1
+    fi
 fi
+
+TASK_DIR="$RESOLVED_DIR"
+ACTUAL_NAME="$(basename "$TASK_DIR")"
+HIDDEN_DIR="$PARENT_DIR/.$ACTUAL_NAME"
 
 if [[ ! -f "$PARENT_README" ]]; then
     echo "Parent README not found: $PARENT_README"
@@ -79,10 +93,11 @@ fi
 # Remove entry from parent README
 # ---------------------------------------------------------------------------
 
-# Matches both checked and unchecked subtask entries:  - [ ] [name](name/)  or  - [x] [name](name/)
-# Also matches plain task-list entries:                - [name](name/)
-if grep -q "\[$NAME\]($NAME/)" "$PARENT_README"; then
-    sed -i '' "/\[$NAME\]($NAME\/)/d" "$PARENT_README"
+# Remove entry from parent README — match by original name or X-prefixed name
+if grep -q "\[$NAME\]" "$PARENT_README"; then
+    sed -i '' "/\[$NAME\]/d" "$PARENT_README"
+elif grep -q "\[X-$NAME\]" "$PARENT_README"; then
+    sed -i '' "/\[X-$NAME\]/d" "$PARENT_README"
 else
     echo "Warning: no entry for '$NAME' found in $PARENT_README — skipping README update."
 fi
@@ -98,8 +113,8 @@ mv "$TASK_DIR" "$HIDDEN_DIR"
 # ---------------------------------------------------------------------------
 
 if [[ -n "$PARENT" ]]; then
-    echo "Deleted subtask: project/tasks/$EPIC/$FOLDER/$PARENT/$NAME/ → .$NAME/"
+    echo "Deleted subtask: project/tasks/$EPIC/$FOLDER/$PARENT/$ACTUAL_NAME/ → .$ACTUAL_NAME/"
 else
-    echo "Deleted task:    project/tasks/$EPIC/$FOLDER/$NAME/ → .$NAME/"
+    echo "Deleted task:    project/tasks/$EPIC/$FOLDER/$ACTUAL_NAME/ → .$ACTUAL_NAME/"
 fi
 echo "Updated:         $PARENT_README"

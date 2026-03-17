@@ -86,6 +86,14 @@ submitted. Can only contain pipeline-subtasks. Created with `new-pipeline-subtas
 - pipeline-subtask → pipeline-subtasks only
 - No human-owned node may appear under a pipeline-owned node
 
+**Naming convention:**
+- Top-level tasks: `{6-char-hex-id}-{name}` (e.g. `a3f2c1-my-task`)
+- Subtasks: `{parent-short-id}-{NNNN}-{name}` (e.g. `a3f2c1-0001-design-review`)
+
+The `NNNN` counter is stored in the parent's `Next-subtask-id` metadata field and
+incremented automatically by the creation scripts. When a subtask is marked complete,
+its directory is renamed with an `X-` prefix (e.g. `X-a3f2c1-0001-design-review`).
+
 **Domain ownership:**
 - **Frontend AI** (Oracle/human assistant): creates user-tasks, user-subtasks,
   and `build-N` pipeline-subtasks. Does NOT edit pipeline-internal subtasks
@@ -108,6 +116,11 @@ add `--parent` for subtasks.
 > **Rule:** Always use the scripts to manage tasks. Never manually edit task
 > `README.md` files to add or remove subtasks, and never manually move task
 > directories between status folders.
+
+> **Rule:** Never create task directories or write task README files directly
+> using shell commands (`cat`, `mkdir`, heredocs, etc.). Always use the
+> provided scripts. Use `Edit` or `Write` only to fill in content sections
+> (Goal, Context, Notes) after a script has created the file.
 
 > **Rule:** When a subtask is finished, always run `complete-task.sh --parent`
 > to mark it `[x]` before moving on to the next subtask.

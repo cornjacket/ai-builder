@@ -7,7 +7,7 @@
 | Tags     | oracle, documentation             |
 | Parent   | —           |
 | Priority | MED         |
-
+| Next-subtask-id | 0005               |
 ## Description
 
 Create the `ai-builder/oracle/` documentation directory and `roles/ORACLE.md`,
@@ -40,11 +40,11 @@ All output is documentation:
 
 <!-- When a subtask is finished, run complete-subtask.sh to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [89a588-create-oracle-directory-and-readme](89a588-create-oracle-directory-and-readme/)
-- [ ] [8375e8-create-oracle-phase-types-doc](8375e8-create-oracle-phase-types-doc/)
-- [ ] [311b40-create-roles-oracle-md](311b40-create-roles-oracle-md/)
-- [ ] [2eeba2-create-oracle-open-questions](2eeba2-create-oracle-open-questions/)
-- [ ] [47a0a9-create-pending-tasks-from-brainstorm](47a0a9-create-pending-tasks-from-brainstorm/)
+- [ ] [b1c374-0000-create-oracle-directory-and-readme](b1c374-0000-create-oracle-directory-and-readme/)
+- [ ] [b1c374-0001-create-oracle-phase-types-doc](b1c374-0001-create-oracle-phase-types-doc/)
+- [ ] [b1c374-0002-create-roles-oracle-md](b1c374-0002-create-roles-oracle-md/)
+- [ ] [b1c374-0003-create-oracle-open-questions](b1c374-0003-create-oracle-open-questions/)
+- [ ] [b1c374-0004-create-pending-tasks-from-brainstorm](b1c374-0004-create-pending-tasks-from-brainstorm/)
 <!-- subtask-list-end -->
 
 ## Notes

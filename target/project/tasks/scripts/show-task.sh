@@ -13,6 +13,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -45,7 +47,12 @@ fi
 STATUS_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER"
 
 if [[ -n "$PARENT" ]]; then
-    README="$STATUS_DIR/$PARENT/$NAME/README.md"
+    TASK_DIR="$(resolve_subtask_dir "$STATUS_DIR/$PARENT" "$NAME")"
+    if [[ -z "$TASK_DIR" ]]; then
+        echo "Task not found: $STATUS_DIR/$PARENT/$NAME"
+        exit 1
+    fi
+    README="$TASK_DIR/README.md"
 else
     README="$STATUS_DIR/$NAME/README.md"
 fi
