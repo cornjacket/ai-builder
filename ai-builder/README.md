@@ -24,7 +24,7 @@ the loop; agents do the work.
   [job doc]
       │
       ▼
-  ARCHITECT ──DONE──► IMPLEMENTOR ──DONE──► TESTER ──DONE──► (halt or TASK_MANAGER)
+  ARCHITECT ──DONE──► IMPLEMENTOR ──DONE──► TESTER ──DONE──► (halt or LEAF_COMPLETE_HANDLER)
       ▲                    │                   │
       └──NEEDS_ARCHITECT───┘                   └──FAILED──► IMPLEMENTOR
 ```
@@ -32,8 +32,8 @@ the loop; agents do the work.
 Two modes:
 
 - **Non-TM mode** (`--job`): single job document, pipeline halts when TESTER passes.
-- **TM mode** (`--target-repo`): TASK_MANAGER decomposes a project into tasks and
-  drives the pipeline task-by-task until the backlog is empty.
+- **TM mode** (`--target-repo`): two handler roles (DECOMPOSE_HANDLER, LEAF_COMPLETE_HANDLER)
+  manage the task system, driving the pipeline task-by-task until the build is complete.
 
 See [`orchestrator/README.md`](orchestrator/README.md) for the full pipeline
 reference including routing tables, data flow, and output directory layout.
@@ -43,5 +43,5 @@ reference including routing tables, data flow, and output directory layout.
 ## References
 
 - [`orchestrator/README.md`](orchestrator/README.md) — pipeline internals
-- [`../roles/`](../roles/) — role definitions (ARCHITECT, IMPLEMENTOR, TESTER, TASK_MANAGER, DOCUMENTER)
+- [`../roles/`](../roles/) — role definitions (ARCHITECT, IMPLEMENTOR, TESTER, DOCUMENTER)
 - [`../tests/regression/`](../tests/regression/) — regression test suite

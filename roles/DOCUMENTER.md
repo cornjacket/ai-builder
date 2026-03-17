@@ -163,8 +163,8 @@ the pending next role, runs DOCUMENTER, then routes to the pending role.
 DOCUMENTER_TRIGGERS = {"ARCHITECT", "IMPLEMENTOR", "TESTER"}
 ```
 
-TASK_MANAGER is excluded — it updates task metadata only and produces no
-documentation artifacts.
+DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER are excluded — they update task
+metadata only and produce no documentation artifacts.
 
 DOCUMENTER runs only when the triggering role emits a `DOCS:` field in its
 output. If `DOCS:` is absent or `none`, the hook is skipped.

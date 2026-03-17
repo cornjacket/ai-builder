@@ -72,7 +72,8 @@ Valid outcomes per role:
 | ARCHITECT | `DONE`, `NEED_HELP` |
 | IMPLEMENTOR | `DONE`, `NEEDS_ARCHITECT`, `NEED_HELP` |
 | TESTER | `DONE`, `FAILED`, `NEED_HELP` |
-| TASK_MANAGER | `DONE`, `NEED_HELP` |
+| DECOMPOSE_HANDLER     | `HANDLER_SUBTASKS_READY`, `HANDLER_NEED_HELP` |
+| LEAF_COMPLETE_HANDLER | `HANDLER_SUBTASKS_READY`, `HANDLER_ALL_DONE`, `HANDLER_STOP_AFTER`, `HANDLER_NEED_HELP` |
 
 `NEED_HELP` from any role halts the pipeline and signals that human
 intervention is required. The orchestrator exits with code 0.
@@ -122,5 +123,5 @@ Pipeline halts; job doc remains in output-dir as a record of the run
 ```
 
 In TM mode, the job document path is written to `current-job.txt` in the
-output directory by TASK_MANAGER, then read by the orchestrator to pass to
+output directory by LEAF_COMPLETE_HANDLER, then read by the orchestrator to pass to
 downstream roles.

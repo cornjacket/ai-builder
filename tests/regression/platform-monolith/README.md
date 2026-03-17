@@ -78,14 +78,12 @@ platform  [USER-TASK, pipeline boundary]
 The full multi-level decomposition and tree traversal pipeline:
 
 1. **ARCHITECT** (decompose: build-1) → produces Components table for platform
-2. **TASK_MANAGER** → creates metrics-ingestion-service, iam-service, integrate(TOP)
-3. **ARCHITECT** (decompose: metrics-ingestion-service) → produces sub-components
-4. **TASK_MANAGER** → creates atomic sub-components + integrate(INTERNAL)
-5. Each atomic component: **ARCHITECT** (design) → **IMPLEMENTOR** → **TESTER** → **TM** advances
-6. metrics integrate(INTERNAL): **ARCHITECT** → **IMPLEMENTOR** → **TESTER** → **TM** walks up
-7. **TM** advances to iam-service — same two-level pattern repeats
-8. After iam integrate(INTERNAL): **TM** walks up to build-1 level
-9. build-1 integrate(TOP): **ARCHITECT** → **IMPLEMENTOR** → **TESTER** → **TM** signals `TM_ALL_DONE`
+2. **DECOMPOSE_HANDLER** → creates metrics, iam, integrate(TOP) subtasks
+3. **ARCHITECT** (decompose: iam) → produces sub-components
+4. **DECOMPOSE_HANDLER** → creates atomic sub-components + integrate(INTERNAL)
+5. Each atomic component: **ARCHITECT** (design) → **IMPLEMENTOR** → **TESTER** → **LEAF_COMPLETE_HANDLER** advances
+6. iam integrate(INTERNAL): **ARCHITECT** → **IMPLEMENTOR** → **TESTER** → **LEAF_COMPLETE_HANDLER** walks up
+7. build-1 integrate(TOP): **ARCHITECT** → **IMPLEMENTOR** → **TESTER** → **LEAF_COMPLETE_HANDLER** signals `HANDLER_ALL_DONE`
 
 ---
 
@@ -164,30 +162,27 @@ Language: Go. Storage: in-memory.
 ## Expected Pipeline Routing
 
 ```
-ARCHITECT (decompose: build-1)              → ARCHITECT_DECOMPOSITION_READY → TASK_MANAGER
-TASK_MANAGER (create service subtasks)      → TM_SUBTASKS_READY             → ARCHITECT
+ARCHITECT (decompose: build-1)              → ARCHITECT_DECOMPOSITION_READY → DECOMPOSE_HANDLER
+DECOMPOSE_HANDLER (create build-1 subtasks) → HANDLER_SUBTASKS_READY        → ARCHITECT
 
-ARCHITECT (decompose: metrics-ingestion)    → ARCHITECT_DECOMPOSITION_READY → TASK_MANAGER
-TASK_MANAGER (create metrics components)    → TM_SUBTASKS_READY             → ARCHITECT
-... (design/implement/test each component)
-TESTER (metrics integrate, INTERNAL)        → TESTER_TESTS_PASS             → TASK_MANAGER
-TASK_MANAGER (on-task-complete: walk up)    → TM_SUBTASKS_READY             → ARCHITECT
+ARCHITECT (decompose: iam)                  → ARCHITECT_DECOMPOSITION_READY → DECOMPOSE_HANDLER
+DECOMPOSE_HANDLER (create iam subtasks)     → HANDLER_SUBTASKS_READY        → ARCHITECT
+  ARCHITECT (design: auth-lifecycle)        → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
+  IMPLEMENTOR / TESTER (auth-lifecycle)     → TESTER_TESTS_PASS             → LEAF_COMPLETE_HANDLER
+  LEAF_COMPLETE_HANDLER (advance)           → HANDLER_SUBTASKS_READY        → ARCHITECT
+  ARCHITECT (design: authz-rbac)            → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
+  IMPLEMENTOR / TESTER (authz-rbac)         → TESTER_TESTS_PASS             → LEAF_COMPLETE_HANDLER
+  LEAF_COMPLETE_HANDLER (advance)           → HANDLER_SUBTASKS_READY        → ARCHITECT
+  ARCHITECT (design: iam/integrate)         → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
+  TESTER (iam integrate, INTERNAL)          → TESTER_TESTS_PASS             → LEAF_COMPLETE_HANDLER
+  LEAF_COMPLETE_HANDLER (walk up)           → HANDLER_SUBTASKS_READY        → ARCHITECT
 
-ARCHITECT (decompose: iam-service)          → ARCHITECT_DECOMPOSITION_READY → TASK_MANAGER
-TASK_MANAGER (create iam components)        → TM_SUBTASKS_READY             → ARCHITECT
-  ARCHITECT (decompose: auth-lifecycle)     → ARCHITECT_DECOMPOSITION_READY → TASK_MANAGER
-  ... (atomic components, then integrate)
-  TESTER (auth-lifecycle integrate)         → TESTER_TESTS_PASS             → TASK_MANAGER
-  TASK_MANAGER (advance)                    → TM_SUBTASKS_READY             → ARCHITECT
-  ARCHITECT (decompose: authz-rbac)         → ARCHITECT_DECOMPOSITION_READY → TASK_MANAGER
-  ... (atomic components, then integrate)
-  TESTER (authz-rbac integrate)             → TESTER_TESTS_PASS             → TASK_MANAGER
-  TASK_MANAGER (advance to iam integrate)   → TM_SUBTASKS_READY             → ARCHITECT
-TESTER (iam integrate, INTERNAL)            → TESTER_TESTS_PASS             → TASK_MANAGER
-TASK_MANAGER (on-task-complete: walk up)    → TM_SUBTASKS_READY             → ARCHITECT
+ARCHITECT (design: metrics)                 → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
+IMPLEMENTOR / TESTER (metrics)              → TESTER_TESTS_PASS             → LEAF_COMPLETE_HANDLER
+LEAF_COMPLETE_HANDLER (advance)             → HANDLER_SUBTASKS_READY        → ARCHITECT
 
-ARCHITECT (design: build-1 integrate, TOP) → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
+ARCHITECT (design: build-1 integrate, TOP)  → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
 IMPLEMENTOR                                 → IMPLEMENTOR_IMPLEMENTATION_DONE → TESTER
-TESTER (e2e: both services)                 → TESTER_TESTS_PASS             → TASK_MANAGER
-TASK_MANAGER (on-task-complete: DONE)       → TM_ALL_DONE                   → (halt)
+TESTER (e2e: both services)                 → TESTER_TESTS_PASS             → LEAF_COMPLETE_HANDLER
+LEAF_COMPLETE_HANDLER (DONE)                → HANDLER_ALL_DONE              → (halt)
 ```

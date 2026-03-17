@@ -38,13 +38,14 @@ The full decomposition pipeline loop:
 
 1. **ARCHITECT** (decompose mode) — reads `JOB-user-service.md`, produces a
    component table (`ARCHITECT_DECOMPOSITION_READY`)
-2. **TASK_MANAGER** — reads the component table, creates subtasks in the
-   target repo's task system, queues the first one (`TM_SUBTASKS_READY`)
+2. **DECOMPOSE_HANDLER** — reads the component table, creates subtasks in the
+   target repo's task system, queues the first one (`HANDLER_SUBTASKS_READY`)
 3. **ARCHITECT** (design mode) — designs the first component (`ARCHITECT_DESIGN_READY`)
 4. **IMPLEMENTOR** — implements the component (`IMPLEMENTOR_IMPLEMENTATION_DONE`)
 5. **TESTER** — tests the component (`TESTER_TESTS_PASS`)
-6. Steps 2–5 repeat for each component
-7. **TASK_MANAGER** signals `TM_ALL_DONE` when all components are done
+6. **LEAF_COMPLETE_HANDLER** — marks task complete, advances to next sibling
+7. Steps 3–6 repeat for each component
+8. **LEAF_COMPLETE_HANDLER** signals `HANDLER_ALL_DONE` when all components are done
 
 After the pipeline completes, `gold/gold_test.go` verifies the assembled
 service's HTTP behaviour end-to-end.
@@ -97,11 +98,12 @@ pre-specified. The ARCHITECT decides the decomposition.
 ## Expected Pipeline Routing
 
 ```
-ARCHITECT (decompose)  → ARCHITECT_DECOMPOSITION_READY → TASK_MANAGER
-TASK_MANAGER           → TM_SUBTASKS_READY             → ARCHITECT (design, component 1)
-ARCHITECT (design)     → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
-IMPLEMENTOR            → IMPLEMENTOR_IMPLEMENTATION_DONE → TESTER
-TESTER                 → TESTER_TESTS_PASS             → TASK_MANAGER
+ARCHITECT (decompose)      → ARCHITECT_DECOMPOSITION_READY → DECOMPOSE_HANDLER
+DECOMPOSE_HANDLER          → HANDLER_SUBTASKS_READY        → ARCHITECT (design, component 1)
+ARCHITECT (design)         → ARCHITECT_DESIGN_READY        → IMPLEMENTOR
+IMPLEMENTOR                → IMPLEMENTOR_IMPLEMENTATION_DONE → TESTER
+TESTER                     → TESTER_TESTS_PASS             → LEAF_COMPLETE_HANDLER
+LEAF_COMPLETE_HANDLER      → HANDLER_SUBTASKS_READY        → ARCHITECT (next component)
 ... (repeat per component)
-TASK_MANAGER           → TM_ALL_DONE                   → (halt)
+LEAF_COMPLETE_HANDLER      → HANDLER_ALL_DONE              → (halt)
 ```

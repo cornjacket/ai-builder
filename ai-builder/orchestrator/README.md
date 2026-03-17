@@ -35,8 +35,8 @@ routes between agents based on that outcome.
 - **TM mode** (`--target-repo`): Oracle-driven outer loop. The Oracle places
   the top-level task in `in-progress/` and writes its README path to
   `current-job.txt`, then invokes the orchestrator. Task READMEs are the job
-  documents at every level — TASK_MANAGER fills in Goal/Context for component
-  subtasks and updates `current-job.txt` to point at the next task README.
+  documents at every level — DECOMPOSE_HANDLER fills in Goal/Context for
+  component subtasks and updates `current-job.txt` to point at the next task README.
 
 **Roles and agents:**
 
@@ -45,7 +45,8 @@ routes between agents based on that outcome.
 | ARCHITECT | claude | Designs the solution; fills Design + Acceptance Criteria |
 | IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed |
 | TESTER | claude | Verifies implementation against Acceptance Criteria |
-| TASK_MANAGER | claude | Updates task system after a successful implementation run |
+| DECOMPOSE_HANDLER     | claude | Creates subtasks from ARCHITECT's component table; advances pipeline to first subtask |
+| LEAF_COMPLETE_HANDLER | claude | Marks task complete, walks up the tree, advances to next sibling or signals DONE |
 
 ---
 
@@ -124,7 +125,7 @@ All pipeline artifacts are written to `--output-dir`:
 
 In TM mode, `current-job.txt` in the output directory holds the absolute path
 to the active task README (the job document). Written by Oracle at startup and
-by TASK_MANAGER via `set-current-job.sh` when advancing to the next task.
+by LEAF_COMPLETE_HANDLER via `set-current-job.sh` when advancing to the next task.
 
 ---
 

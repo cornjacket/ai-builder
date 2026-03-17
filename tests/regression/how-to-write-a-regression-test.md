@@ -12,9 +12,9 @@ matches the original spec.
 
 A regression test has two goals:
 
-1. **Pipeline correctness** — the pipeline routes correctly, the TM creates
-   the right task structure, agents hand off cleanly, and `TM_ALL_DONE` fires
-   at the right time.
+1. **Pipeline correctness** — the pipeline routes correctly, DECOMPOSE_HANDLER
+   creates the right task structure, agents hand off cleanly, and
+   `HANDLER_ALL_DONE` fires at the right time.
 
 2. **Output correctness** — the generated code actually implements the spec.
    This is verified by gold tests, which are independent of whatever tests the
