@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH        |
-| Next-subtask-id | 0001 |
+| Next-subtask-id | 0002 |
 
 ## Goal
 
@@ -669,3 +669,23 @@ H[1] DECOMPOSE/build-1
 ```
 
 The history is trimmed for the benefit of the *next* invocation, not the LCH itself. LCH never needed the history, and the history is cleaned up right after it runs.
+
+---
+
+**Q: Is all the Leaf Complete Handler's work deterministic, or does it require AI decisions?**
+
+It is almost entirely deterministic. The full LCH prompt boils down to:
+
+1. Run `on-task-complete.sh --current <path> --output-dir <dir> --epic <epic>`
+2. Read stdout: `NEXT <path>`, `DONE`, or `STOP_AFTER`
+3. Map that directly to one of three outcome strings: `HANDLER_SUBTASKS_READY`, `HANDLER_ALL_DONE`, `HANDLER_STOP_AFTER`
+
+There is zero AI reasoning required. The shell script does all the work — marks the task complete, renames the directory, advances the pipeline, returns the next path. The agent just runs one command and pattern-matches three possible outputs to three outcome strings.
+
+The only reason it's an AI invocation today is that the orchestrator expects `OUTCOME: <string>` back from an agent subprocess. Everything else — including the decision of what comes next — is handled entirely by `on-task-complete.sh`.
+
+**The orchestrator could execute LCH itself directly in Python**, calling `on-task-complete.sh` via `subprocess.run()`, reading stdout, and mapping it to the next state — no agent spawned, no Claude Code system prompt overhead, no 15s startup latency. That eliminates 5 × ~30K = 150K cached tokens and ~75s of wall time per run (at the platform-monolith scale).
+
+The same argument applies to DECOMPOSE_HANDLER: it calls a fixed sequence of scripts to create subtask directories. The AI adds little value there too — though DECOMPOSE_HANDLER does read the job doc and decide component names and structure, so it's less purely mechanical than LCH. LCH is the cleaner first target.
+
+**Implementation approach:** introduce an `internal_agent` concept in the orchestrator. When the state machine transitions to `LEAF_COMPLETE_HANDLER`, instead of spawning a claude subprocess, the orchestrator calls a Python function that runs `on-task-complete.sh`, parses the result, and returns an `AgentResult` in the same shape as a real agent response. The rest of the orchestrator loop (routing, handoff appending, frame_stack) stays unchanged.
