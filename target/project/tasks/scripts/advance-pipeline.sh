@@ -120,6 +120,11 @@ while true; do
         --epic "$EPIC" --folder "$FOLDER" \
         --parent "$grandparent_rel" --name "$parent_name"
 
+    # complete-task.sh renamed parent_dir to X-<parent_name>. Update the path
+    # so the next loop iteration can read the README from its new location.
+    parent_dir="${grandparent_dir}/X-${parent_name}"
+    parent_readme="${parent_dir}/README.md"
+
     # If grandparent is human-owned, the pipeline tree is fully done.
     if is_human_boundary "$grandparent_readme"; then
         echo "DONE"

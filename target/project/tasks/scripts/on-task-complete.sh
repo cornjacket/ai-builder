@@ -42,14 +42,31 @@ if [[ -z "$CURRENT" || -z "$OUTPUT_DIR" ]]; then
 fi
 
 # Detect FOLDER (e.g. in-progress) from the current path.
+# If the task directory was already renamed with an X- prefix (e.g. by an agent
+# that called complete-task.sh directly), detect that and skip the completion step.
 TASKS_DIR="$REPO_ROOT/project/tasks/$EPIC"
-current="$(cd "$(dirname "$CURRENT")" && pwd)/$(basename "$CURRENT")"
+
+_given_dir="$(dirname "$CURRENT")"
+_given_name="$(basename "$_given_dir")"
+_given_parent="$(dirname "$_given_dir")"
+ALREADY_COMPLETE=false
+
+if [[ -d "$_given_dir" ]]; then
+    current="$(cd "$_given_dir" && pwd)/$(basename "$CURRENT")"
+elif [[ -d "$_given_parent/X-$_given_name" ]]; then
+    current="$(cd "$_given_parent/X-$_given_name" && pwd)/$(basename "$CURRENT")"
+    ALREADY_COMPLETE=true
+else
+    echo "Task not found: $CURRENT" >&2
+    exit 2
+fi
+
 remaining="${current#${TASKS_DIR}/}"
 FOLDER="${remaining%%/*}"
 FOLDER_DIR="$TASKS_DIR/$FOLDER"
 
 # ---------------------------------------------------------------------------
-# 1. Mark the leaf complete
+# 1. Mark the leaf complete (skip if already renamed by a prior complete-task.sh call)
 # ---------------------------------------------------------------------------
 
 current_dir="$(dirname "$current")"
@@ -57,9 +74,13 @@ current_name="$(basename "$current_dir")"
 parent_dir="$(dirname "$current_dir")"
 parent_rel="${parent_dir#${FOLDER_DIR}/}"
 
-"$SCRIPTS_DIR/complete-task.sh" \
-    --epic "$EPIC" --folder "$FOLDER" \
-    --parent "$parent_rel" --name "$current_name"
+if [[ "$ALREADY_COMPLETE" == false ]]; then
+    "$SCRIPTS_DIR/complete-task.sh" \
+        --epic "$EPIC" --folder "$FOLDER" \
+        --parent "$parent_rel" --name "$current_name"
+    # complete-task.sh renames the directory to X-<name>; update current accordingly.
+    current="${parent_dir}/X-${current_name}/$(basename "$current")"
+fi
 
 # ---------------------------------------------------------------------------
 # 2. Check Stop-after

@@ -60,6 +60,8 @@ parent_rel="${parent_dir#${FOLDER_DIR}/}"
 "$SCRIPTS_DIR/complete-task.sh" \
     --epic "$EPIC" --folder "$FOLDER" \
     --parent "$parent_rel" --name "$current_name"
+# complete-task.sh renames the directory to X-<name>; update current accordingly.
+current="${parent_dir}/X-${current_name}/$(basename "$current")"
 
 # ---------------------------------------------------------------------------
 # 2. Check Stop-after

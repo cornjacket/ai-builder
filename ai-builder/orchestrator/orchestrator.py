@@ -47,6 +47,12 @@ parser.add_argument(
     metavar="ROLE",
     help="Override the machine's start_state at runtime (e.g. for testing or resuming)",
 )
+parser.add_argument(
+    "--resume",
+    action="store_true",
+    help="Resume a mid-run pipeline. Skips the Level: TOP entry-point validation so the "
+         "orchestrator can restart from an INTERNAL task (e.g. after a rate-limit halt).",
+)
 args = parser.parse_args()
 
 TM_MODE = args.target_repo is not None
@@ -98,10 +104,11 @@ if TM_MODE:
             print(f"    Task-type must be PIPELINE-SUBTASK, not a USER-TASK or USER-SUBTASK.")
             print(f"    Create a pipeline build task with new-pipeline-subtask.sh and set Level: TOP.")
             sys.exit(1)
-        if not re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', _job_content):
+        if not args.resume and not re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', _job_content):
             print(f"[orchestrator] ERROR: TM mode requires the pipeline entry point to have Level: TOP.")
             print(f"    Job document: {initial_job_doc}")
             print(f"    Set '| Level | TOP |' in the task metadata table.")
+            print(f"    (Use --resume to skip this check when restarting a mid-run pipeline.)")
             sys.exit(1)
 else:
     initial_job_doc = args.job.resolve()
@@ -192,9 +199,13 @@ if args.start_state:
 # Prompt builder
 # ---------------------------------------------------------------------------
 
+# Roles that run shell scripts and need no prior agent context.
+_HANDLER_ROLES = {"DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER"}
+
+
 def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str]) -> str:
     history_section = ""
-    if handoff_history:
+    if handoff_history and role not in _HANDLER_ROLES:
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
             "\n\n---\n\n".join(handoff_history)
 
@@ -247,9 +258,8 @@ Your job:
 Available tools:
   {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-rel-path> --name <name>
   {PM_SCRIPTS_DIR}/set-current-job.sh      --output-dir {output_dir} <task-readme-path>
-  {PM_SCRIPTS_DIR}/list-tasks.sh           --epic {EPIC} --folder in-progress --depth 4
 
-Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
+Do NOT read any additional files or run any other commands.\
 """
         valid_outcomes = "HANDLER_SUBTASKS_READY | HANDLER_NEED_HELP"
         job_section = ""
@@ -274,14 +284,11 @@ Your job:
    - "NEXT <path>"  → more subtasks remain; output OUTCOME: HANDLER_SUBTASKS_READY
    - "DONE"         → all subtasks complete; output OUTCOME: HANDLER_ALL_DONE
    - "STOP_AFTER"   → human review required; output OUTCOME: HANDLER_STOP_AFTER
-                      Include in HANDOFF: which subtask completed, what was
-                      implemented, TESTER results, and that Oracle intervention
-                      is required before continuing.
 
 Available tools:
   {PM_SCRIPTS_DIR}/on-task-complete.sh --current <readme-path> --output-dir {output_dir} --epic {EPIC}
 
-Refer to {TARGET_REPO}/project/tasks/README.md for task system documentation.\
+Do NOT read any additional files or run any other commands.\
 """
         valid_outcomes = "HANDLER_SUBTASKS_READY | HANDLER_ALL_DONE | HANDLER_STOP_AFTER | HANDLER_NEED_HELP"
         job_section = ""
@@ -357,6 +364,12 @@ MAX_ROLE_ITERATIONS = 3
 current_role = _start_state
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
+# Stack of decomposition frames for scope-bounded handoff history.
+# Each frame: {"anchor_index": int, "scope_dir": Path}
+# anchor_index — index in handoff_history of the DECOMPOSE_HANDLER entry that opened this frame.
+# scope_dir    — job_doc.parent at the moment DECOMPOSE_HANDLER fired; equals the parent
+#                directory of every subtask created by that decomposition.
+frame_stack: list[dict] = []
 role_iteration_counts: dict[str, int] = {}
 role_counters: dict[str, int] = {}
 
@@ -367,10 +380,21 @@ build_readme: Path | None = None  # Level:TOP pipeline-subtask README for live l
 
 
 def _find_level_top(readme: Path | None) -> Path | None:
-    """Return readme if it contains Level: TOP, else None."""
-    if readme and readme.exists():
-        if re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', readme.read_text()):
-            return readme
+    """Return the nearest README (at or above readme's directory) that contains Level: TOP.
+
+    Walks upward through parent directories so that resuming from an INTERNAL
+    task still finds the Level: TOP build-N README that owns the execution log.
+    """
+    if not readme:
+        return None
+    candidate = readme
+    while candidate and candidate.exists():
+        if re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', candidate.read_text()):
+            return candidate
+        parent_readme = candidate.parent.parent / "README.md"
+        if parent_readme == candidate:
+            break
+        candidate = parent_readme
     return None
 
 build_readme = _find_level_top(initial_job_doc)
@@ -445,11 +469,20 @@ while current_role is not None:
         print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
         sys.exit(1)
 
-    # After a handler signals HANDLER_SUBTASKS_READY, read the current job path for downstream agents
+    # After a handler signals HANDLER_SUBTASKS_READY, read the current job path for downstream agents.
+    # DECOMPOSE: push a new frame BEFORE job_doc is updated (scope_dir = current job_doc.parent).
+    # LEAF:      pop frames and truncate handoff history AFTER job_doc is updated (uses next job path).
     if current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER") and outcome == "HANDLER_SUBTASKS_READY":
         if not CURRENT_JOB_FILE.exists():
             print(f"\n[orchestrator] Handler did not write job path to {CURRENT_JOB_FILE}. Halting.")
             sys.exit(1)
+
+        if current_role == "DECOMPOSE_HANDLER" and job_doc:
+            frame_stack.append({
+                "anchor_index": len(handoff_history) - 1,
+                "scope_dir": job_doc.parent,
+            })
+
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
         if not job_doc.exists():
             print(f"\n[orchestrator] Job document not found: {job_doc}. Halting.")
@@ -457,6 +490,15 @@ while current_role is not None:
         print(f"    current job:   {job_doc}")
         if build_readme is None:
             build_readme = _find_level_top(job_doc)
+
+        if current_role == "LEAF_COMPLETE_HANDLER":
+            # Pop frames whose scope doesn't contain the next task, then truncate.
+            while frame_stack and frame_stack[-1]["scope_dir"] != job_doc.parent:
+                frame_stack.pop()
+            if frame_stack:
+                handoff_history[:] = handoff_history[:frame_stack[-1]["anchor_index"] + 1]
+            else:
+                handoff_history.clear()
 
     next_role = ROUTES.get((current_role, outcome))
 

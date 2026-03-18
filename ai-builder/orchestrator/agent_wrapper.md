@@ -33,7 +33,7 @@ Non-claude agents return zeros for all token fields.
 | `timeout_minutes` | int | Hard timeout; kills subprocess and returns exit_code=2 |
 | `role` | str | Role name used for log file naming and display |
 | `prompt` | str | Full prompt string passed via `-p` flag |
-| `output_dir` | Path | Working directory for the subprocess; log files written here |
+| `output_dir` | Path | Directory where log files are written (NOT used as subprocess cwd — see Environment) |
 
 **Side effects:**
 - Creates `output_dir/logs/` if it does not exist
@@ -93,8 +93,14 @@ is set by Claude Code and the claude CLI checks for it unconditionally to
 block nested interactive sessions. Subprocesses use `-p` (non-interactive)
 so blocking is unnecessary, but the check is unconditional in the CLI.
 
-The subprocess runs with `cwd=output_dir` so relative paths in agent-generated
-files resolve to the correct location.
+The subprocess runs with `cwd=/tmp` — a neutral directory with no CLAUDE.md
+files in its ancestry. Claude Code walks upward from cwd at startup and injects
+every CLAUDE.md it finds into the agent's context. If cwd were inside the
+ai-builder repo (e.g. `output_dir`), agents would load the developer CLAUDE.md
+and follow rules written for human contributors (such as "run complete-task.sh
+--parent when a subtask is done"), contaminating pipeline behaviour. All context
+the agent needs is injected explicitly through the prompt; cwd is irrelevant for
+actual file I/O because all paths in prompts are absolute.
 
 ---
 

@@ -12,6 +12,9 @@ Read the Design and Acceptance Criteria sections of the job document.
 Run the program and verify every expected output. Report pass/fail for
 each acceptance criterion.
 
+Do NOT call `complete-task.sh` or move any task directories. Task completion
+is handled by the LEAF_COMPLETE_HANDLER after you emit TESTER_TESTS_PASS.
+
 ## Valid Outcomes
 
 - `TESTER_TESTS_PASS` — all acceptance criteria pass

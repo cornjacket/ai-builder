@@ -25,4 +25,5 @@
 - [4dfdf2-improve-regression-test-infrastructure](4dfdf2-improve-regression-test-infrastructure/)
 - [bc5c01-task-script-cleanup](bc5c01-task-script-cleanup/)
 - [14efe0-repo-root-readme](14efe0-repo-root-readme/)
+- [3fa24b-bug-handler-prompt-inefficiency](3fa24b-bug-handler-prompt-inefficiency/)
 <!-- task-list-end -->

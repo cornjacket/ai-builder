@@ -45,7 +45,13 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            cwd=output_dir,
+            # Use a neutral cwd with no CLAUDE.md ancestry. Claude Code walks upward
+            # from cwd at startup to find and inject CLAUDE.md files. If we used
+            # output_dir (which lives inside the ai-builder repo), agents would load
+            # ai-builder's developer CLAUDE.md — rules written for humans — and follow
+            # them (e.g. "run complete-task.sh --parent when done"). All context agents
+            # need is injected explicitly via the prompt; cwd is irrelevant for file I/O.
+            cwd=Path("/tmp"),
             env=env,
         )
 
