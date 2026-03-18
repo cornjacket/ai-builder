@@ -199,8 +199,10 @@ if args.start_state:
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-# Roles that run shell scripts and need no prior agent context.
-_HANDLER_ROLES = {"DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER"}
+# Roles that receive no handoff history — only their role prompt and job doc.
+# Handlers run shell scripts and need no prior context. TESTER only needs the
+# job doc (acceptance criteria) and runs go test; it does not use design history.
+_HANDLER_ROLES = {"DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER", "TESTER"}
 
 
 def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str]) -> str:

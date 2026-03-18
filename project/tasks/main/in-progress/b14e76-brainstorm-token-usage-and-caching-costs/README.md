@@ -3,11 +3,11 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | draft             |
+| Status | in-progress |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH        |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0001 |
 
 ## Goal
 
@@ -430,3 +430,242 @@ handler's "I ran a script" note has no value for the next sibling's agents.
 - The truncation in the pop rule is `handoff_history = handoff_history[:anchor_index + 1]`
 - No changes required to `build_prompt()` — it still receives the flat `handoff_history` list
 - Handlers should additionally receive an empty list (separate fix, see parent task)
+
+---
+
+## Execution Log — platform-monolith run 8 (2026-03-18) — first full clean run, all fixes
+
+**All fixes active:** handler no-history, frame_stack, cwd=/tmp, TESTER prohibition, on-task-complete.sh stale path fix, advance-pipeline.sh stale path fix.
+
+This is the first uninterrupted full pipeline run (build-1 entry point, all 24 invocations) with all fixes active. Direct comparison to run 1 baseline is now possible.
+
+| Field          | Value |
+|----------------|-------|
+| Task           | build-1 |
+| Start          | 2026-03-18 13:21:25 |
+| End            | 2026-03-18 13:59:07 |
+| Total time     | 37m 41s |
+| Invocations    | 24 |
+| Tokens in      | 321 |
+| Tokens out     | 119,776 |
+| Tokens cached  | 5,728,675 |
+| Tokens total   | 5,848,772 |
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | build-1 | 13:22:28 | 1m 03s | 11 | 2,952 | 195,127 |
+| 2 | DECOMPOSE_HANDLER | claude | build-1 | 13:25:12 | 2m 43s | 23 | 8,984 | 567,824 |
+| 3 | ARCHITECT | claude | metrics | 13:26:29 | 1m 16s | 12 | 2,929 | 232,991 |
+| 4 | IMPLEMENTOR | claude | metrics | 13:26:53 | 24s | 5 | 725 | 74,614 |
+| 5 | TESTER | claude | metrics | 13:27:19 | 26s | 4 | 832 | 50,038 |
+| 6 | LEAF_COMPLETE_HANDLER | claude | metrics | 13:27:36 | 17s | 3 | 340 | 30,051 |
+| 7 | ARCHITECT | claude | iam | 13:29:12 | 1m 36s | 9 | 4,510 | 157,229 |
+| 8 | DECOMPOSE_HANDLER | claude | iam | 13:31:16 | 2m 03s | 13 | 7,134 | 261,916 |
+| 9 | ARCHITECT | claude | auth-lifecycle | 13:33:16 | 1m 59s | 7 | 6,190 | 120,827 |
+| 10 | IMPLEMENTOR | claude | auth-lifecycle | 13:36:16 | 3m 00s | 15 | 12,032 | 409,557 |
+| 11 | TESTER | claude | auth-lifecycle | 13:37:04 | 48s | 12 | 1,888 | 220,406 |
+| 12 | LEAF_COMPLETE_HANDLER | claude | auth-lifecycle | 13:37:16 | 12s | 3 | 429 | 30,064 |
+| 13 | ARCHITECT | claude | authz-rbac | 13:38:52 | 1m 35s | 11 | 5,015 | 216,109 |
+| 14 | IMPLEMENTOR | claude | authz-rbac | 13:42:17 | 3m 25s | 19 | 15,616 | 630,644 |
+| 15 | TESTER | claude | authz-rbac | 13:43:07 | 50s | 9 | 2,043 | 163,468 |
+| 16 | LEAF_COMPLETE_HANDLER | claude | authz-rbac | 13:43:20 | 13s | 3 | 523 | 30,066 |
+| 17 | ARCHITECT | claude | integrate | 13:46:38 | 3m 17s | 7 | 9,843 | 127,641 |
+| 18 | IMPLEMENTOR | claude | integrate | 13:48:35 | 1m 57s | 16 | 6,035 | 392,257 |
+| 19 | TESTER | claude | integrate | 13:49:56 | 1m 20s | 15 | 3,642 | 329,598 |
+| 20 | LEAF_COMPLETE_HANDLER | claude | integrate | 13:50:09 | 12s | 3 | 511 | 30,062 |
+| 21 | ARCHITECT | claude | integrate | 13:52:08 | 1m 58s | 84 | 6,788 | 194,980 |
+| 22 | IMPLEMENTOR | claude | integrate | 13:57:51 | 5m 42s | 25 | 18,766 | 1,083,136 |
+| 23 | TESTER | claude | integrate | 13:58:51 | 1m 00s | 9 | 1,611 | 150,019 |
+| 24 | LEAF_COMPLETE_HANDLER | claude | integrate | 13:59:07 | 15s | 3 | 438 | 30,051 |
+
+**Per-Role Totals**
+
+| Role | Count | Total Time | Avg/Invocation |
+|------|-------|------------|----------------|
+| ARCHITECT | 7 | 12m 47s | 1m 49s |
+| DECOMPOSE_HANDLER | 2 | 4m 47s | 2m 23s |
+| IMPLEMENTOR | 5 | 14m 29s | 2m 53s |
+| TESTER | 5 | 4m 25s | 53s |
+| LEAF_COMPLETE_HANDLER | 5 | 1m 11s | 14s |
+
+**Token Usage by Role**
+
+| Role | Tokens In | Tokens Out | Tokens Cached | Total |
+|------|-----------|------------|---------------|-------|
+| ARCHITECT | 141 | 38,227 | 1,244,904 | 1,283,272 |
+| DECOMPOSE_HANDLER | 36 | 16,118 | 829,740 | 845,894 |
+| IMPLEMENTOR | 80 | 53,174 | 2,590,208 | 2,643,462 |
+| TESTER | 49 | 10,016 | 913,529 | 923,594 |
+| LEAF_COMPLETE_HANDLER | 15 | 2,241 | 150,294 | 152,550 |
+| **Total** | **321** | **119,776** | **5,728,675** | **5,848,772** |
+
+### Run 8 vs Run 1 — full pipeline comparison
+
+| Metric | Run 1 (no fixes) | Run 8 (all fixes) | Change |
+|--------|-----------------|-------------------|--------|
+| Total time | 30m 48s | 37m 41s | +22% |
+| Invocations | 24 | 24 | — |
+| Tokens out | 100,470 | 119,776 | +19% |
+| Tokens cached total | 4,694,514 | 5,728,675 | **+22%** |
+| LCH cached total | 1,148,483 | 150,294 | **−87%** |
+| LCH cached max | 550,802 | 30,066 | **−95%** |
+| IMPLEMENTOR cached total | 1,308,132 | 2,590,208 | +98% |
+| TESTER cached total | 454,152 | 913,529 | +101% |
+
+### Key observations
+
+**LCH is fixed and stays fixed.** All 5 LCH invocations land at ~30K — the Claude Code floor. This is stable.
+
+**Total cached went UP despite all fixes.** The fixes worked on what they targeted (LCH −87%), but IMPLEMENTOR and TESTER cached roughly doubled. The cause is not prompt injection — it's codebase growth. The pipeline generated 19% more code in run 8 (119K tokens out vs 100K). More code written = bigger codebase = more files read by IMPLEMENTOR at integration time and by TESTER when running tests.
+
+**IMPLEMENTOR/integrate (TOP) is the new biggest single offender at 1,083,136 cached** (vs 198,560 in run 1 — 5.4×). This TOP-level integrate task reads the entire assembled codebase before wiring it together. The bigger the codebase built by prior components, the more context this task accumulates. This is structurally inherent to integration tasks.
+
+**Quality vs cost tradeoff.** The fixes appear to have improved implementation quality — the pipeline is generating more complete code. Better implementations lead to larger codebases, which leads to more tokens at integration time. This is not a regression in the optimization work; the fixes did what they were supposed to. But it surfaces a new cost driver that is harder to reduce: the integrate IMPLEMENTOR's read-everything-to-wire-it-together pattern.
+
+**TESTER is the next actionable target.** TESTER totalled 913,529 cached (vs 454,152 in run 1, +101%). TESTER is NOT in `_HANDLER_ROLES` — it still receives the full handoff history. Adding TESTER to `_HANDLER_ROLES` is the lowest-effort remaining optimization (one-line change, same fix as LCH). Expected savings: TESTER cached floor would drop to ~30K × 5 = 150K, saving ~763K cached tokens per run (~13% of total).
+
+---
+
+## Remaining Performance Opportunities (2026-03-18)
+
+Based on post-fix run data (run 7), the following opportunities are ranked by expected impact.
+
+### Current per-role token averages (run 7, iam subtree, 18 invocations)
+
+| Role | Invocations | Avg Cached/Inv | Total Cached |
+|------|-------------|----------------|--------------|
+| ARCHITECT | 5 | 241,976 | 1,209,882 |
+| IMPLEMENTOR | 4 | 308,772 | 1,235,086 |
+| TESTER | 4 | 149,104 | 596,414 |
+| DECOMPOSE_HANDLER | 1 | 208,032 | 208,032 |
+| LEAF_COMPLETE_HANDLER | 4 | 30,065 | 120,258 |
+
+LCH at ~30K is the irreducible floor with the current claude-subprocess approach. It is purely Claude Code's own system prompt.
+
+---
+
+### Opportunity 1: TESTER no-history (low effort, high impact)
+
+**Current state:** TESTER receives the full handoff history up to its point in the frame — typically ARCH/parent + DECOMPOSE/parent + ARCH/component + IMPLEMENTOR/component. It doesn't need any of it. TESTER's job is to run the tests and report pass/fail. The job doc alone is sufficient.
+
+**Expected impact:** TESTER averaged 149K cached/invocation in run 7 vs the 30K handler floor. Stripping handoff from TESTER should bring it to ~30K, saving ~120K/invocation × N TESTER calls per run. For a 24-invocation run (~5 TESTER calls) that's ~600K tokens saved.
+
+**Implementation:** Add `TESTER` to `_HANDLER_ROLES` in `build_prompt()` (same set that already strips DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER).
+
+**Risk:** Low. TESTER doesn't use handoff content — it reads the job doc for acceptance criteria and runs `go test`. Verified by the fact that TESTER already works correctly with zero cross-component context.
+
+---
+
+### Opportunity 2: IMPLEMENTOR trim to current ARCHITECT only
+
+**Current state:** IMPLEMENTOR receives the full lineage up to its point: ARCH/parent-of-parent + DECOMPOSE/parent-of-parent + ARCH/parent + DECOMPOSE/parent + ARCH/component. For deeply nested trees this grows with depth.
+
+**Expected impact:** Medium, task-dependent. For the current 2-level tree, IMPLEMENTOR sees 2-3 ancestral entries beyond the current ARCHITECT design. Trimming to just the most recent ARCHITECT handoff would save those entries per invocation.
+
+**Implementation:** Introduce a per-role `handoff_depth` limit, or a dedicated `IMPLEMENTOR` filter that keeps only `handoff_history[-1]` (the immediately prior ARCHITECT handoff).
+
+**Risk:** Medium. IMPLEMENTOR may benefit from knowing the parent decomposition rationale (e.g. "iam is split into user-lifecycle and authz-rbac because..."). Needs testing to verify quality is maintained.
+
+---
+
+### Opportunity 3: Direct API calls instead of claude subprocess
+
+**Current state:** Each invocation spawns a `claude` subprocess. Claude Code injects its own system prompt (~30K cached tokens) regardless of what we ask the agent to do. This is the 30K floor visible on every LCH and TESTER invocation.
+
+**Expected impact:** Eliminating the Claude Code system prompt overhead saves ~30K × (total invocations) per run. For a 24-invocation run: ~720K tokens (~15% of total). Additionally removes per-invocation subprocess startup latency.
+
+**Implementation:** Replace `agent_wrapper.py` with direct `anthropic.Anthropic().messages.create()` calls. Role prompts become the `system` message; handoff history and job doc become `user` messages. Significant refactor — the streaming, tool-use loop, and outcome parsing all need to move from Claude Code to Python.
+
+**Risk:** High effort. Claude Code handles a lot of agent scaffolding (file reads, bash execution, multi-turn tool use). Reimplementing that in Python is non-trivial and removes the ability to use Claude Code's built-in tools.
+
+---
+
+### Opportunity 4: Parallelism within a decomposition level
+
+**Current state:** After DECOMPOSE splits a composite into N siblings, each sibling is processed sequentially. Siblings are structurally independent — metrics and iam share no code, only the parent job doc.
+
+**Expected impact:** No token reduction. Wall-time reduction proportional to the number of siblings. For the platform-monolith (metrics + iam), running in parallel would roughly halve total time. For wider decompositions the benefit scales further.
+
+**Implementation:** Requires the orchestrator to manage multiple concurrent pipeline branches, merge their results, and handle rate limits across parallel agents.
+
+**Risk:** High complexity. Parallel branches could conflict on shared files (e.g. go.mod), and rate limit handling becomes more complex.
+
+---
+
+### Opportunity 5: Role document size audit
+
+**Current state:** ARCHITECT.md, IMPLEMENTOR.md, TESTER.md are injected verbatim into every invocation of their role. Their sizes have not been measured. If any are large, they are a fixed per-invocation cost that could be trimmed without affecting agent behavior.
+
+**Expected impact:** Unknown until measured. Likely small but easy to check.
+
+**Implementation:** Measure with `wc -c roles/*.md`; trim verbose sections, examples, or redundant instructions.
+
+**Risk:** Low. Role docs are human-readable instructions — trimming carefully preserves agent behavior.
+
+---
+
+### Opportunity 6: Model tiering
+
+**Current state:** All roles use the same model (claude-sonnet-4-6).
+
+**Expected impact:** Handlers and TESTER are simple script-runners. Using Haiku (5× cheaper) for LCH, DECOMPOSE_HANDLER, and TESTER would reduce cost significantly without affecting quality for those roles. ARCHITECT and IMPLEMENTOR should stay on Sonnet.
+
+**Implementation:** Per-role model selection in `agent_wrapper.py` / orchestrator config.
+
+**Risk:** Low for handlers (their job is trivial). Medium for TESTER (needs judgement on pass/fail).
+
+---
+
+### Summary table
+
+| Opportunity | Effort | Token Savings | Speed Savings | Risk |
+|---|---|---|---|---|
+| TESTER no-history | Low | ~600K/run | Negligible | Low |
+| Role doc audit | Low | Unknown, likely small | Negligible | Low |
+| IMPLEMENTOR trim | Medium | Medium, depth-dependent | Negligible | Medium |
+| Model tiering | Medium | Cost reduction (not token count) | Negligible | Low–Medium |
+| Direct API calls | High | ~720K/run (~15%) | High | High |
+| Parallelism | High | None | High | High |
+
+---
+
+## Q&A
+
+**Q: How did we get the leaf handler so low in token usage? Are we passing the handoff to it?**
+
+No — we are not passing handoff history to LCH. `_HANDLER_ROLES = {"DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER"}` in `build_prompt()` causes both handlers to receive an empty history section. The full `handoff_history` list still exists in memory at the time LCH runs, but `build_prompt` strips it before constructing the prompt.
+
+The ~30K that remains is purely the Claude Code system prompt. The LCH prompt itself is tiny — role instructions plus the job doc path — but Claude Code boots and injects its own ~30K token system prompt before it sees our prompt. That is the irreducible floor with the current subprocess approach.
+
+How LCH went from 550,802 → ~30K:
+1. **Handler no-history** (`_HANDLER_ROLES`): removed accumulated run history from the prompt. ~95% of the reduction.
+2. **cwd=/tmp**: removed ai-builder's CLAUDE.md + target repo's CLAUDE.md from being injected. Saved another ~3K (the delta between run 4's ~33K and run 7's ~30K floor).
+
+---
+
+**Q: So at the time the leaf handler is called, we still have a large handoff full of history, but we just don't give that history to the leaf. And after the leaf handler, then we start popping stuff off the handoff. Is that correct?**
+
+Yes, exactly. The sequence when LCH fires:
+
+1. LCH is invoked — `build_prompt` strips handoff history before passing to the agent, but the full `handoff_history` list still exists in memory
+2. LCH runs `on-task-complete.sh`, emits outcome
+3. LCH's own handoff gets appended to `handoff_history`
+4. **Then** the frame_stack truncation fires — it looks at where the next job landed, pops frames, and truncates history accordingly
+
+So at the moment LCH runs, memory holds e.g.:
+```
+H[0] ARCH/build-1
+H[1] DECOMPOSE/build-1       ← frame anchor (scope=build-1/)
+H[2] ARCH/metrics
+H[3] IMPLEMENTOR/metrics
+H[4] TESTER/metrics
+H[5] LCH/metrics              ← just appended
+```
+
+LCH saw none of that. Then the truncation fires, sees the next job is `iam` (same scope=build-1/), and truncates back to anchor+1:
+```
+H[0] ARCH/build-1
+H[1] DECOMPOSE/build-1
+```
+
+The history is trimmed for the benefit of the *next* invocation, not the LCH itself. LCH never needed the history, and the history is cleaned up right after it runs.

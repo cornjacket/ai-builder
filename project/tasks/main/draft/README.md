@@ -17,5 +17,4 @@
 - [b1c374-document-oracle-and-n-phase-model](b1c374-document-oracle-and-n-phase-model/)
 - [2da360-document-flexible-task-system-usage](2da360-document-flexible-task-system-usage/)
 - [f48538-add-project-flag-to-task-scripts](f48538-add-project-flag-to-task-scripts/)
-- [b14e76-brainstorm-token-usage-and-caching-costs](b14e76-brainstorm-token-usage-and-caching-costs/)
 <!-- task-list-end -->
