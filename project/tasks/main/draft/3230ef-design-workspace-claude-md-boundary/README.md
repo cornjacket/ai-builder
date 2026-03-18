@@ -7,7 +7,7 @@
 | Tags     | tooling, claude-md, workspace             |
 | Parent   | —           |
 | Priority | MED         |
-
+| Next-subtask-id | 0000               |
 ## Description
 
 When a target repository is set up inside a parent workspace directory that

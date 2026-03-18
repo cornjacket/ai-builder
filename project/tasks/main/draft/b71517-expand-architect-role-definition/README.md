@@ -7,7 +7,7 @@
 | Tags     | orchestrator, roles, architect             |
 | Parent   | —           |
 | Priority | MED         |
-
+| Next-subtask-id | 0000               |
 ## Description
 
 The current ARCHITECT prompt is a minimal stub (4 lines). Once role

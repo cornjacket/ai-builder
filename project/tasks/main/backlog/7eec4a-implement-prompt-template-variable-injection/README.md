@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, prompts |
 | Priority    | MED                   |
-
+| Next-subtask-id | 0000               |
 ## Goal
 
 Implement a template variable injection system so that handler prompts

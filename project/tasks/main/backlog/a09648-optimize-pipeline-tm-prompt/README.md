@@ -7,7 +7,7 @@
 | Epic        | main                         |
 | Tags        | orchestrator, pipeline       |
 | Priority    | MED                          |
-
+| Next-subtask-id | 0000               |
 ## Goal
 
 Reduce the AI surface in `DECOMPOSE_HANDLER` by replacing bookkeeping

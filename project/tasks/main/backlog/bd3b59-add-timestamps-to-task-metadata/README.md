@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
-
+| Next-subtask-id | 0000               |
 ## Goal
 
 Add `Created` and `Updated` timestamp fields to the metadata table of all

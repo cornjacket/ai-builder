@@ -7,7 +7,7 @@
 | Tags     | documentation, orchestrator, architecture    |
 | Parent   | —                                            |
 | Priority | HIGH                                         |
-
+| Next-subtask-id | 0000               |
 ## Description
 
 Design the DOCUMENTER agent role for the ai-builder orchestrator pipeline.

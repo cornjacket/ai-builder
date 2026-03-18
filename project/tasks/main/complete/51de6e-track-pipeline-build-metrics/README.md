@@ -3,39 +3,59 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | backlog             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
+| Next-subtask-id | 0012 |
 
 ## Goal
 
-Instrument the orchestrator pipeline to record build metrics per run and write
-them to the output directory alongside the execution log. Metrics to capture:
+Instrument the orchestrator to capture and surface build metrics with zero
+changes to agent prompts or behaviour. The orchestrator owns all monitoring;
+agents are unaware. Design with a clean Python function boundary so metrics
+can later be persisted to a database and surfaced in a dashboard.
 
-- **Wall-clock time:** total run time, and elapsed time per role invocation
-- **Role invocations:** count per role, and a per-invocation log with role,
-  task name, elapsed time, and outcome
-- **Token usage:** total tokens (input + output + cache), and per-role
-  breakdown — useful for cost attribution and identifying expensive roles
-- **Components:** number of modules implemented, decomposition depth, test counts
+### Architecture
 
-When LEAF_COMPLETE_HANDLER fires `HANDLER_ALL_DONE`, the orchestrator must
-write a human-readable `run-summary.md` to the output directory. The summary
-must include:
+- **`agent_wrapper.py`** — capture token counts from the `result` event
+  emitted by the claude CLI after each invocation. Return them in `AgentResult`.
+- **`metrics.py`** (new module) — pure functions called by the orchestrator:
+  - `record_invocation(role, n, description, start, end, tokens, outcome)`
+  - `update_task_doc(build_readme, invocations)` — live update after each agent
+  - `write_run_summary(output_dir, run_data)` — called on `HANDLER_ALL_DONE`
+  - `write_run_metrics_json(output_dir, run_data)` — called on `HANDLER_ALL_DONE`
+- **`orchestrator.py`** — measure wall-clock start before `run_agent`, call
+  `record_invocation` after each agent, call `update_task_doc` to write the
+  live table, and call the write functions on `HANDLER_ALL_DONE`.
 
-1. **Header** — task name, start time, end time, total wall-clock time
-2. **Per-invocation table** — one row per role invocation in order:
-   role, invocation #, description (task being worked), end time, elapsed
-3. **Per-role totals table** — role, count, total time, avg time/invocation
-4. **Token usage table** — role, input tokens, output tokens, cache tokens,
-   total; with a grand-total row
-5. **Decomposition tree** — ASCII representation of the pipeline-subtask
-   hierarchy built during the run
-6. **Implementations table** — component path, test count
+### Live execution log in the pipeline-subtask README
 
-A machine-readable `run-metrics.json` should also be written with the same
-data for aggregation across runs.
+After every agent invocation the orchestrator rewrites the `## Execution Log`
+section of the top-level pipeline-subtask README (the task with `Level: TOP`).
+This gives a live progress view that can be monitored during a run.
+
+Table format:
+```
+| # | Role | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+```
+
+`Description` is derived from the current job path
+(e.g. `eab6f7-0001-handler` → `handler`).
+
+The `## Execution Log` section is pre-populated with the header row by the
+pipeline-subtask template so the orchestrator only needs to append rows.
+
+### On `HANDLER_ALL_DONE`
+
+Write to the output directory:
+- `run-summary.md` — human-readable, with sections:
+  1. Header (task, start, end, total wall-clock)
+  2. Per-invocation table (same columns as live log)
+  3. Per-role totals (role, count, total time, avg/invocation)
+  4. Token usage by role (Tokens In, Tokens Out, Tokens Cached, Total) + grand total
+  5. Decomposition tree (ASCII)
+- `run-metrics.json` — machine-readable, same data, for cross-run aggregation
 
 ## Context
 
@@ -48,6 +68,17 @@ every future pipeline run self-documents its performance characteristics.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [x] [X-51de6e-0000-update-agent-result-tokens](X-51de6e-0000-update-agent-result-tokens/)
+- [x] [X-51de6e-0001-create-metrics-module](X-51de6e-0001-create-metrics-module/)
+- [x] [X-51de6e-0002-update-orchestrator](X-51de6e-0002-update-orchestrator/)
+- [x] [X-51de6e-0003-update-pipeline-templates](X-51de6e-0003-update-pipeline-templates/)
+- [x] [X-51de6e-0004-smoke-test](X-51de6e-0004-smoke-test/)
+- [x] [X-51de6e-0005-update-docs](X-51de6e-0005-update-docs/)
+- [x] [X-51de6e-0006-document-monitoring-design](X-51de6e-0006-document-monitoring-design/)
+- [x] [X-51de6e-0007-fix-elapsed-and-token-totals](X-51de6e-0007-fix-elapsed-and-token-totals/)
+- [x] [X-51de6e-0008-dynamic-execution-log-insertion](X-51de6e-0008-dynamic-execution-log-insertion/)
+- [x] [X-51de6e-0009-write-summary-to-readme](X-51de6e-0009-write-summary-to-readme/)
+- [x] [X-51de6e-0011-implement-pipeline-build-script](X-51de6e-0011-implement-pipeline-build-script/)
 <!-- subtask-list-end -->
 
 ## Notes

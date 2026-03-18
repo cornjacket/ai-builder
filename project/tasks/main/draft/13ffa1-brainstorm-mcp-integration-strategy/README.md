@@ -7,7 +7,7 @@
 | Tags     | mcp, orchestrator, architecture             |
 | Parent   | —           |
 | Priority | HIGH         |
-
+| Next-subtask-id | 0000               |
 ## Description
 
 Produce an architectural recommendation for MCP integration across the

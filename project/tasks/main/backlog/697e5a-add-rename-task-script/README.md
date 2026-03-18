@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | task-management        |
 | Priority    | LOW                    |
-
+| Next-subtask-id | 0000               |
 ## Goal
 
 Add a `rename-task.sh` script (and a matching `rename-subtask.sh`) that renames

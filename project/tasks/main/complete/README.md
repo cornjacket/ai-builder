@@ -21,4 +21,8 @@
 - [cc2203-resolve-pipeline-spec-adherence-failure](cc2203-resolve-pipeline-spec-adherence-failure/)
 - [2faff3-add-configurable-start-state-and-routes-to-orchestrator](2faff3-add-configurable-start-state-and-routes-to-orchestrator/)
 - [c98d7b-incremental-subtask-ids](c98d7b-incremental-subtask-ids/)
+- [51de6e-track-pipeline-build-metrics](51de6e-track-pipeline-build-metrics/)
+- [4dfdf2-improve-regression-test-infrastructure](4dfdf2-improve-regression-test-infrastructure/)
+- [bc5c01-task-script-cleanup](bc5c01-task-script-cleanup/)
+- [14efe0-repo-root-readme](14efe0-repo-root-readme/)
 <!-- task-list-end -->

@@ -7,7 +7,7 @@
 | Tags     | target, claude-md             |
 | Parent   | —           |
 | Priority | LOW         |
-
+| Next-subtask-id | 0000               |
 ## Description
 
 Add the post-task completion summary convention to `target/CLAUDE.md` (the

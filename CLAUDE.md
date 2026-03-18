@@ -63,7 +63,9 @@ user-subtasks or pipeline-subtasks. Created with `new-user-subtask.sh`.
 **PIPELINE-SUBTASK** — the pipeline's unit of work. A `build-N` entry point
 authored by the Oracle and submitted to the orchestrator, or a pipeline-internal
 node (component, integrate, test) created by the TM. Pipeline-owned once
-submitted. Can only contain pipeline-subtasks. Created with `new-pipeline-subtask.sh`.
+submitted. Can only contain pipeline-subtasks. Entry points are created with
+`new-pipeline-build.sh`; internal nodes are created by the pipeline itself via
+`new-pipeline-subtask.sh`.
 
 **Hierarchy rules:**
 - All top-level work must be a user-task
@@ -107,6 +109,12 @@ project/tasks/scripts/list-tasks.sh --epic main --folder draft --depth 2
 project/tasks/scripts/list-tasks.sh --epic main --folder backlog --depth 2
 project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --depth 2
 ```
+Add `--sort-priority` to any of the above to order tasks HIGH → MED → LOW → unset:
+```bash
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog --sort-priority
+project/tasks/scripts/list-tasks.sh --epic main --folder draft --sort-priority
+project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --sort-priority
+```
 Do NOT use `list-tasks.sh --epic main` without `--folder` when the user asks for
 outstanding or incomplete tasks — it includes `complete/` which adds noise.
 
@@ -143,6 +151,7 @@ Run from the repo root:
 ```bash
 project/tasks/scripts/new-user-task.sh        --epic main --folder draft --name <task>
 project/tasks/scripts/new-user-subtask.sh     --epic main --folder <status> --parent <task> --name <subtask>
+project/tasks/scripts/new-pipeline-build.sh   --epic main --folder <status> --parent <task> [--name <name>]
 project/tasks/scripts/new-pipeline-subtask.sh --epic main --folder <status> --parent <task> --name <subtask>
 project/tasks/scripts/move-task.sh            --epic main --name <task> --from <status> --to <status>
 project/tasks/scripts/complete-task.sh        --epic main --folder <status> --name <task>
@@ -151,7 +160,31 @@ project/tasks/scripts/show-task.sh            --epic main --folder <status> --na
 project/tasks/scripts/delete-task.sh          --epic main --folder <status> --name <task>
 project/tasks/scripts/restore-task.sh         --epic main --folder <status> --name <task>
 project/tasks/scripts/wont-do-subtask.sh      --epic main --folder <status> --parent <task> --name <subtask>
-project/tasks/scripts/list-tasks.sh           --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>]
+project/tasks/scripts/list-tasks.sh           --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--sort-priority]
+```
+
+### Submitting a pipeline build run
+
+The orchestrator (TM mode) requires the pipeline entry point to be a
+**PIPELINE-SUBTASK with `Level: TOP`**. Never point the orchestrator at a
+USER-TASK directly.
+
+```bash
+# 1. Create the build entry point under the user-task
+README=$(project/tasks/scripts/new-pipeline-build.sh \
+    --epic main --folder in-progress --parent <user-task-name> \
+    | grep "^README:" | awk '{print $2}')
+
+# 2. Fill in the Goal and Context in the created README, then point the pipeline at it
+<target-repo>/project/tasks/scripts/set-current-job.sh \
+    --output-dir <output-dir> "$README"
+
+# 3. Run the orchestrator
+python3 ai-builder/orchestrator/orchestrator.py \
+    --target-repo <target-repo> \
+    --output-dir  <output-dir> \
+    --epic        main \
+    --state-machine ai-builder/orchestrator/machines/default.json
 ```
 
 ---

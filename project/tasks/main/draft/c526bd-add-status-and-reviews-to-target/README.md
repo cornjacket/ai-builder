@@ -7,7 +7,7 @@
 | Tags     | tooling, target, project-management             |
 | Parent   | —           |
 | Priority | MED         |
-
+| Next-subtask-id | 0000               |
 ## Description
 
 Extend `target/setup-project.sh` to include `project/status/` and

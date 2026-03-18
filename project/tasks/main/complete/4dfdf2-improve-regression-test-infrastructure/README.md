@@ -3,11 +3,11 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | backlog             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | regression, testing |
 | Priority    | MED                 |
-
+| Next-subtask-id | 0008 |
 ## Goal
 
 Improve the regression test infrastructure to reduce wasted compute from
@@ -57,6 +57,10 @@ it only needs to satisfy `waitReady`, so drift risk is low.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [x] [X-4dfdf2-0004-goldutil-package](X-4dfdf2-0004-goldutil-package/)
+- [x] [X-4dfdf2-0005-migrate-gold-tests](X-4dfdf2-0005-migrate-gold-tests/)
+- [x] [X-4dfdf2-0006-infra-smoke-test](X-4dfdf2-0006-infra-smoke-test/)
+- [x] [X-4dfdf2-0007-python-unit-tests](X-4dfdf2-0007-python-unit-tests/)
 <!-- subtask-list-end -->
 
 ## Notes

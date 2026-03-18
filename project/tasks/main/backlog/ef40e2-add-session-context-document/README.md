@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | process, docs           |
 | Priority    | HIGH                    |
-
+| Next-subtask-id | 0000               |
 ## Goal
 
 Introduce a `context.md` file written at sign-off alongside the daily status
