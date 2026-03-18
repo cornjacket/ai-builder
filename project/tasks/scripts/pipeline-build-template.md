@@ -1,3 +1,4 @@
+<!-- This file is managed by the ai-builder pipeline. Do not hand-edit. -->
 # Task: {{NAME}}
 
 | Field       | Value                  |

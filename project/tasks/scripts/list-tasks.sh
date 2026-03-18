@@ -6,9 +6,10 @@
 #
 # By default only incomplete tasks are shown. Use --all to show everything.
 # Use --tag to filter to tasks whose Tags field contains the given value.
+# Use --sort-priority to sort tasks HIGH → MED → LOW → unset within each folder.
 #
 # Usage:
-#   list-tasks.sh [--epic <epic>] [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>]
+#   list-tasks.sh [--epic <epic>] [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--sort-priority]
 #
 # Examples:
 #   list-tasks.sh --epic main
@@ -16,6 +17,7 @@
 #   list-tasks.sh --epic main --folder in-progress --depth 2
 #   list-tasks.sh --root main/in-progress/my-task --depth 3 --all
 #   list-tasks.sh --epic main --tag tooling --depth 2
+#   list-tasks.sh --epic main --folder backlog --sort-priority
 
 set -euo pipefail
 
@@ -32,15 +34,17 @@ DEPTH=1
 ROOT=""
 SHOW_ALL=false
 TAG=""
+SORT_PRIORITY=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --epic)   EPIC="$2";   shift 2 ;;
-        --folder) FOLDER="$2"; shift 2 ;;
-        --depth)  DEPTH="$2";  shift 2 ;;
-        --root)   ROOT="$2";   shift 2 ;;
-        --all)    SHOW_ALL=true; shift ;;
-        --tag)    TAG="$2";    shift 2 ;;
+        --epic)            EPIC="$2";   shift 2 ;;
+        --folder)          FOLDER="$2"; shift 2 ;;
+        --depth)           DEPTH="$2";  shift 2 ;;
+        --root)            ROOT="$2";   shift 2 ;;
+        --all)             SHOW_ALL=true; shift ;;
+        --tag)             TAG="$2";    shift 2 ;;
+        --sort-priority)   SORT_PRIORITY=true; shift ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
@@ -75,6 +79,19 @@ get_priority() {
     local priority
     priority=$(grep -m1 "^| Priority" "$readme" 2>/dev/null | sed 's/| Priority *| *\(.*\) *|/\1/' | tr -d ' ')
     echo "${priority:-—}"
+}
+
+# ---------------------------------------------------------------------------
+# Helper: map a priority value to a sort key (lower = higher priority)
+# ---------------------------------------------------------------------------
+
+priority_sort_key() {
+    case "$1" in
+        HIGH) echo "1" ;;
+        MED)  echo "2" ;;
+        LOW)  echo "3" ;;
+        *)    echo "4" ;;
+    esac
 }
 
 # ---------------------------------------------------------------------------
@@ -178,9 +195,41 @@ print_status_tasks() {
 
     # At the status level there are no checkboxes, so we always show all
     # top-level tasks regardless of --all (status folder = completion state).
+
+    # Build the list of task dirs, optionally sorted by priority.
+    local task_dirs=()
     while IFS= read -r task_dir; do
         [[ -f "$task_dir/README.md" ]] || continue
         has_tag "$task_dir/README.md" || continue
+        task_dirs+=("$task_dir")
+    done < <(
+        if [[ -f "$readme" ]]; then
+            parse_readme_order "$readme" "$status_dir"
+        else
+            find "$status_dir" -mindepth 1 -maxdepth 1 -type d -not -name '.*' | sort
+        fi
+    )
+
+    if [[ "$SORT_PRIORITY" == true && ${#task_dirs[@]} -gt 0 ]]; then
+        # Decorate with sort key, stable-sort, then undecorate.
+        local decorated=()
+        for task_dir in "${task_dirs[@]}"; do
+            local p key
+            p="$(get_priority "$task_dir/README.md")"
+            key="$(priority_sort_key "$p")"
+            decorated+=("${key}|${task_dir}")
+        done
+        # Sort by key (first field), preserving original order within same priority.
+        local sorted_dirs=()
+        while IFS= read -r entry; do
+            sorted_dirs+=("${entry#*|}")
+        done < <(printf '%s\n' "${decorated[@]}" | sort -t'|' -k1,1 -s)
+        task_dirs=("${sorted_dirs[@]}")
+    fi
+
+    [[ ${#task_dirs[@]} -eq 0 ]] && return
+
+    for task_dir in "${task_dirs[@]}"; do
         local task_name priority
         task_name="$(basename "$task_dir")"
         priority="$(get_priority "$task_dir/README.md")"
@@ -200,14 +249,7 @@ print_status_tasks() {
         if [[ "$DEPTH" -gt 1 ]]; then
             print_dir_tasks "$task_dir" 2 "$DEPTH" "      └── "
         fi
-
-    done < <(
-        if [[ -f "$readme" ]]; then
-            parse_readme_order "$readme" "$status_dir"
-        else
-            find "$status_dir" -mindepth 1 -maxdepth 1 -type d -not -name '.*' | sort
-        fi
-    )
+    done
 }
 
 # ---------------------------------------------------------------------------
@@ -217,6 +259,7 @@ print_status_tasks() {
 FILTER_LABEL="incomplete only"
 [[ "$SHOW_ALL" == true ]] && FILTER_LABEL="all"
 [[ -n "$TAG" ]] && FILTER_LABEL="$FILTER_LABEL, tag: $TAG"
+[[ "$SORT_PRIORITY" == true ]] && FILTER_LABEL="$FILTER_LABEL, sorted by priority"
 
 if [[ -n "$ROOT" ]]; then
     echo "Tasks — root: $ROOT  (depth: $DEPTH, $FILTER_LABEL)"
