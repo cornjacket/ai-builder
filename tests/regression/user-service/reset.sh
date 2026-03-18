@@ -5,9 +5,11 @@
 # What this does:
 #   1. Creates a fresh target repo at sandbox/user-service-target/
 #   2. Installs the task management system and CLAUDE.md
-#   3. Creates the user-service task in in-progress/ with Goal/Context populated
-#   4. Points current-job.txt at the task README (simulating Oracle)
-#   5. Clears any previous pipeline artifacts from the output dir
+#   3. Creates a USER-TASK "user-service" in in-progress/ (Oracle-owned boundary)
+#   4. Creates a PIPELINE-SUBTASK "build-1" under it with Level=TOP
+#   5. Writes the user-service spec to the build-1 README
+#   6. Points current-job.txt at the build-1 README (simulating Oracle)
+#   7. Clears any previous pipeline artifacts from the output dir
 
 set -euo pipefail
 
@@ -17,7 +19,8 @@ REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 TARGET_REPO="$REPO_ROOT/sandbox/user-service-target"
 OUTPUT_DIR="$REPO_ROOT/sandbox/user-service-output"
 EPIC="main"
-TASK_NAME="user-service"
+PARENT_TASK_NAME="user-service"
+ENTRY_TASK_NAME="build-1"
 
 echo "=== Resetting user-service regression test ==="
 echo ""
@@ -26,7 +29,7 @@ echo ""
 # 1. Fresh target repo
 # ---------------------------------------------------------------------------
 
-echo "[1/4] Creating fresh target repo at $TARGET_REPO ..."
+echo "[1/5] Creating fresh target repo at $TARGET_REPO ..."
 rm -rf "$TARGET_REPO"
 mkdir -p "$TARGET_REPO"
 
@@ -34,41 +37,63 @@ mkdir -p "$TARGET_REPO"
 # 2. Install task management system and CLAUDE.md
 # ---------------------------------------------------------------------------
 
-echo "[2/4] Installing task management system ..."
+echo "[2/5] Installing task management system ..."
 "$REPO_ROOT/target/setup-project.sh" "$TARGET_REPO" --epic "$EPIC"
 "$REPO_ROOT/target/init-claude-md.sh" "$TARGET_REPO"
 
 SCRIPTS="$TARGET_REPO/project/tasks/scripts"
 
 # ---------------------------------------------------------------------------
-# 3. Create user-service task in in-progress/ with Goal/Context populated
+# 3. Create Oracle-owned parent USER-TASK "user-service" in in-progress/
 # ---------------------------------------------------------------------------
 
-echo "[3/4] Creating user-service task in in-progress/ ..."
+echo "[3/5] Creating parent user-task 'user-service' in in-progress/ ..."
 
-"$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$TASK_NAME"
+"$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME"
 
-# Find the generated task directory (it gets a short hash prefix)
-TASK_DIR=$(find "$TARGET_REPO/project/tasks/$EPIC/in-progress" -maxdepth 1 -type d -name "*-$TASK_NAME" | head -1)
-if [[ -z "$TASK_DIR" ]]; then
-    echo "ERROR: Could not find created task directory for $TASK_NAME"
+PARENT_DIR=$(find "$TARGET_REPO/project/tasks/$EPIC/in-progress" -maxdepth 1 -type d -name "*-$PARENT_TASK_NAME" | head -1)
+if [[ -z "$PARENT_DIR" ]]; then
+    echo "ERROR: Could not find created task directory for $PARENT_TASK_NAME"
     exit 1
 fi
-TASK_FULL_NAME="$(basename "$TASK_DIR")"
+PARENT_FULL_NAME="$(basename "$PARENT_DIR")"
+echo "    parent task: $PARENT_FULL_NAME"
 
-# Write the task README with Goal and Context populated.
-# Components, Design, Acceptance Criteria left for ARCHITECT to fill.
-cat > "$TASK_DIR/README.md" <<'TASKEOF'
-# Task: user-service
+# ---------------------------------------------------------------------------
+# 4. Create PIPELINE-SUBTASK "build-1" under the user-service task with Level=TOP
+# ---------------------------------------------------------------------------
+
+echo "[4/5] Creating pipeline entry point 'build-1' (Level=TOP) ..."
+
+BUILD_OUTPUT=$("$SCRIPTS/new-pipeline-build.sh" \
+    --epic   "$EPIC" \
+    --folder in-progress \
+    --parent "$PARENT_FULL_NAME" \
+    --name   "$ENTRY_TASK_NAME")
+
+ENTRY_README=$(echo "$BUILD_OUTPUT" | grep "^README:" | awk '{print $2}')
+ENTRY_DIR="$(dirname "$ENTRY_README")"
+ENTRY_FULL_NAME="$(basename "$ENTRY_DIR")"
+echo "    entry task:  $ENTRY_FULL_NAME"
+
+# Write the user-service spec into the build-1 README.
+# Complexity is left unset (—) to trigger ARCHITECT decompose mode.
+cat > "$ENTRY_README" <<'TASKEOF'
+# Task: build-1
 
 | Field       | Value           |
 |-------------|-----------------|
-| Task-type   | USER-TASK       |
-| Status      | in-progress     |
+| Task-type   | PIPELINE-SUBTASK |
+| Status      | —               |
 | Epic        | main            |
 | Tags        | regression-test |
-| Parent      | —               |
+| Parent      | user-service    |
 | Priority    | MED             |
+| Next-subtask-id | 0000       |
+| Complexity  | —               |
+| Stop-after  | false           |
+| Last-task   | false           |
+| Level       | TOP             |
 
 ## Goal
 
@@ -114,20 +139,20 @@ _To be completed by the ARCHITECT._
 _None._
 TASKEOF
 
-echo "    task: $TASK_FULL_NAME"
+echo "    spec written to $ENTRY_README"
 
 # ---------------------------------------------------------------------------
-# 4. Point current-job.txt at the task README (simulating Oracle)
+# 5. Point current-job.txt at the build-1 README (simulating Oracle)
 # ---------------------------------------------------------------------------
 
-echo "[4/4] Pointing current-job.txt at task README ..."
+echo "[5/5] Pointing current-job.txt at build-1 README ..."
 mkdir -p "$OUTPUT_DIR"
 rm -f  "$OUTPUT_DIR/execution.log"
 rm -rf "$OUTPUT_DIR/logs"
 
 "$SCRIPTS/set-current-job.sh" \
     --output-dir "$OUTPUT_DIR" \
-    "$TASK_DIR/README.md"
+    "$ENTRY_README"
 
 echo ""
 echo "=== Reset complete ==="

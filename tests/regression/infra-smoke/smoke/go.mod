@@ -1,4 +1,4 @@
-module github.com/cornjacket/ai-builder/tests/regression/user-service/gold
+module github.com/cornjacket/ai-builder/tests/regression/infra-smoke/smoke
 
 go 1.21
 

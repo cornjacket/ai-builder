@@ -1,0 +1,10 @@
+go 1.25.5
+
+use (
+	./fibonacci/gold
+	./goldutil
+	./infra-smoke/fixture
+	./infra-smoke/smoke
+	./platform-monolith/gold
+	./user-service/gold
+)

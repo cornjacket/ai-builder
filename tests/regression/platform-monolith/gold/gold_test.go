@@ -3,10 +3,7 @@
 package gold_test
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -14,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/cornjacket/ai-builder/tests/regression/goldutil"
 )
 
 const (
@@ -45,7 +44,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Scan for stray main packages — architectural drift check.
-	pkgs, _ := findMainPackages(outputDir)
+	pkgs, _ := goldutil.FindMainPackages(outputDir)
 	var extra []string
 	for _, p := range pkgs {
 		if filepath.Clean(p) != filepath.Clean(platformPkg) {
@@ -58,7 +57,7 @@ func TestMain(m *testing.M) {
 	}
 
 	bin := filepath.Join(os.TempDir(), "platform-gold-bin")
-	if err := buildBinary(platformPkg, bin); err != nil {
+	if err := goldutil.BuildBinary(platformPkg, bin); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: build error: %v\n", err)
 		os.Exit(1)
 	}
@@ -77,11 +76,11 @@ func TestMain(m *testing.M) {
 	}()
 
 	// Both listeners must be ready — they start from the same process.
-	if err := waitReady(metricsAddr+"/events", 15*time.Second); err != nil {
+	if err := goldutil.WaitReady(metricsAddr+"/events", 15*time.Second); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: metrics listener not ready on %s: %v\n", metricsAddr, err)
 		os.Exit(1)
 	}
-	if err := waitReady(iamAddr+"/users", 15*time.Second); err != nil {
+	if err := goldutil.WaitReady(iamAddr+"/users", 15*time.Second); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: iam listener not ready on %s: %v\n", iamAddr, err)
 		os.Exit(1)
 	}
@@ -95,21 +94,21 @@ func TestMain(m *testing.M) {
 
 func TestMetrics_RecordClickMouseEvent(t *testing.T) {
 	body := `{"type":"click-mouse","userId":"user-1","payload":{"element":"btn-submit"}}`
-	resp := mustDo(t, "POST", metricsAddr+"/events", body)
+	resp := goldutil.MustDo(t, "POST", metricsAddr+"/events", body)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /events: want 200 or 201, got %d", resp.StatusCode)
 	}
-	event := decodeJSON(t, resp)
-	if extractField(event, "id", "ID", "eventId") == "" {
+	event := goldutil.DecodeJSON(t, resp)
+	if goldutil.ExtractField(event, "id", "ID", "eventId") == "" {
 		t.Fatal("POST /events: response has no id field")
 	}
 }
 
 func TestMetrics_RecordSubmitFormEvent(t *testing.T) {
 	body := `{"type":"submit-form","userId":"user-2","payload":{"form":"signup"}}`
-	resp := mustDo(t, "POST", metricsAddr+"/events", body)
+	resp := goldutil.MustDo(t, "POST", metricsAddr+"/events", body)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
@@ -118,24 +117,23 @@ func TestMetrics_RecordSubmitFormEvent(t *testing.T) {
 }
 
 func TestMetrics_ListEvents(t *testing.T) {
-	// Record a known event first.
-	mustDo(t, "POST", metricsAddr+"/events",
+	goldutil.MustDo(t, "POST", metricsAddr+"/events",
 		`{"type":"click-mouse","userId":"list-test-user","payload":{}}`).Body.Close()
 
-	resp := mustDo(t, "GET", metricsAddr+"/events", "")
+	resp := goldutil.MustDo(t, "GET", metricsAddr+"/events", "")
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("GET /events: want 200, got %d", resp.StatusCode)
 	}
-	events := decodeJSONArray(t, resp)
+	events := goldutil.DecodeJSONArray(t, resp)
 	if len(events) == 0 {
 		t.Fatal("GET /events: expected at least one event, got empty list")
 	}
 }
 
 func TestMetrics_ResponseIsJSON(t *testing.T) {
-	resp := mustDo(t, "POST", metricsAddr+"/events",
+	resp := goldutil.MustDo(t, "POST", metricsAddr+"/events",
 		`{"type":"click-mouse","userId":"json-test","payload":{}}`)
 	defer resp.Body.Close()
 
@@ -150,18 +148,17 @@ func TestMetrics_ResponseIsJSON(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestIAM_RegisterUser(t *testing.T) {
-	resp := mustDo(t, "POST", iamAddr+"/users",
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/users",
 		`{"username":"alice","password":"secret123"}`)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /users: want 200 or 201, got %d", resp.StatusCode)
 	}
-	user := decodeJSON(t, resp)
-	if extractField(user, "id", "ID", "userId") == "" {
+	user := goldutil.DecodeJSON(t, resp)
+	if goldutil.ExtractField(user, "id", "ID", "userId") == "" {
 		t.Fatal("POST /users: response has no id field")
 	}
-	// Password must not appear in response.
 	if _, ok := user["password"]; ok {
 		t.Fatal("POST /users: response must not include password field")
 	}
@@ -170,20 +167,20 @@ func TestIAM_RegisterUser(t *testing.T) {
 func TestIAM_GetUser(t *testing.T) {
 	id := registerUser(t, "bob", "pass456")
 
-	resp := mustDo(t, "GET", iamAddr+"/users/"+id, "")
+	resp := goldutil.MustDo(t, "GET", iamAddr+"/users/"+id, "")
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("GET /users/%s: want 200, got %d", id, resp.StatusCode)
 	}
-	user := decodeJSON(t, resp)
-	if extractField(user, "id", "ID", "userId") != id {
+	user := goldutil.DecodeJSON(t, resp)
+	if goldutil.ExtractField(user, "id", "ID", "userId") != id {
 		t.Fatalf("GET /users/%s: response id does not match", id)
 	}
 }
 
 func TestIAM_GetUserNotFound(t *testing.T) {
-	resp := mustDo(t, "GET", iamAddr+"/users/nonexistent-99999", "")
+	resp := goldutil.MustDo(t, "GET", iamAddr+"/users/nonexistent-99999", "")
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNotFound {
@@ -194,14 +191,13 @@ func TestIAM_GetUserNotFound(t *testing.T) {
 func TestIAM_DeleteUser(t *testing.T) {
 	id := registerUser(t, "charlie-delete", "pass789")
 
-	resp := mustDo(t, "DELETE", iamAddr+"/users/"+id, "")
+	resp := goldutil.MustDo(t, "DELETE", iamAddr+"/users/"+id, "")
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("DELETE /users/%s: want 200 or 204, got %d", id, resp.StatusCode)
 	}
-	// Verify deleted.
-	getResp := mustDo(t, "GET", iamAddr+"/users/"+id, "")
+	getResp := goldutil.MustDo(t, "GET", iamAddr+"/users/"+id, "")
 	defer getResp.Body.Close()
 	if getResp.StatusCode != http.StatusNotFound {
 		t.Fatalf("GET after DELETE /users/%s: want 404, got %d", id, getResp.StatusCode)
@@ -215,15 +211,15 @@ func TestIAM_DeleteUser(t *testing.T) {
 func TestIAM_Login(t *testing.T) {
 	registerUser(t, "dana-login", "loginpass")
 
-	resp := mustDo(t, "POST", iamAddr+"/auth/login",
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/auth/login",
 		`{"username":"dana-login","password":"loginpass"}`)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /auth/login: want 200, got %d", resp.StatusCode)
 	}
-	result := decodeJSON(t, resp)
-	if extractField(result, "token", "access_token", "accessToken", "Token") == "" {
+	result := goldutil.DecodeJSON(t, resp)
+	if goldutil.ExtractField(result, "token", "access_token", "accessToken", "Token") == "" {
 		t.Fatal("POST /auth/login: response has no token field")
 	}
 }
@@ -231,7 +227,7 @@ func TestIAM_Login(t *testing.T) {
 func TestIAM_LoginWrongPassword(t *testing.T) {
 	registerUser(t, "eve-wrongpass", "correctpass")
 
-	resp := mustDo(t, "POST", iamAddr+"/auth/login",
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/auth/login",
 		`{"username":"eve-wrongpass","password":"wrongpass"}`)
 	defer resp.Body.Close()
 
@@ -262,31 +258,30 @@ func TestIAM_Logout(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestIAM_CreateRole(t *testing.T) {
-	resp := mustDo(t, "POST", iamAddr+"/roles",
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/roles",
 		`{"name":"editor","permissions":["read","write"]}`)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /roles: want 200 or 201, got %d", resp.StatusCode)
 	}
-	role := decodeJSON(t, resp)
-	if extractField(role, "id", "ID", "roleId") == "" {
+	role := goldutil.DecodeJSON(t, resp)
+	if goldutil.ExtractField(role, "id", "ID", "roleId") == "" {
 		t.Fatal("POST /roles: response has no id field")
 	}
 }
 
 func TestIAM_ListRoles(t *testing.T) {
-	// Ensure at least one role exists.
-	mustDo(t, "POST", iamAddr+"/roles",
+	goldutil.MustDo(t, "POST", iamAddr+"/roles",
 		`{"name":"viewer","permissions":["read"]}`).Body.Close()
 
-	resp := mustDo(t, "GET", iamAddr+"/roles", "")
+	resp := goldutil.MustDo(t, "GET", iamAddr+"/roles", "")
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("GET /roles: want 200, got %d", resp.StatusCode)
 	}
-	roles := decodeJSONArray(t, resp)
+	roles := goldutil.DecodeJSONArray(t, resp)
 	if len(roles) == 0 {
 		t.Fatal("GET /roles: expected at least one role")
 	}
@@ -296,8 +291,7 @@ func TestIAM_AssignAndGetUserRoles(t *testing.T) {
 	userID := registerUser(t, "grace-rbac", "rbacpass")
 	roleID := createRole(t, "operator", []string{"read", "write", "delete"})
 
-	// Assign role.
-	assignResp := mustDo(t, "POST", iamAddr+"/users/"+userID+"/roles",
+	assignResp := goldutil.MustDo(t, "POST", iamAddr+"/users/"+userID+"/roles",
 		fmt.Sprintf(`{"roleId":%q}`, roleID))
 	defer assignResp.Body.Close()
 
@@ -305,14 +299,13 @@ func TestIAM_AssignAndGetUserRoles(t *testing.T) {
 		t.Fatalf("POST /users/%s/roles: want 200 or 201, got %d", userID, assignResp.StatusCode)
 	}
 
-	// Get user roles.
-	rolesResp := mustDo(t, "GET", iamAddr+"/users/"+userID+"/roles", "")
+	rolesResp := goldutil.MustDo(t, "GET", iamAddr+"/users/"+userID+"/roles", "")
 	defer rolesResp.Body.Close()
 
 	if rolesResp.StatusCode != http.StatusOK {
 		t.Fatalf("GET /users/%s/roles: want 200, got %d", userID, rolesResp.StatusCode)
 	}
-	roles := decodeJSONArray(t, rolesResp)
+	roles := goldutil.DecodeJSONArray(t, rolesResp)
 	if len(roles) == 0 {
 		t.Fatalf("GET /users/%s/roles: expected at least one role after assignment", userID)
 	}
@@ -324,14 +317,14 @@ func TestIAM_AuthzCheck_Allowed(t *testing.T) {
 	roleID := createRole(t, "writer-check", []string{"write"})
 	assignRole(t, userID, roleID)
 
-	resp := mustDo(t, "POST", iamAddr+"/authz/check",
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/authz/check",
 		fmt.Sprintf(`{"userId":%q,"permission":"write"}`, userID))
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /authz/check: want 200, got %d", resp.StatusCode)
 	}
-	result := decodeJSON(t, resp)
+	result := goldutil.DecodeJSON(t, resp)
 	allowed, ok := result["allowed"]
 	if !ok {
 		t.Fatal("POST /authz/check: response has no 'allowed' field")
@@ -343,9 +336,8 @@ func TestIAM_AuthzCheck_Allowed(t *testing.T) {
 
 func TestIAM_AuthzCheck_Denied(t *testing.T) {
 	userID := registerUser(t, "iris-denied", "deniedpass")
-	// No roles assigned.
 
-	resp := mustDo(t, "POST", iamAddr+"/authz/check",
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/authz/check",
 		fmt.Sprintf(`{"userId":%q,"permission":"admin"}`, userID))
 	defer resp.Body.Close()
 
@@ -353,7 +345,7 @@ func TestIAM_AuthzCheck_Denied(t *testing.T) {
 		t.Fatalf("POST /authz/check (no roles): want 200 or 403, got %d", resp.StatusCode)
 	}
 	if resp.StatusCode == http.StatusOK {
-		result := decodeJSON(t, resp)
+		result := goldutil.DecodeJSON(t, resp)
 		if result["allowed"] == true {
 			t.Fatal("POST /authz/check: expected allowed=false for user with no roles")
 		}
@@ -365,20 +357,17 @@ func TestIAM_AuthzCheck_Denied(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestE2E_MetricsAndIAM_Independent(t *testing.T) {
-	// Both services must be independently reachable and functional.
 	userID := registerUser(t, "e2e-user", "e2epass")
 
-	// Record a metrics event referencing the IAM user.
 	body := fmt.Sprintf(`{"type":"submit-form","userId":%q,"payload":{"form":"login"}}`, userID)
-	evtResp := mustDo(t, "POST", metricsAddr+"/events", body)
+	evtResp := goldutil.MustDo(t, "POST", metricsAddr+"/events", body)
 	defer evtResp.Body.Close()
 
 	if evtResp.StatusCode != http.StatusCreated && evtResp.StatusCode != http.StatusOK {
 		t.Fatalf("cross-service: POST /events: want 200 or 201, got %d", evtResp.StatusCode)
 	}
 
-	// Verify the user still exists in IAM (services are independent).
-	iamResp := mustDo(t, "GET", iamAddr+"/users/"+userID, "")
+	iamResp := goldutil.MustDo(t, "GET", iamAddr+"/users/"+userID, "")
 	defer iamResp.Body.Close()
 
 	if iamResp.StatusCode != http.StatusOK {
@@ -393,13 +382,13 @@ func TestE2E_MetricsAndIAM_Independent(t *testing.T) {
 func registerUser(t *testing.T, username, password string) string {
 	t.Helper()
 	body := fmt.Sprintf(`{"username":%q,"password":%q}`, username, password)
-	resp := mustDo(t, "POST", iamAddr+"/users", body)
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/users", body)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		t.Fatalf("registerUser: POST /users returned %d", resp.StatusCode)
 	}
-	user := decodeJSON(t, resp)
-	id := extractField(user, "id", "ID", "userId")
+	user := goldutil.DecodeJSON(t, resp)
+	id := goldutil.ExtractField(user, "id", "ID", "userId")
 	if id == "" {
 		t.Fatal("registerUser: response has no id field")
 	}
@@ -409,13 +398,13 @@ func registerUser(t *testing.T, username, password string) string {
 func loginUser(t *testing.T, username, password string) string {
 	t.Helper()
 	body := fmt.Sprintf(`{"username":%q,"password":%q}`, username, password)
-	resp := mustDo(t, "POST", iamAddr+"/auth/login", body)
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/auth/login", body)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("loginUser: POST /auth/login returned %d", resp.StatusCode)
 	}
-	result := decodeJSON(t, resp)
-	token := extractField(result, "token", "access_token", "accessToken", "Token")
+	result := goldutil.DecodeJSON(t, resp)
+	token := goldutil.ExtractField(result, "token", "access_token", "accessToken", "Token")
 	if token == "" {
 		t.Fatal("loginUser: response has no token field")
 	}
@@ -424,15 +413,22 @@ func loginUser(t *testing.T, username, password string) string {
 
 func createRole(t *testing.T, name string, permissions []string) string {
 	t.Helper()
-	perms, _ := json.Marshal(permissions)
+	perms := `[`
+	for i, p := range permissions {
+		if i > 0 {
+			perms += ","
+		}
+		perms += fmt.Sprintf("%q", p)
+	}
+	perms += `]`
 	body := fmt.Sprintf(`{"name":%q,"permissions":%s}`, name, perms)
-	resp := mustDo(t, "POST", iamAddr+"/roles", body)
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/roles", body)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		t.Fatalf("createRole: POST /roles returned %d", resp.StatusCode)
 	}
-	role := decodeJSON(t, resp)
-	id := extractField(role, "id", "ID", "roleId")
+	role := goldutil.DecodeJSON(t, resp)
+	id := goldutil.ExtractField(role, "id", "ID", "roleId")
 	if id == "" {
 		t.Fatal("createRole: response has no id field")
 	}
@@ -442,105 +438,9 @@ func createRole(t *testing.T, name string, permissions []string) string {
 func assignRole(t *testing.T, userID, roleID string) {
 	t.Helper()
 	body := fmt.Sprintf(`{"roleId":%q}`, roleID)
-	resp := mustDo(t, "POST", iamAddr+"/users/"+userID+"/roles", body)
+	resp := goldutil.MustDo(t, "POST", iamAddr+"/users/"+userID+"/roles", body)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		t.Fatalf("assignRole: POST /users/%s/roles returned %d", userID, resp.StatusCode)
 	}
-}
-
-func mustDo(t *testing.T, method, url, body string) *http.Response {
-	t.Helper()
-	var b *bytes.Reader
-	if body != "" {
-		b = bytes.NewReader([]byte(body))
-	} else {
-		b = bytes.NewReader(nil)
-	}
-	req, err := http.NewRequest(method, url, b)
-	if err != nil {
-		t.Fatalf("NewRequest %s %s: %v", method, url, err)
-	}
-	if body != "" {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("%s %s: %v", method, url, err)
-	}
-	return resp
-}
-
-func decodeJSON(t *testing.T, resp *http.Response) map[string]interface{} {
-	t.Helper()
-	var m map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		t.Fatalf("decodeJSON: %v", err)
-	}
-	return m
-}
-
-func decodeJSONArray(t *testing.T, resp *http.Response) []interface{} {
-	t.Helper()
-	var arr []interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&arr); err != nil {
-		t.Fatalf("decodeJSONArray: %v", err)
-	}
-	return arr
-}
-
-func extractField(m map[string]interface{}, keys ...string) string {
-	for _, key := range keys {
-		if v, ok := m[key]; ok {
-			return fmt.Sprintf("%v", v)
-		}
-	}
-	return ""
-}
-
-func findMainPackages(root string) ([]string, error) {
-	seen := map[string]bool{}
-	var pkgs []string
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") {
-			return err
-		}
-		dir := filepath.Dir(path)
-		if seen[dir] {
-			return nil
-		}
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return nil
-		}
-		if strings.Contains(string(content), "package main") {
-			seen[dir] = true
-			pkgs = append(pkgs, dir)
-		}
-		return nil
-	})
-	return pkgs, err
-}
-
-func buildBinary(pkgDir, outPath string) error {
-	cmd := exec.Command("go", "build", "-o", outPath, ".")
-	cmd.Dir = pkgDir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("go build failed in %s: %w\n%s", pkgDir, err, out)
-	}
-	return nil
-}
-
-func waitReady(url string, timeout time.Duration) error {
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		resp, err := http.Get(url)
-		if err == nil {
-			resp.Body.Close()
-			return nil
-		}
-		time.Sleep(300 * time.Millisecond)
-	}
-	return fmt.Errorf("service at %s not ready after %s", url, timeout)
 }

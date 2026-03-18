@@ -65,17 +65,14 @@ echo "    parent task: $PARENT_FULL_NAME"
 
 echo "[4/5] Creating pipeline entry point 'build-1' (Level=TOP) ..."
 
-"$SCRIPTS/new-pipeline-subtask.sh" \
-    --epic "$EPIC" --folder in-progress \
+BUILD_OUTPUT=$("$SCRIPTS/new-pipeline-build.sh" \
+    --epic   "$EPIC" \
+    --folder in-progress \
     --parent "$PARENT_FULL_NAME" \
-    --name "$ENTRY_TASK_NAME" \
-    --level TOP
+    --name   "$ENTRY_TASK_NAME")
 
-ENTRY_DIR=$(find "$PARENT_DIR" -maxdepth 1 -type d -name "*-$ENTRY_TASK_NAME" | head -1)
-if [[ -z "$ENTRY_DIR" ]]; then
-    echo "ERROR: Could not find created pipeline-subtask directory for $ENTRY_TASK_NAME"
-    exit 1
-fi
+ENTRY_README=$(echo "$BUILD_OUTPUT" | grep "^README:" | awk '{print $2}')
+ENTRY_DIR="$(dirname "$ENTRY_README")"
 ENTRY_FULL_NAME="$(basename "$ENTRY_DIR")"
 echo "    entry task:  $ENTRY_FULL_NAME"
 
@@ -195,7 +192,7 @@ rm -rf "$OUTPUT_DIR/logs"
 
 "$SCRIPTS/set-current-job.sh" \
     --output-dir "$OUTPUT_DIR" \
-    "$ENTRY_DIR/README.md"
+    "$ENTRY_README"
 
 echo ""
 echo "=== Reset complete ==="
