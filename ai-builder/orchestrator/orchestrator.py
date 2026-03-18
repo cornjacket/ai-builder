@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 
 from agent_wrapper import run_agent, AgentResult
+import metrics as metrics_mod
+from metrics import RunData, description_from_job_path
 
 
 # ---------------------------------------------------------------------------
@@ -83,6 +85,24 @@ if TM_MODE:
         initial_job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
     else:
         initial_job_doc = None
+
+    # Validate: TM mode requires a PIPELINE-SUBTASK with Level: TOP as entry point.
+    if initial_job_doc is not None:
+        if not initial_job_doc.exists():
+            print(f"[orchestrator] Initial job document not found: {initial_job_doc}")
+            sys.exit(1)
+        _job_content = initial_job_doc.read_text()
+        if not re.search(r'\|\s*Task-type\s*\|\s*PIPELINE-SUBTASK\s*\|', _job_content):
+            print(f"[orchestrator] ERROR: TM mode requires a PIPELINE-SUBTASK as the pipeline entry point.")
+            print(f"    Job document: {initial_job_doc}")
+            print(f"    Task-type must be PIPELINE-SUBTASK, not a USER-TASK or USER-SUBTASK.")
+            print(f"    Create a pipeline build task with new-pipeline-subtask.sh and set Level: TOP.")
+            sys.exit(1)
+        if not re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', _job_content):
+            print(f"[orchestrator] ERROR: TM mode requires the pipeline entry point to have Level: TOP.")
+            print(f"    Job document: {initial_job_doc}")
+            print(f"    Set '| Level | TOP |' in the task metadata table.")
+            sys.exit(1)
 else:
     initial_job_doc = args.job.resolve()
 
@@ -338,6 +358,22 @@ current_role = _start_state
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
 role_iteration_counts: dict[str, int] = {}
+role_counters: dict[str, int] = {}
+
+# Metrics state
+_task_name = description_from_job_path(initial_job_doc) if initial_job_doc else "pipeline"
+run = RunData(task_name=_task_name, start=datetime.now())
+build_readme: Path | None = None  # Level:TOP pipeline-subtask README for live log
+
+
+def _find_level_top(readme: Path | None) -> Path | None:
+    """Return readme if it contains Level: TOP, else None."""
+    if readme and readme.exists():
+        if re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', readme.read_text()):
+            return readme
+    return None
+
+build_readme = _find_level_top(initial_job_doc)
 
 print("=== Orchestrator: starting ===")
 if TM_MODE:
@@ -360,7 +396,9 @@ while current_role is not None:
     print(f"\n>>> [{current_role} / {agent}]")
 
     prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
+    inv_start = datetime.now()
     result: AgentResult = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
+    inv_end = datetime.now()
 
     if result.exit_code == 2:
         print(f"\n[orchestrator] {current_role} timed out. Halting.")
@@ -374,6 +412,28 @@ while current_role is not None:
     log_run(current_role, agent, outcome, handoff)
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
+
+    # Record metrics
+    role_counters[current_role] = role_counters.get(current_role, 0) + 1
+    metrics_mod.record_invocation(
+        run=run,
+        role=current_role,
+        agent=agent,
+        role_counter=role_counters[current_role],
+        description=description_from_job_path(job_doc),
+        start=inv_start,
+        end=inv_end,
+        tokens_in=result.tokens_in,
+        tokens_out=result.tokens_out,
+        tokens_cached=result.tokens_cached,
+        outcome=outcome,
+    )
+
+    # Update live execution log in the Level:TOP README
+    if build_readme is None:
+        build_readme = _find_level_top(job_doc)
+    if build_readme is not None:
+        metrics_mod.update_task_doc(build_readme, run)
 
     if outcome.endswith("_NEED_HELP"):
         print(f"\n[orchestrator] {current_role} needs human help. Halting.")
@@ -395,6 +455,8 @@ while current_role is not None:
             print(f"\n[orchestrator] Job document not found: {job_doc}. Halting.")
             sys.exit(1)
         print(f"    current job:   {job_doc}")
+        if build_readme is None:
+            build_readme = _find_level_top(job_doc)
 
     next_role = ROUTES.get((current_role, outcome))
 
@@ -411,5 +473,10 @@ while current_role is not None:
         role_iteration_counts.pop(current_role, None)
 
     current_role = next_role
+
+run.end = datetime.now()
+metrics_mod.write_run_summary(OUTPUT_DIR, run)
+metrics_mod.write_run_metrics_json(OUTPUT_DIR, run)
+metrics_mod.write_summary_to_readme(build_readme, run)
 
 print("\n=== Orchestrator: pipeline complete ===")

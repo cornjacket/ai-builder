@@ -67,6 +67,11 @@ fi
 PARENT_README="$PARENT_DIR/README.md"
 PARENT_SHORT_ID="$(get_parent_short_id "$PARENT_DIR")"
 NEXT_ID="$(get_next_subtask_id "$PARENT_README")"
+# Default to 0000 and add the field if the parent predates the Next-subtask-id convention
+if [[ -z "$NEXT_ID" ]]; then
+    NEXT_ID="0000"
+    sed -i '' "s/| Priority *|[^|]*|/&\n| Next-subtask-id | 0000               |/" "$PARENT_README"
+fi
 DIRNAME="$PARENT_SHORT_ID-$NEXT_ID-$NAME"
 
 TASK_DIR="$PARENT_DIR/$DIRNAME"

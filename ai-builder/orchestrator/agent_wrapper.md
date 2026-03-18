@@ -12,9 +12,16 @@ real time, and returns a structured result to the orchestrator.
 ```python
 @dataclass
 class AgentResult:
-    exit_code: int   # 0=success, 1=agent error, 2=timeout
-    response: str    # full concatenated text response from the agent
+    exit_code: int        # 0=success, 1=agent error, 2=timeout
+    response: str         # full concatenated text response from the agent
+    tokens_in: int        # input tokens (claude CLI only; 0 for other agents)
+    tokens_out: int       # output tokens (claude CLI only; 0 for other agents)
+    tokens_cached: int    # cache-read input tokens (claude CLI only; 0 for other agents)
 ```
+
+Token counts are captured from the `result` event in the claude CLI's stream-json
+output (`event.usage.input_tokens`, `output_tokens`, `cache_read_input_tokens`).
+Non-claude agents return zeros for all token fields.
 
 ---
 

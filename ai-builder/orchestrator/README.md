@@ -11,8 +11,11 @@ document from input to tested implementation through specialist agents.
 |------|-------------|
 | `orchestrator.py` | Main pipeline loop: routes between roles, manages state, parses outcomes |
 | `agent_wrapper.py` | Spawns agent CLI subprocesses, streams output, returns results |
+| `metrics.py` | Captures per-invocation timing and token usage; writes run-summary.md and run-metrics.json |
 | `orchestrator.md` | Code companion: inputs, outputs, internals for orchestrator.py |
 | `agent_wrapper.md` | Code companion: inputs, outputs, internals for agent_wrapper.py |
+| `metrics.md` | Code companion: data model, public API, and outputs for metrics.py |
+| `monitoring.md` | Design document: monitoring architecture, live log, end-of-run outputs, extension points |
 | `job-format.md` | Job document format and agent output field specification |
 | `routing.md` | ROUTES table, outcome values per role, DOCUMENTER hook |
 | `pipeline-behavior.md` | End-to-end pipeline flow: modes, Level field, tree traversal algorithm |
@@ -109,6 +112,31 @@ This hook is not present in the current `orchestrator.py`. See
 
 ---
 
+## Submitting a Pipeline Build Run (TM mode)
+
+The orchestrator validates that the pipeline entry point is a **PIPELINE-SUBTASK
+with `Level: TOP`**. Pointing it at a USER-TASK is an error.
+
+```bash
+# 1. Create a build entry point under the user-task
+README=$(project/tasks/scripts/new-pipeline-build.sh \
+    --epic main --folder in-progress --parent <user-task-name> \
+    | grep "^README:" | awk '{print $2}')
+
+# 2. Fill in Goal and Context in the created README, then register it
+<target-repo>/project/tasks/scripts/set-current-job.sh \
+    --output-dir <output-dir> "$README"
+
+# 3. Run the orchestrator
+python3 ai-builder/orchestrator/orchestrator.py \
+    --target-repo <target-repo> \
+    --output-dir  <output-dir> \
+    --epic        main \
+    --state-machine ai-builder/orchestrator/machines/default.json
+```
+
+---
+
 ## Output Directory
 
 All pipeline artifacts are written to `--output-dir`:
@@ -116,6 +144,8 @@ All pipeline artifacts are written to `--output-dir`:
 ```
 <output-dir>/
     execution.log       append-only log of all agent runs (role, outcome, handoff)
+    run-summary.md      human-readable run summary (timing, tokens, per-role totals)
+    run-metrics.json    machine-readable run metrics (same data as run-summary.md)
     logs/
         ARCHITECT.log   raw stream-json events from ARCHITECT run
         IMPLEMENTOR.log
@@ -127,6 +157,9 @@ In TM mode, `current-job.txt` in the output directory holds the absolute path
 to the active task README (the job document). Written by Oracle at startup and
 by LEAF_COMPLETE_HANDLER via `set-current-job.sh` when advancing to the next task.
 
+The `run-summary.md` content is also appended as a `## Run Summary` section to
+the Level:TOP pipeline-subtask README at the end of the run.
+
 ---
 
 ## References
@@ -137,5 +170,7 @@ by LEAF_COMPLETE_HANDLER via `set-current-job.sh` when advancing to the next tas
 - [`decomposition.md`](decomposition.md) — multi-level decomposition, task tree navigation
 - [`orchestrator.md`](orchestrator.md) — orchestrator.py internals
 - [`agent_wrapper.md`](agent_wrapper.md) — agent_wrapper.py internals
+- [`metrics.md`](metrics.md) — metrics.py internals
+- [`monitoring.md`](monitoring.md) — monitoring system design and extension guide
 - [`open-questions.md`](open-questions.md) — unresolved design questions
 - [`../roles/`](../roles/) — role prompt files loaded by build_prompt()

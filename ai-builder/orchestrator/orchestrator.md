@@ -41,6 +41,33 @@ isolation or resuming a pipeline after a partial run.
 | `EXECUTION_LOG` | Path | `OUTPUT_DIR/execution.log` |
 | `CURRENT_JOB_FILE` | Path | `OUTPUT_DIR/current-job.txt` (TM mode only) |
 
+## Metrics State (main loop)
+
+| Variable | Type | Purpose |
+|----------|------|---------|
+| `run` | `RunData` | Accumulates per-invocation records for the entire pipeline run |
+| `build_readme` | `Path \| None` | Path to the Level:TOP pipeline-subtask README; target for live execution log updates |
+| `role_counters` | `dict[str, int]` | Counts how many times each role has been invoked; used as the `role_counter` for `record_invocation` |
+
+`run` is initialized before the loop with `task_name` derived from `description_from_job_path(initial_job_doc)`.
+`build_readme` is set by `_find_level_top(initial_job_doc)` before the loop and lazily by `_find_level_top(job_doc)` on the first `HANDLER_SUBTASKS_READY` transition where it is still `None`.
+
+---
+
+## TM Mode Validation
+
+In TM mode, before the main loop starts, the orchestrator validates that the
+initial job document is a **PIPELINE-SUBTASK with `Level: TOP`**. If either
+check fails, the orchestrator prints a diagnostic message and exits with code 1.
+
+| Check | Error message |
+|-------|---------------|
+| `Task-type` must be `PIPELINE-SUBTASK` | `TM mode requires a PIPELINE-SUBTASK as the pipeline entry point` |
+| `Level` must be `TOP` | `TM mode requires the pipeline entry point to have Level: TOP` |
+
+Use `new-pipeline-build.sh` to create a correctly-structured entry point. Pointing
+the orchestrator at a USER-TASK or a non-TOP pipeline-subtask is always an error.
+
 ---
 
 ## TM Mode Handlers
@@ -126,6 +153,14 @@ and handoff. Append-only — never overwrites prior entries.
 
 ---
 
+### `_find_level_top(readme) -> Path | None`
+
+Returns `readme` if the file exists and contains `| Level | TOP |` in its
+metadata table, else `None`. Used to locate the Level:TOP pipeline-subtask
+README that receives live execution log updates.
+
+---
+
 ## Main Loop
 
 ```
@@ -134,10 +169,16 @@ job_doc      = --job path (non-TM mode)
              | current-job.txt contents if pre-seeded by Oracle (TM mode)
              | None if Oracle has not yet written current-job.txt (TM mode, first handler run)
 
+run          = RunData(task_name, start=now)
+build_readme = _find_level_top(initial_job_doc)
+
 while current_role is not None:
     agent  = AGENTS[current_role]
     prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
+
+    inv_start = now
     result = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
+    inv_end = now
 
     if result.exit_code == 2: timeout  → halt (sys.exit 1)
     if result.exit_code == 1: error    → halt (sys.exit 1)
@@ -146,12 +187,26 @@ while current_role is not None:
     handoff_history.append(f"[{current_role}] {handoff}")
     log_run(current_role, agent, outcome, handoff)
 
+    # Record invocation metrics
+    role_counters[current_role] += 1
+    metrics_mod.record_invocation(run, role, agent, role_counters[current_role],
+        description_from_job_path(job_doc), inv_start, inv_end,
+        result.tokens_in, result.tokens_out, result.tokens_cached, outcome)
+
+    # Update live execution log in the Level:TOP README
+    if build_readme is None:
+        build_readme = _find_level_top(job_doc)
+    if build_readme is not None:
+        metrics_mod.update_task_doc(build_readme, run)
+
     if outcome.endswith("_NEED_HELP"): → halt (sys.exit 0, human required)
     if outcome not in ROUTES:          → halt (sys.exit 1, unrecognised outcome)
 
     # TM mode: read job path after a handler signals HANDLER_SUBTASKS_READY
     if current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER") and outcome == "HANDLER_SUBTASKS_READY":
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
+        if build_readme is None:
+            build_readme = _find_level_top(job_doc)
 
     next_role = ROUTES.get((current_role, outcome))
 
@@ -164,10 +219,20 @@ while current_role is not None:
         role_iteration_counts.pop(current_role)  # reset on role change
 
     current_role = next_role
+
+# End of run
+run.end = now
+metrics_mod.write_run_summary(OUTPUT_DIR, run)
+metrics_mod.write_run_metrics_json(OUTPUT_DIR, run)
+metrics_mod.write_summary_to_readme(build_readme, run)
 ```
 
 Any outcome ending in `_NEED_HELP` exits with code 0 (expected halt, not an
 error). All other halts exit with code 1.
+
+End-of-run writes only execute when the pipeline completes normally (exits the
+`while` loop). Timeout, agent error, and `_NEED_HELP` halts exit before reaching
+this block; `run-summary.md` and `run-metrics.json` are not written for those cases.
 
 ---
 
@@ -176,12 +241,15 @@ error). All other halts exit with code 1.
 | Operation | File | When |
 |-----------|------|------|
 | Read | `--job` (job document) | non-TM mode startup |
-
 | Read | `current-job.txt` | TM mode startup — if present, initialises `job_doc` for the first ARCHITECT call (Oracle pre-seeds this before invoking the orchestrator) |
 | Read | `roles/<ROLE>.md` | each `build_prompt()` call for non-TM roles |
 | Write | `execution.log` | after every role run (append) |
 | Write | `current-job.txt` | by `DECOMPOSE_HANDLER` or `LEAF_COMPLETE_HANDLER` after `HANDLER_SUBTASKS_READY` — path to the next job document |
 | Read | `current-job.txt` | by orchestrator after a handler emits `HANDLER_SUBTASKS_READY` — updates `job_doc` for downstream roles |
+| Read/Write | Level:TOP `README.md` | after every invocation — `update_task_doc` rewrites the `## Execution Log` table |
+| Write | `run-summary.md` | on pipeline completion (normal exit only) |
+| Write | `run-metrics.json` | on pipeline completion (normal exit only) |
+| Append | Level:TOP `README.md` | on pipeline completion — `write_summary_to_readme` appends `## Run Summary` |
 
 **Oracle contract (TM mode):** before invoking the orchestrator, Oracle must:
 1. Place the top-level task in `in-progress/` in the target repo's task system

@@ -10,6 +10,9 @@ from pathlib import Path
 class AgentResult:
     exit_code: int   # 0=success, 1=agent error, 2=timeout
     response: str    # full text response from the agent
+    tokens_in: int = 0
+    tokens_out: int = 0
+    tokens_cached: int = 0
 
 
 def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_dir: Path) -> AgentResult:
@@ -47,6 +50,7 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
         )
 
         response_text = []
+        tokens_in = tokens_out = tokens_cached = 0
 
         with role_log.open("w") as role_out, execution_log.open("a") as exec_out:
             for line in process.stdout:
@@ -62,6 +66,13 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
                     continue
 
                 print(f"[debug] event type: {event.get('type')}", flush=True)
+
+                # Capture token usage from the final result event (claude CLI)
+                if event.get("type") == "result":
+                    usage = event.get("usage") or {}
+                    tokens_in      = usage.get("input_tokens", 0)
+                    tokens_out     = usage.get("output_tokens", 0)
+                    tokens_cached  = usage.get("cache_read_input_tokens", 0)
 
                 text = _extract_text(event)
                 if text:
@@ -80,9 +91,11 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
             print(f"[agent_wrapper] {role}/{agent} exited with error (status {process.returncode})")
             if stderr_output:
                 print(f"[agent_wrapper] stderr: {stderr_output.strip()}")
-            return AgentResult(exit_code=1, response="".join(response_text))
+            return AgentResult(exit_code=1, response="".join(response_text),
+                               tokens_in=tokens_in, tokens_out=tokens_out, tokens_cached=tokens_cached)
 
-        return AgentResult(exit_code=0, response="".join(response_text))
+        return AgentResult(exit_code=0, response="".join(response_text),
+                           tokens_in=tokens_in, tokens_out=tokens_out, tokens_cached=tokens_cached)
 
     except subprocess.TimeoutExpired:
         process.kill()
