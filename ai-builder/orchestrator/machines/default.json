@@ -1,11 +1,11 @@
 {
   "start_state": "ARCHITECT",
   "roles": {
-    "ARCHITECT":            { "agent": "claude", "prompt": "roles/ARCHITECT.md" },
-    "IMPLEMENTOR":          { "agent": "claude", "prompt": "roles/IMPLEMENTOR.md" },
-    "TESTER":               { "agent": "claude", "prompt": "roles/TESTER.md" },
-    "DECOMPOSE_HANDLER":    { "agent": "claude", "prompt": null },
-    "LEAF_COMPLETE_HANDLER":{ "agent": "claude", "prompt": null }
+    "ARCHITECT":            { "agent": "claude", "prompt": "roles/ARCHITECT.md",      "no_history": false },
+    "IMPLEMENTOR":          { "agent": "claude", "prompt": "roles/IMPLEMENTOR.md",    "no_history": false },
+    "TESTER":               { "agent": "claude", "prompt": "roles/TESTER.md",         "no_history": true  },
+    "DECOMPOSE_HANDLER":    { "agent": "claude", "prompt": null,                      "no_history": true  },
+    "LEAF_COMPLETE_HANDLER":{ "agent": "claude", "prompt": null,                      "no_history": true  }
   },
   "transitions": {
     "ARCHITECT": {

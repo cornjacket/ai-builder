@@ -1,9 +1,9 @@
 {
   "start_state": "ARCHITECT",
   "roles": {
-    "ARCHITECT":  { "agent": "claude", "prompt": "roles/ARCHITECT.md" },
-    "IMPLEMENTOR":{ "agent": "claude", "prompt": "roles/IMPLEMENTOR.md" },
-    "TESTER":     { "agent": "claude", "prompt": "roles/TESTER.md" }
+    "ARCHITECT":  { "agent": "claude", "prompt": "roles/ARCHITECT.md",   "no_history": false },
+    "IMPLEMENTOR":{ "agent": "claude", "prompt": "roles/IMPLEMENTOR.md", "no_history": false },
+    "TESTER":     { "agent": "claude", "prompt": "roles/TESTER.md",      "no_history": false }
   },
   "transitions": {
     "ARCHITECT": {

@@ -81,7 +81,7 @@ sed \
     -e "s/{{NAME}}/$NAME/g" \
     -e "s/{{EPIC}}/$EPIC/g" \
     -e "s/{{TAGS}}/$TAGS/g" \
-    -e "s/{{PARENT}}/$PARENT/g" \
+    -e "s|{{PARENT}}|$PARENT|g" \
     -e "s/{{PRIORITY}}/$PRIORITY/g" \
     "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 

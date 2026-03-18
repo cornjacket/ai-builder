@@ -121,11 +121,12 @@ else:
 def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict]:
     """Load and validate a machine JSON file.
 
-    Returns (agents, routes, start_state, role_prompts) where:
-      agents      — maps role name → agent CLI name
-      routes      — maps (role, outcome) → next role or None
-      start_state — default entry role
-      role_prompts — maps role → Path (prompt file) or None (dynamic generation)
+    Returns (agents, routes, start_state, role_prompts, no_history_roles) where:
+      agents           — maps role name → agent CLI name
+      routes           — maps (role, outcome) → next role or None
+      start_state      — default entry role
+      role_prompts     — maps role → Path (prompt file) or None (dynamic generation)
+      no_history_roles — set of roles that receive no handoff history in their prompt
     """
     try:
         data = json.loads(machine_file.read_text())
@@ -168,7 +169,11 @@ def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict]:
             p = Path(cfg["prompt"])
             role_prompts[role] = p if p.is_absolute() else REPO_ROOT / p
 
-    return agents, routes, start_state, role_prompts
+    no_history_roles: set[str] = {
+        role for role, cfg in roles.items() if cfg.get("no_history", False)
+    }
+
+    return agents, routes, start_state, role_prompts, no_history_roles
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +190,7 @@ elif TM_MODE:
 else:
     _machine_file = MACHINES_DIR / "simple.json"
 
-AGENTS, ROUTES, _start_state, ROLE_PROMPTS = load_state_machine(_machine_file)
+AGENTS, ROUTES, _start_state, ROLE_PROMPTS, NO_HISTORY_ROLES = load_state_machine(_machine_file)
 
 if args.start_state:
     if args.start_state not in AGENTS:
@@ -199,15 +204,9 @@ if args.start_state:
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-# Roles that receive no handoff history — only their role prompt and job doc.
-# Handlers run shell scripts and need no prior context. TESTER only needs the
-# job doc (acceptance criteria) and runs go test; it does not use design history.
-_HANDLER_ROLES = {"DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER", "TESTER"}
-
-
 def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str]) -> str:
     history_section = ""
-    if handoff_history and role not in _HANDLER_ROLES:
+    if handoff_history and role not in NO_HISTORY_ROLES:
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
             "\n\n---\n\n".join(handoff_history)
 
