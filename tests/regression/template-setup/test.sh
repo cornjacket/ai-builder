@@ -120,8 +120,8 @@ echo "--- 6. new-task.sh (task) ---"
 
 cd "$TARGET"
 
-OUTPUT=$(project/tasks/scripts/new-task.sh --epic "$EPIC" --folder draft --name my-test-task --priority HIGH 2>&1)
-TASK_DIR=$(echo "$OUTPUT" | grep "Created task:" | sed 's/.*Created task: *//' | sed 's|/$||')
+OUTPUT=$(project/tasks/scripts/new-user-task.sh --epic "$EPIC" --folder draft --name my-test-task --priority HIGH 2>&1)
+TASK_DIR=$(echo "$OUTPUT" | grep "Created user-task:" | sed 's/.*Created user-task: *//' | sed 's|/$||')
 TASK_NAME=$(basename "$TASK_DIR")
 
 check_dir  "$TARGET/$TASK_DIR"
@@ -137,15 +137,15 @@ check_contains "$TARGET/project/tasks/$EPIC/draft/README.md" "$TASK_NAME" "task 
 echo ""
 echo "--- 7. new-task.sh (subtask) ---"
 
-OUTPUT=$(project/tasks/scripts/new-task.sh --epic "$EPIC" --folder draft --parent "$TASK_NAME" --name my-subtask 2>&1)
-SUBTASK_DIR=$(echo "$OUTPUT" | grep "Created subtask:" | sed 's/.*Created subtask: *//' | sed 's|/$||')
+OUTPUT=$(project/tasks/scripts/new-user-subtask.sh --epic "$EPIC" --folder draft --parent "$TASK_NAME" --name my-subtask 2>&1)
+SUBTASK_DIR=$(echo "$OUTPUT" | grep "Created user-subtask:" | sed 's/.*Created user-subtask: *//' | sed 's|/$||')
 SUBTASK_NAME=$(basename "$SUBTASK_DIR")
 
 check_dir  "$TARGET/$SUBTASK_DIR"
 check_contains "$TARGET/$SUBTASK_DIR/README.md" "my-subtask"  "subtask README contains subtask name"
 check_contains "$TARGET/$SUBTASK_DIR/README.md" "| Status"    "subtask README has Status field"
 check_contains "$TARGET/$SUBTASK_DIR/README.md" "—"           "subtask README Status is —"
-check_contains "$TARGET/$TASK_DIR/README.md" "$SUBTASK_NAME"  "subtask listed in parent README"
+check_contains "$TARGET/$TASK_DIR/README.md" "$SUBTASK_NAME"   "subtask listed in parent README"
 
 # ---------------------------------------------------------------------------
 # 8. move-task.sh moves task to backlog
@@ -199,7 +199,7 @@ echo "--- 11. complete-task.sh (subtask) ---"
 project/tasks/scripts/complete-task.sh --epic "$EPIC" --folder in-progress --parent "$TASK_NAME" --name "$SUBTASK_NAME" > /dev/null
 
 check_contains "$TARGET/project/tasks/$EPIC/in-progress/$TASK_NAME/README.md" "\[x\].*$SUBTASK_NAME" "subtask marked [x] in parent README"
-check_contains "$TARGET/project/tasks/$EPIC/in-progress/$TASK_NAME/$SUBTASK_NAME/README.md" "complete" "subtask Status updated to complete"
+check_contains "$TARGET/project/tasks/$EPIC/in-progress/$TASK_NAME/X-$SUBTASK_NAME/README.md" "complete" "subtask Status updated to complete"
 
 # ---------------------------------------------------------------------------
 # 12. complete-task.sh moves top-level task to complete/
