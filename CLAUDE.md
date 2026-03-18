@@ -40,6 +40,21 @@ This is how context survives across sessions.
 
 ---
 
+## Regression Tests
+
+**Never start a regression run if one is already in progress.** Before running
+`reset.sh` or launching the orchestrator, check whether a pipeline is currently
+running by inspecting the Level: TOP pipeline-subtask README in the target repo.
+`reset.sh` enforces this automatically — it will abort if the current pipeline
+is incomplete. Do not use `--force` unless you have confirmed the pipeline
+process is no longer running.
+
+Only one regression run may be active at a time. The sandbox output directories
+are shared (`sandbox/platform-monolith-output`, etc.) — two concurrent runs
+will corrupt each other's task trees and token data.
+
+---
+
 ## Task Management
 
 All work in this repository is tracked through a structured task management

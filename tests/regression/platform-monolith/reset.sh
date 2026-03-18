@@ -21,6 +21,47 @@ OUTPUT_DIR="$REPO_ROOT/sandbox/platform-monolith-output"
 EPIC="main"
 PARENT_TASK_NAME="platform"
 ENTRY_TASK_NAME="build-1"
+FORCE=false
+
+for arg in "$@"; do
+    [[ "$arg" == "--force" ]] && FORCE=true
+done
+
+# ---------------------------------------------------------------------------
+# Guard: abort if a pipeline run is currently in progress.
+#
+# Checks the Level: TOP pipeline-subtask README from the previous run.
+# If the path in current-job.txt still exists on disk (not yet renamed to
+# X- by complete-task.sh), the pipeline has not completed and may be running.
+# ---------------------------------------------------------------------------
+if [[ "$FORCE" == false && -f "$OUTPUT_DIR/current-job.txt" ]]; then
+    CURRENT_JOB=$(cat "$OUTPUT_DIR/current-job.txt")
+
+    # Walk up from the current job path to find the Level: TOP README.
+    SEARCH_DIR="$(dirname "$CURRENT_JOB")"
+    LEVEL_TOP_README=""
+    while [[ "$SEARCH_DIR" != "/" && "$SEARCH_DIR" != "$TARGET_REPO" ]]; do
+        if [[ -f "$SEARCH_DIR/README.md" ]] && \
+           grep -qE "^\| *Level *\| *TOP *\|" "$SEARCH_DIR/README.md" 2>/dev/null; then
+            LEVEL_TOP_README="$SEARCH_DIR/README.md"
+            break
+        fi
+        SEARCH_DIR="$(dirname "$SEARCH_DIR")"
+    done
+
+    if [[ -n "$LEVEL_TOP_README" && -f "$LEVEL_TOP_README" ]]; then
+        STATUS=$(grep -E "^\| *Status *\|" "$LEVEL_TOP_README" 2>/dev/null | head -1 \
+            | awk -F'|' '{gsub(/ /,"",$3); print $3}')
+        if [[ "$STATUS" != "complete" ]]; then
+            echo "ERROR: Pipeline is currently in progress (Status: ${STATUS:-—})."
+            echo "  Level: TOP task: $LEVEL_TOP_README"
+            echo ""
+            echo "Wait for the pipeline to finish before resetting."
+            echo "To override (only if the process is confirmed stopped): reset.sh --force"
+            exit 1
+        fi
+    fi
+fi
 
 echo "=== Resetting platform-monolith regression test ==="
 echo ""
