@@ -98,6 +98,31 @@ routes between agents based on that outcome.
 
 ---
 
+## Configuring Handoff History Per Role
+
+Each role can be configured to receive or suppress the accumulated handoff
+history via the `no_history` field in the state machine JSON:
+
+```json
+"TESTER": { "agent": "claude", "prompt": "roles/TESTER.md", "no_history": true }
+```
+
+When `no_history: true`, the role's prompt contains only its role instructions
+and the current job document — no history of what prior agents said or did.
+
+**Use this to reduce token usage for roles that don't need prior context.**
+In `default.json`, `TESTER`, `DECOMPOSE_HANDLER`, and `LEAF_COMPLETE_HANDLER`
+all have `no_history: true`. Roles that actively reason about prior decisions
+(`ARCHITECT`, `IMPLEMENTOR`) keep `no_history: false`.
+
+The policy is fully configurable per machine file — different pipelines can
+use different history strategies without touching the orchestrator source.
+
+See [`machines/README.md`](machines/README.md) for the full field reference
+and rationale.
+
+---
+
 ## DOCUMENTER Hook *(planned, not yet implemented)*
 
 In TM mode, the orchestrator will run a DOCUMENTER post-step after ARCHITECT,
