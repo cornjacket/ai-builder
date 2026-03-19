@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Check whether a task README is marked as the last (integration) task.
+# Check whether a task is marked as the last (integration) task.
 #
-# Reads the Last-task field from the task metadata table.
+# Reads last-task from task.json in the same directory as the README argument.
 #
 # Usage:
 #   is-last-task.sh <task-readme-path>
 #
 # Exit codes:
-#   0 — Last-task: true
-#   1 — Last-task: false, field absent, or file not found
+#   0 — last-task: true
+#   1 — last-task: false, field absent, or file not found
 #
 # Example:
 #   if is-last-task.sh project/tasks/main/in-progress/abc123-my-task/xyz-integrate/README.md
@@ -16,6 +16,10 @@
 #   fi
 
 set -euo pipefail
+
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=task-json-helpers.sh
+source "$SCRIPTS_DIR/task-json-helpers.sh"
 
 README="${1:-}"
 
@@ -28,8 +32,12 @@ if [[ ! -f "$README" ]]; then
     exit 1
 fi
 
-if grep -qE '^\|\s*Last-task\s*\|\s*true\s*\|' "$README"; then
-    exit 0
+TASK_DIR="$(dirname "$README")"
+JSON_FILE="$TASK_DIR/task.json"
+
+if [[ ! -f "$JSON_FILE" ]]; then
+    exit 1
 fi
 
-exit 1
+val="$(json_get "$JSON_FILE" "last-task")"
+[[ "$val" == "true" ]] && exit 0 || exit 1

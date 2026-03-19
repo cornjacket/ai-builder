@@ -2,6 +2,8 @@
 # Print the absolute path of the next incomplete subtask README under a
 # given parent task, or exit 1 if all subtasks are complete.
 #
+# Reads the subtask list from the parent's task.json.
+#
 # Usage:
 #   next-subtask.sh --epic <epic> --folder <status> --parent <parent-id-name>
 #
@@ -13,6 +15,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-json-helpers.sh
+source "$SCRIPTS_DIR/task-json-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -36,10 +40,11 @@ if [[ -z "$FOLDER" || -z "$PARENT" ]]; then
     exit 1
 fi
 
-PARENT_README="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT/README.md"
+PARENT_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT"
+PARENT_JSON="$PARENT_DIR/task.json"
 
-if [[ ! -f "$PARENT_README" ]]; then
-    echo "Parent task not found: project/tasks/$EPIC/$FOLDER/$PARENT" >&2
+if [[ ! -f "$PARENT_JSON" ]]; then
+    echo "Parent task.json not found: project/tasks/$EPIC/$FOLDER/$PARENT" >&2
     exit 1
 fi
 
@@ -47,18 +52,13 @@ fi
 # Find first incomplete subtask
 # ---------------------------------------------------------------------------
 
-# Extract the subtask list section and find the first unchecked entry
-NEXT_NAME=$(awk '/<!-- subtask-list-start -->/,/<!-- subtask-list-end -->/' "$PARENT_README" \
-    | grep '^\- \[ \]' \
-    | head -1 \
-    | sed 's/^- \[ \] //' \
-    | sed 's/^\[\([^]]*\)\](.*/\1/' )  # strip linked format [name](path/) -> name
+NEXT_NAME="$(json_next_subtask "$PARENT_JSON")" || exit 1
 
 if [[ -z "$NEXT_NAME" ]]; then
     exit 1
 fi
 
-SUBTASK_README="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT/$NEXT_NAME/README.md"
+SUBTASK_README="$PARENT_DIR/$NEXT_NAME/README.md"
 
 if [[ ! -f "$SUBTASK_README" ]]; then
     echo "Subtask directory not found: $NEXT_NAME" >&2

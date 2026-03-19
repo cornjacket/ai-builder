@@ -5,8 +5,8 @@
 # level, marks the parent complete and walks up. Repeats until a next sibling
 # is found or the pipeline root boundary is reached.
 #
-# The pipeline root boundary is detected when the parent directory's README
-# has Task-type USER-TASK or USER-SUBTASK (human-owned — pipeline stops here).
+# The pipeline root boundary is detected when the parent directory has no
+# task.json (human-owned task — pipeline stops here).
 #
 # The completed leaf must already be marked [x] before calling this script
 # (use on-task-complete.sh to do both in one call).
@@ -26,6 +26,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-json-helpers.sh
+source "$SCRIPTS_DIR/task-json-helpers.sh"
 
 CURRENT=""
 OUTPUT_DIR=""
@@ -56,21 +58,12 @@ FOLDER_DIR="$TASKS_DIR/$FOLDER"
 # Helpers
 # ---------------------------------------------------------------------------
 
-# Read a field value from a task README.
-# Usage: read_field <readme> <field-name>
-read_field() {
-    local readme="$1" field="$2"
-    grep -E "^\| *${field} *\|" "$readme" 2>/dev/null | head -1 \
-        | awk -F'|' '{gsub(/ /,"",$3); print $3}'
-}
-
-# Return true if a README is human-owned (pipeline boundary).
+# Return true if a task directory is human-owned (pipeline boundary).
+# A directory is human-owned when it has no task.json.
 is_human_boundary() {
-    local readme="$1"
-    [[ ! -f "$readme" ]] && return 0
-    local task_type
-    task_type=$(read_field "$readme" "Task-type")
-    [[ "$task_type" == "USER-TASK" || "$task_type" == "USER-SUBTASK" ]]
+    local task_dir="$1"
+    [[ ! -d "$task_dir" ]] && return 0
+    ! is_pipeline_task "$task_dir"
 }
 
 # Compute the path of a directory relative to FOLDER_DIR.
@@ -89,7 +82,12 @@ while true; do
     current_dir="$(dirname "$current")"
     parent_dir="$(dirname "$current_dir")"
 
-    last_task=$(read_field "$current" "Last-task")
+    # Read last-task from the current task's task.json
+    current_json="$current_dir/task.json"
+    last_task="false"
+    if [[ -f "$current_json" ]]; then
+        last_task="$(json_get "$current_json" "last-task")"
+    fi
 
     if [[ "$last_task" != "true" ]]; then
         # More siblings remain at this level — find the next one.
@@ -102,17 +100,15 @@ while true; do
     fi
 
     # Last at this level — need to walk up.
-    parent_readme="$parent_dir/README.md"
 
     # If parent is human-owned, we cannot mark it complete; pipeline is done.
-    if is_human_boundary "$parent_readme"; then
+    if is_human_boundary "$parent_dir"; then
         echo "DONE"
         exit 0
     fi
 
     # Mark the parent (composite node) complete and continue walking up.
     grandparent_dir="$(dirname "$parent_dir")"
-    grandparent_readme="$grandparent_dir/README.md"
     parent_name="$(basename "$parent_dir")"
     grandparent_rel="$(rel_to_folder "$grandparent_dir")"
 
@@ -123,14 +119,13 @@ while true; do
     # complete-task.sh renamed parent_dir to X-<parent_name>. Update the path
     # so the next loop iteration can read the README from its new location.
     parent_dir="${grandparent_dir}/X-${parent_name}"
-    parent_readme="${parent_dir}/README.md"
 
     # If grandparent is human-owned, the pipeline tree is fully done.
-    if is_human_boundary "$grandparent_readme"; then
+    if is_human_boundary "$grandparent_dir"; then
         echo "DONE"
         exit 0
     fi
 
     # Walk up: check if the parent was also the last at its level.
-    current="$parent_readme"
+    current="$parent_dir/README.md"
 done

@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# Check whether all subtasks of a parent task are marked [x] complete.
+# Check whether all subtasks of a parent task are marked complete.
 #
-# Reads the subtask list (between subtask-list-start and subtask-list-end
-# markers) in the parent task's README.md and checks for any remaining
-# unchecked items.
+# Reads the subtask list from the parent's task.json.
 #
 # Usage:
 #   subtasks-complete.sh --epic <epic> --folder <status> --parent <parent-task>
@@ -20,6 +18,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-json-helpers.sh
+source "$SCRIPTS_DIR/task-json-helpers.sh"
 
 EPIC="main"
 FOLDER=""
@@ -39,19 +39,12 @@ if [[ -z "$FOLDER" || -z "$PARENT" ]]; then
     exit 1
 fi
 
-PARENT_README="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT/README.md"
+PARENT_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT"
+PARENT_JSON="$PARENT_DIR/task.json"
 
-if [[ ! -f "$PARENT_README" ]]; then
-    echo "Parent task not found: project/tasks/$EPIC/$FOLDER/$PARENT"
+if [[ ! -f "$PARENT_JSON" ]]; then
+    echo "Parent task.json not found: project/tasks/$EPIC/$FOLDER/$PARENT"
     exit 1
 fi
 
-# Extract the subtask list section and check for any unchecked items
-incomplete=$(awk '/<!-- subtask-list-start -->/,/<!-- subtask-list-end -->/' "$PARENT_README" \
-    | grep -c '^\- \[ \]' || true)
-
-if [[ "$incomplete" -gt 0 ]]; then
-    exit 1
-fi
-
-exit 0
+json_subtasks_complete "$PARENT_JSON"

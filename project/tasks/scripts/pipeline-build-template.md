@@ -1,20 +1,6 @@
 <!-- This file is managed by the ai-builder pipeline. Do not hand-edit. -->
 # Task: {{NAME}}
 
-| Field       | Value                  |
-|-------------|------------------------|
-| Task-type   | PIPELINE-SUBTASK       |
-| Status      | —                      |
-| Epic        | {{EPIC}}               |
-| Tags        | {{TAGS}}               |
-| Parent      | {{PARENT}}             |
-| Priority    | {{PRIORITY}}           |
-| Next-subtask-id | 0000               |
-| Complexity  | —                      |
-| Stop-after  | false                  |
-| Last-task   | false                  |
-| Level       | {{LEVEL}}              |
-
 ## Goal
 
 _To be written._
@@ -42,11 +28,6 @@ _To be completed by the ARCHITECT._
 ## Suggested Tools
 
 _To be completed by the ARCHITECT._
-
-## Subtasks
-
-<!-- subtask-list-start -->
-<!-- subtask-list-end -->
 
 ## Notes
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Create a new pipeline-subtask directory with a pipeline-build-template README.md.
-# Updates the parent task's README.md subtask list.
+# Create a new pipeline-subtask directory with a task.json and prose-only README.md.
+# Updates the parent task's task.json subtask list.
 #
 # Used for both pipeline entry points (build-N under a user-task or user-subtask)
 # and pipeline-internal nodes (components, integrate, test, etc. under a build-N).
 #
 # Usage:
-#   new-pipeline-subtask.sh --epic <epic> --folder <status> --parent <task> --name <name> [--tags <tags>] [--priority <p>]
+#   new-pipeline-subtask.sh --epic <epic> --folder <status> --parent <task> --name <name> [--tags <tags>] [--priority <p>] [--level <TOP|INTERNAL>]
 #
 # Priority values: CRITICAL, HIGH, MED, LOW (default: —)
 #
@@ -19,8 +19,8 @@ set -euo pipefail
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
 TASK_TEMPLATE="$SCRIPTS_DIR/pipeline-build-template.md"
-# shellcheck source=task-id-helpers.sh
-source "$SCRIPTS_DIR/task-id-helpers.sh"
+# shellcheck source=task-json-helpers.sh
+source "$SCRIPTS_DIR/task-json-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -63,53 +63,65 @@ if [[ ! -d "$PARENT_DIR" ]]; then
     exit 1
 fi
 
-# Derive incremental ID from parent
-PARENT_README="$PARENT_DIR/README.md"
+PARENT_JSON="$PARENT_DIR/task.json"
 PARENT_SHORT_ID="$(get_parent_short_id "$PARENT_DIR")"
-NEXT_ID="$(get_next_subtask_id "$PARENT_README")"
-# Default to 0000 and add the field if the parent predates the Next-subtask-id convention
-if [[ -z "$NEXT_ID" ]]; then
-    NEXT_ID="0000"
-    sed -i '' "s/| Priority *|[^|]*|/&\n| Next-subtask-id | 0000               |/" "$PARENT_README"
+
+# Read NEXT_ID from parent task.json (incrementing the counter in place)
+if [[ ! -f "$PARENT_JSON" ]]; then
+    echo "Parent task.json not found: $PARENT_JSON"
+    exit 1
 fi
+
+NEXT_ID="$(get_and_increment_subtask_id "$PARENT_JSON")"
 DIRNAME="$PARENT_SHORT_ID-$NEXT_ID-$NAME"
 
 TASK_DIR="$PARENT_DIR/$DIRNAME"
 
-# Extract just the immediate parent name for the Parent field
+# Extract just the immediate parent name for the parent field
 PARENT_NAME="$(basename "$PARENT")"
 
 # ---------------------------------------------------------------------------
-# Create subtask directory and README
+# Create subtask directory, task.json, and README
 # ---------------------------------------------------------------------------
 
 mkdir -p "$TASK_DIR"
 
-sed \
-    -e "s/{{NAME}}/$NAME/g" \
-    -e "s/{{EPIC}}/$EPIC/g" \
-    -e "s/{{TAGS}}/$TAGS/g" \
-    -e "s/{{PARENT}}/$PARENT_NAME/g" \
-    -e "s/{{PRIORITY}}/$PRIORITY/g" \
-    -e "s/{{LEVEL}}/$LEVEL/g" \
-    "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
+# Write task.json with all structured metadata
+python3 - "$TASK_DIR/task.json" "$NAME" "$EPIC" "$PARENT_NAME" "$PRIORITY" "$LEVEL" "$TAGS" <<'EOF'
+import sys, json
+path, name, epic, parent, priority, level, tags = sys.argv[1:]
+data = {
+    "task-type": "PIPELINE-SUBTASK",
+    "status": "—",
+    "epic": epic,
+    "parent": parent,
+    "tags": tags,
+    "priority": priority,
+    "next-subtask-id": "0000",
+    "complexity": "—",
+    "level": level,
+    "last-task": False,
+    "stop-after": False,
+    "components": [],
+    "subtasks": []
+}
+with open(path, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+EOF
+
+# Write prose-only README from template (only {{NAME}} substitution needed)
+sed -e "s/{{NAME}}/$NAME/g" "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------
-# Append to parent README subtask list
+# Append subtask entry to parent task.json
 # ---------------------------------------------------------------------------
 
-if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
-    sed -i '' "s|<!-- subtask-list-end -->|- [ ] [$DIRNAME]($DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
-else
-    echo "Warning: no subtask list markers found in $PARENT_README — add the entry manually."
-fi
-
-# Increment Next-subtask-id in parent
-increment_subtask_id "$PARENT_README"
+json_append_subtask "$PARENT_JSON" "$DIRNAME"
 
 # ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 
 echo "Created pipeline-subtask: project/tasks/$EPIC/$FOLDER/$PARENT/$DIRNAME/"
-echo "Updated:                  $PARENT_README"
+echo "Updated:                  $PARENT_JSON"
