@@ -526,6 +526,54 @@ This is the first uninterrupted full pipeline run (build-1 entry point, all 24 i
 
 ---
 
+## Execution Log — platform-monolith run 9 (2026-03-18) — TESTER no_history: true
+
+**Change under test:** `no_history: true` added to TESTER in `default.json`. TESTER now receives no handoff history — only its role instructions and the current job doc.
+
+**Note:** Run 9 hit a rate limit after 8 invocations (build-1 ARCH+DECOMPOSE, metrics ×4, iam ARCH+DECOMPOSE) and was resumed. The first session's metrics were not captured. The iam subtree (16 invocations) is fully captured and is sufficient for the TESTER comparison.
+
+| # | Role | Description | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | auth-lifecycle | 1m 34s | 7 | 4,459 | 104,294 |
+| 2 | IMPLEMENTOR | auth-lifecycle | 2m 17s | 13 | 8,900 | 343,681 |
+| 3 | TESTER | auth-lifecycle | 55s | 8 | 1,708 | 149,104 |
+| 4 | LEAF_COMPLETE_HANDLER | auth-lifecycle | 11s | 3 | 487 | 30,514 |
+| 5 | ARCHITECT | authz-rbac | 2m 00s | 85 | 6,664 | 241,019 |
+| 6 | IMPLEMENTOR | authz-rbac | 4m 57s | 17 | 14,215 | 510,335 |
+| 7 | TESTER | authz-rbac | 52s | 8 | 1,221 | 147,670 |
+| 8 | LEAF_COMPLETE_HANDLER | authz-rbac | 16s | 3 | 447 | 30,516 |
+| 9 | ARCHITECT | integrate (INTERNAL) | 2m 13s | 10 | 6,064 | 224,098 |
+| 10 | IMPLEMENTOR | integrate (INTERNAL) | 2m 33s | 14 | 10,400 | 417,201 |
+| 11 | TESTER | integrate (INTERNAL) | 55s | 11 | 1,337 | 196,101 |
+| 12 | LEAF_COMPLETE_HANDLER | integrate (INTERNAL) | 12s | 3 | 468 | 30,512 |
+| 13 | ARCHITECT | integrate (TOP) | 6m 23s | 10 | 11,892 | 270,260 |
+| 14 | IMPLEMENTOR | integrate (TOP) | 5m 26s | 17 | 9,521 | 534,274 |
+| 15 | TESTER | integrate (TOP) | 1m 35s | 9 | 1,344 | 159,886 |
+| 16 | LEAF_COMPLETE_HANDLER | integrate (TOP) | 28s | 3 | 344 | 30,499 |
+
+### Run 9 vs Run 8 — iam subtree TESTER comparison (4 invocations each)
+
+| Invocation | Run 8 Cached | Run 9 Cached | Change |
+|---|---|---|---|
+| TESTER / auth-lifecycle | 220,406 | 149,104 | −32% |
+| TESTER / authz-rbac | 163,468 | 147,670 | −10% |
+| TESTER / integrate (INTERNAL) | 329,598 | 196,101 | −40% |
+| TESTER / integrate (TOP) | 150,019 | 159,886 | +7% |
+| **TESTER total** | **863,491** | **652,761** | **−24%** |
+| LCH total | 931,636 | 122,041 | −87% (for ref) |
+
+### Key observations
+
+**TESTER did not drop to the ~30K floor.** The prediction was wrong. LCH at ~30.5K is the floor because LCH does almost nothing — it runs one short script and exits. TESTER actively reads the codebase: it opens test files, source files, runs `go test`, reads output. All those file reads accumulate in the context window and get cached. The ~150K–196K remaining is the codebase read overhead, not handoff history.
+
+**The no_history change still helped — ~24% reduction on TESTER.** The remaining variance (+7% on integrate TOP) is within normal run-to-run variation from different generated codebases.
+
+**The floor for TESTER is workload-dependent**, not a fixed constant. A bigger codebase = more files to read = higher TESTER cached count. This is inherent to what TESTER does and cannot be reduced by prompt changes alone.
+
+**LCH at ~30.5K** confirms the Claude Code system prompt floor is stable.
+
+---
+
 ## Remaining Performance Opportunities (2026-03-18)
 
 Based on post-fix run data (run 7), the following opportunities are ranked by expected impact.
