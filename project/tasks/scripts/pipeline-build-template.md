@@ -35,6 +35,10 @@ _To be completed by the ARCHITECT._
 
 _To be completed by the ARCHITECT._
 
+## Test Command
+
+_To be completed by the ARCHITECT._
+
 ## Suggested Tools
 
 _To be completed by the ARCHITECT._
