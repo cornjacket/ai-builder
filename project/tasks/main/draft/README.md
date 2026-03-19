@@ -18,5 +18,4 @@
 - [2da360-document-flexible-task-system-usage](2da360-document-flexible-task-system-usage/)
 - [f48538-add-project-flag-to-task-scripts](f48538-add-project-flag-to-task-scripts/)
 - [26d8ee-regression-execution-log-validation](26d8ee-regression-execution-log-validation/)
-- [829461-split-task-format-md-json-and-scripts](829461-split-task-format-md-json-and-scripts/)
 <!-- task-list-end -->
