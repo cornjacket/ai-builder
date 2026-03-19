@@ -78,16 +78,12 @@ Your job:
    The `integrate` component inherits the `Level` of the current job document.
    Read the `Level` field from the metadata table to determine which scope applies.
 
-5. Fill in the `## Test Command` section with the exact shell command to run
-   all tests for this service (e.g. `cd /path/to/repo && go test ./...`).
-   Source this from the target repo's `CLAUDE.md` if present. This command
-   will be run verbatim by the TESTER — be precise.
-6. Fill in the `## Suggested Tools` section with the language-agnostic
+5. Fill in the `## Suggested Tools` section with the language-agnostic
    build and test commands for this service, sourced from the target
    repo's `CLAUDE.md` if present (e.g. `go build ./...`, `go test ./...`).
 
 **Valid outcomes:**
-- `ARCHITECT_DECOMPOSITION_READY` — Components, Test Command, and Suggested Tools are filled
+- `ARCHITECT_DECOMPOSITION_READY` — Components and Suggested Tools are filled
 - `ARCHITECT_NEEDS_REVISION` — the Goal is ambiguous; clarification needed
 - `ARCHITECT_NEED_HELP` — blocked by missing information that cannot be resolved
 
