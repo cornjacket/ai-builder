@@ -153,9 +153,9 @@ def write_run_summary(output_dir: Path, run: RunData) -> None:
     (output_dir / "run-summary.md").write_text("\n".join(lines))
 
 
-def write_summary_to_readme(build_readme: Path, run: RunData) -> None:
+def write_summary_to_readme(build_readme: Path | None, run: RunData) -> None:
     """Append the run summary as a ## Run Summary section to the Level:TOP README."""
-    if not build_readme.exists():
+    if build_readme is None or not build_readme.exists():
         return
     lines = ["", "## Run Summary", ""] + _build_summary_lines(run)
     with build_readme.open("a") as f:
