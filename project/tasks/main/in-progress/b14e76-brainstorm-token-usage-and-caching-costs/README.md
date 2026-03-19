@@ -774,4 +774,17 @@ The same argument applies to DECOMPOSE_HANDLER: it calls a fixed sequence of scr
 | LCH tokens cached | ~150K (5 × 30K) | 0 | −100% |
 | LCH wall time | ~75s (5 × 15s) | <1s | ~−75s |
 
-**Run 11** (pending) will validate.
+**Run 11** tests both changes active together (2026-03-19):
+
+1. **TESTER no-history + Test Command** — TESTER receives no handoff history and reads only `## Test Command` from the job doc; ARCHITECT fills that field in Design Mode; no source file browsing.
+2. **LCH internal agent** — LEAF_COMPLETE_HANDLER runs `on-task-complete.sh` directly in Python; no claude subprocess; zero token cost.
+
+These are bundled rather than isolated because the Test Command change requires ARCHITECT behaviour to change (filling the new field), making a clean single-variable run impractical.
+
+**Expected outcomes vs run 8 baseline:**
+
+| Role | Run 8 Cached | Run 11 Expected | Change |
+|------|-------------|-----------------|--------|
+| TESTER (5 inv) | 913,529 | ~150K or less | −80%+ |
+| LCH (5 inv) | 150,294 | 0 | −100% |
+| Combined savings | — | ~900K | ~16% of run 8 total |
