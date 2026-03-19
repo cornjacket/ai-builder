@@ -37,24 +37,25 @@ done
 if [[ "$FORCE" == false && -f "$OUTPUT_DIR/current-job.txt" ]]; then
     CURRENT_JOB=$(cat "$OUTPUT_DIR/current-job.txt")
 
-    # Walk up from the current job path to find the Level: TOP README.
+    # Walk up from the current job path to find the Level: TOP task.json.
     SEARCH_DIR="$(dirname "$CURRENT_JOB")"
-    LEVEL_TOP_README=""
+    LEVEL_TOP_JSON=""
     while [[ "$SEARCH_DIR" != "/" && "$SEARCH_DIR" != "$TARGET_REPO" ]]; do
-        if [[ -f "$SEARCH_DIR/README.md" ]] && \
-           grep -qE "^\| *Level *\| *TOP *\|" "$SEARCH_DIR/README.md" 2>/dev/null; then
-            LEVEL_TOP_README="$SEARCH_DIR/README.md"
-            break
+        if [[ -f "$SEARCH_DIR/task.json" ]]; then
+            LEVEL=$(python3 -c "import json; d=json.load(open('$SEARCH_DIR/task.json')); print(d.get('level',''))" 2>/dev/null || echo "")
+            if [[ "$LEVEL" == "TOP" ]]; then
+                LEVEL_TOP_JSON="$SEARCH_DIR/task.json"
+                break
+            fi
         fi
         SEARCH_DIR="$(dirname "$SEARCH_DIR")"
     done
 
-    if [[ -n "$LEVEL_TOP_README" && -f "$LEVEL_TOP_README" ]]; then
-        STATUS=$(grep -E "^\| *Status *\|" "$LEVEL_TOP_README" 2>/dev/null | head -1 \
-            | awk -F'|' '{gsub(/ /,"",$3); print $3}')
+    if [[ -n "$LEVEL_TOP_JSON" ]]; then
+        STATUS=$(python3 -c "import json; d=json.load(open('$LEVEL_TOP_JSON')); print(d.get('status',''))" 2>/dev/null || echo "")
         if [[ "$STATUS" != "complete" ]]; then
             echo "ERROR: Pipeline is currently in progress (Status: ${STATUS:-—})."
-            echo "  Level: TOP task: $LEVEL_TOP_README"
+            echo "  Level: TOP task.json: $LEVEL_TOP_JSON"
             echo ""
             echo "Wait for the pipeline to finish before resetting."
             echo "To override (only if the process is confirmed stopped): reset.sh --force"
@@ -121,20 +122,8 @@ echo "    entry task:  $ENTRY_FULL_NAME"
 # Complexity is left unset (—) to trigger ARCHITECT decompose mode.
 # ARCHITECT and TM fill Components, Design, Acceptance Criteria.
 cat > "$ENTRY_DIR/README.md" <<'TASKEOF'
+<!-- This file is managed by the ai-builder pipeline. Do not hand-edit. -->
 # Task: build-1
-
-| Field       | Value                   |
-|-------------|-------------------------|
-| Task-type   | PIPELINE-SUBTASK        |
-| Status      | —                       |
-| Epic        | main                    |
-| Tags        | regression-test         |
-| Parent      | platform                |
-| Priority    | MED                     |
-| Complexity  | —                       |
-| Stop-after  | false                   |
-| Last-task   | false                   |
-| Level       | TOP                     |
 
 ## Goal
 
@@ -212,12 +201,6 @@ _To be completed by the ARCHITECT._
 ## Suggested Tools
 
 _To be completed by the ARCHITECT._
-
-## Subtasks
-
-<!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
-<!-- subtask-list-start -->
-<!-- subtask-list-end -->
 
 ## Notes
 

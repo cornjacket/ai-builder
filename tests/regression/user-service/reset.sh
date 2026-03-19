@@ -79,21 +79,8 @@ echo "    entry task:  $ENTRY_FULL_NAME"
 # Write the user-service spec into the build-1 README.
 # Complexity is left unset (—) to trigger ARCHITECT decompose mode.
 cat > "$ENTRY_README" <<'TASKEOF'
+<!-- This file is managed by the ai-builder pipeline. Do not hand-edit. -->
 # Task: build-1
-
-| Field       | Value           |
-|-------------|-----------------|
-| Task-type   | PIPELINE-SUBTASK |
-| Status      | —               |
-| Epic        | main            |
-| Tags        | regression-test |
-| Parent      | user-service    |
-| Priority    | MED             |
-| Next-subtask-id | 0000       |
-| Complexity  | —               |
-| Stop-after  | false           |
-| Last-task   | false           |
-| Level       | TOP             |
 
 ## Goal
 
@@ -124,15 +111,13 @@ _To be completed by the ARCHITECT._
 
 _To be completed by the ARCHITECT._
 
-## Suggested Tools
+## Test Command
 
 _To be completed by the ARCHITECT._
 
-## Subtasks
+## Suggested Tools
 
-<!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
-<!-- subtask-list-start -->
-<!-- subtask-list-end -->
+_To be completed by the ARCHITECT._
 
 ## Notes
 
