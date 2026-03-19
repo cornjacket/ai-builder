@@ -105,7 +105,7 @@ _None._
 <!-- subtask-list-start -->
 - [x] [X-829461-0000-audit-and-schema-design](X-829461-0000-audit-and-schema-design/)
 - [x] [X-829461-0001-split-pipeline-scripts](X-829461-0001-split-pipeline-scripts/)
-- [ ] [829461-0002-split-user-scripts](829461-0002-split-user-scripts/)
+- [x] [X-829461-0002-split-user-scripts](X-829461-0002-split-user-scripts/)
 - [ ] [829461-0003-update-orchestrator-and-internal-decompose-handler](829461-0003-update-orchestrator-and-internal-decompose-handler/)
 - [ ] [829461-0004-update-templates](829461-0004-update-templates/)
 - [ ] [829461-0005-unit-tests](829461-0005-unit-tests/)

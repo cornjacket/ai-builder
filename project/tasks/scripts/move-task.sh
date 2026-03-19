@@ -13,6 +13,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-json-helpers.sh
+source "$SCRIPTS_DIR/task-json-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -67,10 +69,16 @@ mkdir -p "$DST_STATUS_DIR"
 mv "$SRC_DIR" "$DST_DIR"
 
 # ---------------------------------------------------------------------------
-# Update task README: change Status field
+# Update task README: change Status field (user tasks only — prose-only
+# pipeline task READMEs have no metadata table so the sed is a no-op)
 # ---------------------------------------------------------------------------
 
 sed -i '' "s/| Status *|[^|]*|/| Status | $TO |/" "$TASK_README"
+
+# For pipeline tasks, status lives in task.json
+if is_pipeline_task "$DST_DIR"; then
+    json_set_str "$DST_DIR/task.json" "status" "$TO"
+fi
 
 # ---------------------------------------------------------------------------
 # Remove task from source status README
