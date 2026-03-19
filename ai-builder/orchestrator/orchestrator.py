@@ -1,6 +1,7 @@
 import argparse
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -345,6 +346,56 @@ def parse_outcome(response: str) -> tuple[str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Internal agents — deterministic roles that run shell scripts directly
+# in Python rather than spawning a claude subprocess.
+#
+# An "internal" agent is declared in the machine JSON with "agent": "internal".
+# It returns an AgentResult with zero token counts (no model was invoked).
+# ---------------------------------------------------------------------------
+
+def _run_lch_internal(output_dir: Path) -> AgentResult:
+    """Execute LEAF_COMPLETE_HANDLER logic directly without a claude subprocess.
+
+    Runs on-task-complete.sh and maps its three possible outputs to the
+    corresponding outcome strings. No AI reasoning is required for this role.
+    """
+    current_job_path = CURRENT_JOB_FILE.read_text().strip()
+    cmd = [
+        str(PM_SCRIPTS_DIR / "on-task-complete.sh"),
+        "--current", current_job_path,
+        "--output-dir", str(output_dir),
+        "--epic", EPIC,
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    stdout = proc.stdout.strip()
+
+    if proc.returncode != 0:
+        err = proc.stderr.strip() or stdout
+        print(f"[internal/LCH] on-task-complete.sh failed (exit {proc.returncode}): {err}")
+        return AgentResult(exit_code=1, response=f"on-task-complete.sh failed: {err}")
+
+    if stdout.startswith("NEXT "):
+        outcome = "HANDLER_SUBTASKS_READY"
+    elif stdout == "DONE":
+        outcome = "HANDLER_ALL_DONE"
+    elif stdout == "STOP_AFTER":
+        outcome = "HANDLER_STOP_AFTER"
+    else:
+        print(f"[internal/LCH] unexpected output from on-task-complete.sh: {stdout!r}")
+        return AgentResult(exit_code=1, response=f"Unexpected output: {stdout}")
+
+    response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {stdout}"
+    return AgentResult(exit_code=0, response=response)
+
+
+def run_internal_agent(role: str, output_dir: Path) -> AgentResult:
+    """Dispatch to the internal implementation for the given role."""
+    if role == "LEAF_COMPLETE_HANDLER":
+        return _run_lch_internal(output_dir)
+    return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
+
+
+# ---------------------------------------------------------------------------
 # Execution log helpers
 # ---------------------------------------------------------------------------
 
@@ -420,9 +471,12 @@ while current_role is not None:
 
     print(f"\n>>> [{current_role} / {agent}]")
 
-    prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
     inv_start = datetime.now()
-    result: AgentResult = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
+    if agent == "internal":
+        result: AgentResult = run_internal_agent(current_role, OUTPUT_DIR)
+    else:
+        prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
+        result = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
     inv_end = datetime.now()
 
     if result.exit_code == 2:
