@@ -774,7 +774,9 @@ The same argument applies to DECOMPOSE_HANDLER: it calls a fixed sequence of scr
 | LCH tokens cached | ~150K (5 × 30K) | 0 | −100% |
 | LCH wall time | ~75s (5 × 15s) | <1s | ~−75s |
 
-**Run 11** tests both changes active together (2026-03-19):
+**Run 11 completed (2026-03-19). Gold test: PASS.**
+
+**Run 11** tested both changes active together (2026-03-19):
 
 1. **TESTER no-history + Test Command** — TESTER receives no handoff history and reads only `## Test Command` from the job doc; ARCHITECT fills that field in Design Mode; no source file browsing.
 2. **LCH internal agent** — LEAF_COMPLETE_HANDLER runs `on-task-complete.sh` directly in Python; no claude subprocess; zero token cost.
@@ -788,3 +790,28 @@ These are bundled rather than isolated because the Test Command change requires 
 | TESTER (5 inv) | 913,529 | ~150K or less | −80%+ |
 | LCH (5 inv) | 150,294 | 0 | −100% |
 | Combined savings | — | ~900K | ~16% of run 8 total |
+
+### Run 11 Actual Results vs Run 8
+
+| Metric | Run 8 (baseline) | Run 11 | Change |
+|--------|-----------------|--------|--------|
+| Total time | 37m 41s | 23m 15s | **−38%** |
+| Tokens cached total | 5,728,675 | 3,503,765 | **−39%** |
+| TESTER cached (5 inv) | 913,529 | 245,406 | **−73%** |
+| LCH cached (5 inv) | 150,294 | 0 | **−100%** |
+| IMPLEMENTOR cached | 2,590,208 | 905,871 | −65%* |
+| LCH avg elapsed | 14s | 0s | −100% |
+| TESTER avg elapsed | 53s | 16s | −70% |
+| claude invocations | 24 | 19 | −21% |
+
+*IMPLEMENTOR drop is likely run-to-run variation — run 11 generated simpler code (64K tokens out vs 119K in run 8).
+
+**Key observations:**
+
+**TESTER Test Command is highly effective.** TESTER dropped from ~183K avg → ~49K avg per invocation (−73%). The ~49K floor is Claude Code's system prompt + the job doc (which is legitimately in context). Source file browsing eliminated entirely.
+
+**LCH internal agent is exact.** Zero tokens, zero latency on all 5 invocations. The stdout line-scanning fix worked correctly.
+
+**Total cached down 39%, wall time down 38%.** The combined optimizations are significant. The remaining dominant costs are ARCHITECT (1,427K) and DECOMPOSE_HANDLER (924K) — both still running as claude subprocesses and both candidates for further optimization.
+
+**Gold test: PASS.**
