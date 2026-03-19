@@ -758,3 +758,20 @@ The only reason it's an AI invocation today is that the orchestrator expects `OU
 The same argument applies to DECOMPOSE_HANDLER: it calls a fixed sequence of scripts to create subtask directories. The AI adds little value there too — though DECOMPOSE_HANDLER does read the job doc and decide component names and structure, so it's less purely mechanical than LCH. LCH is the cleaner first target.
 
 **Implementation approach:** introduce an `internal_agent` concept in the orchestrator. When the state machine transitions to `LEAF_COMPLETE_HANDLER`, instead of spawning a claude subprocess, the orchestrator calls a Python function that runs `on-task-complete.sh`, parses the result, and returns an `AgentResult` in the same shape as a real agent response. The rest of the orchestrator loop (routing, handoff appending, frame_stack) stays unchanged.
+
+---
+
+## Execution Log — internal agent for LEAF_COMPLETE_HANDLER — IMPLEMENTED (2026-03-18, run 11 pending)
+
+**Change:** `LEAF_COMPLETE_HANDLER` declared as `"agent": "internal"` in `default.json`. The orchestrator main loop branches on `agent == "internal"` and calls `run_internal_agent()` instead of `build_prompt()` + `run_agent()`. `_run_lch_internal()` calls `on-task-complete.sh` via `subprocess.run()`, maps stdout to an outcome string, and returns an `AgentResult` with zero token counts.
+
+**`no_history` flag omitted** for internal agents — it is meaningless since no prompt is ever built. The orchestrator skips `build_prompt()` entirely for internal roles.
+
+**Expected savings per full run (24 invocations, 5 LCH calls):**
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| LCH tokens cached | ~150K (5 × 30K) | 0 | −100% |
+| LCH wall time | ~75s (5 × 15s) | <1s | ~−75s |
+
+**Run 11** (pending) will validate.

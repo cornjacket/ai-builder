@@ -5,7 +5,7 @@
     "IMPLEMENTOR":          { "agent": "claude",    "prompt": "roles/IMPLEMENTOR.md", "no_history": false },
     "TESTER":               { "agent": "claude",    "prompt": "roles/TESTER.md",      "no_history": true  },
     "DECOMPOSE_HANDLER":    { "agent": "claude",    "prompt": null,                   "no_history": true  },
-    "LEAF_COMPLETE_HANDLER":{ "agent": "internal",  "prompt": null,                   "no_history": true  }
+    "LEAF_COMPLETE_HANDLER":{ "agent": "internal",  "prompt": null                                        }
   },
   "transitions": {
     "ARCHITECT": {
