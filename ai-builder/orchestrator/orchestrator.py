@@ -374,17 +374,30 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
         print(f"[internal/LCH] on-task-complete.sh failed (exit {proc.returncode}): {err}")
         return AgentResult(exit_code=1, response=f"on-task-complete.sh failed: {err}")
 
-    if stdout.startswith("NEXT "):
-        outcome = "HANDLER_SUBTASKS_READY"
-    elif stdout == "DONE":
-        outcome = "HANDLER_ALL_DONE"
-    elif stdout == "STOP_AFTER":
-        outcome = "HANDLER_STOP_AFTER"
-    else:
+    # on-task-complete.sh may emit status lines before the terminal token.
+    # Scan each line for NEXT/DONE/STOP_AFTER rather than matching the whole blob.
+    outcome = None
+    token_line = ""
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if line.startswith("NEXT "):
+            outcome = "HANDLER_SUBTASKS_READY"
+            token_line = line
+            break
+        elif line == "DONE":
+            outcome = "HANDLER_ALL_DONE"
+            token_line = line
+            break
+        elif line == "STOP_AFTER":
+            outcome = "HANDLER_STOP_AFTER"
+            token_line = line
+            break
+
+    if outcome is None:
         print(f"[internal/LCH] unexpected output from on-task-complete.sh: {stdout!r}")
         return AgentResult(exit_code=1, response=f"Unexpected output: {stdout}")
 
-    response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {stdout}"
+    response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {token_line}"
     return AgentResult(exit_code=0, response=response)
 
 
