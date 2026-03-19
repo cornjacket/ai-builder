@@ -108,7 +108,7 @@ _None._
 - [x] [X-829461-0002-split-user-scripts](X-829461-0002-split-user-scripts/)
 - [x] [X-829461-0003-update-orchestrator-and-internal-decompose-handler](X-829461-0003-update-orchestrator-and-internal-decompose-handler/)
 - [x] [X-829461-0004-update-templates](X-829461-0004-update-templates/)
-- [ ] [829461-0005-unit-tests](829461-0005-unit-tests/)
+- [x] [X-829461-0005-unit-tests](X-829461-0005-unit-tests/)
 - [ ] [829461-0006-regression-validation](829461-0006-regression-validation/)
 - [ ] [829461-0007-audit-agent-script-knowledge-boundary](829461-0007-audit-agent-script-knowledge-boundary/)
 <!-- subtask-list-end -->

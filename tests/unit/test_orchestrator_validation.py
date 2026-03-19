@@ -1,156 +1,142 @@
 """Unit tests for orchestrator.py TM-mode validation logic.
 
-Tests the regex patterns used to validate PIPELINE-SUBTASK and Level:TOP
-fields without importing or running the orchestrator (which has top-level
-side effects from argparse).
+Tests the task.json-based validation that replaced the old README regex
+approach. Orchestrator now reads task-type and level from task.json.
 """
 
-import re
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 
-# The exact patterns used in orchestrator.py TM validation block.
-TASK_TYPE_PATTERN = r'\|\s*Task-type\s*\|\s*PIPELINE-SUBTASK\s*\|'
-LEVEL_PATTERN      = r'\|\s*Level\s*\|\s*TOP\s*\|'
+def _write_task_json(directory: Path, task_type: str, level: str) -> Path:
+    """Write a minimal task.json to directory and return its path."""
+    data = {
+        "task-type": task_type,
+        "status": "—",
+        "level": level,
+        "complexity": "—",
+    }
+    path = directory / "task.json"
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    return path
 
 
-def _is_pipeline_subtask(content: str) -> bool:
-    return bool(re.search(TASK_TYPE_PATTERN, content))
+def _validate_entry_point(task_json: Path, resume: bool = False) -> tuple[bool, str]:
+    """Replicate the orchestrator TM validation logic.
 
+    Returns (valid, error_message).
+    """
+    if not task_json.exists():
+        return False, "task.json not found"
+    try:
+        data = json.loads(task_json.read_text())
+    except Exception as e:
+        return False, f"Failed to parse task.json: {e}"
 
-def _is_level_top(content: str) -> bool:
-    return bool(re.search(LEVEL_PATTERN, content))
+    if data.get("task-type") != "PIPELINE-SUBTASK":
+        return False, f"task-type is '{data.get('task-type')}', expected 'PIPELINE-SUBTASK'"
 
+    if not resume and data.get("level") != "TOP":
+        return False, f"level is '{data.get('level')}', expected 'TOP'"
 
-# ---------------------------------------------------------------------------
-# Task-type validation
-# ---------------------------------------------------------------------------
-
-class TestTaskTypePattern(unittest.TestCase):
-    def _table(self, task_type: str) -> str:
-        return (
-            f"| Field       | Value           |\n"
-            f"|-------------|-----------------||\n"
-            f"| Task-type   | {task_type}     |\n"
-            f"| Status      | —               |\n"
-        )
-
-    def test_matches_pipeline_subtask(self):
-        self.assertTrue(_is_pipeline_subtask(self._table("PIPELINE-SUBTASK")))
-
-    def test_rejects_user_task(self):
-        self.assertFalse(_is_pipeline_subtask(self._table("USER-TASK")))
-
-    def test_rejects_user_subtask(self):
-        self.assertFalse(_is_pipeline_subtask(self._table("USER-SUBTASK")))
-
-    def test_tolerates_extra_spaces(self):
-        content = "|  Task-type  |  PIPELINE-SUBTASK  |"
-        self.assertTrue(_is_pipeline_subtask(content))
-
-    def test_rejects_partial_match(self):
-        # "PIPELINE-SUBTASK-EXTRA" should not match
-        content = "| Task-type   | PIPELINE-SUBTASK-EXTRA |"
-        self.assertFalse(_is_pipeline_subtask(content))
-
-    def test_rejects_empty(self):
-        self.assertFalse(_is_pipeline_subtask(""))
-
-    def test_multiline_document(self):
-        doc = (
-            "# Task: build-1\n\n"
-            "| Field       | Value           |\n"
-            "|-------------|-----------------||\n"
-            "| Task-type   | PIPELINE-SUBTASK |\n"
-            "| Status      | —               |\n"
-            "| Level       | TOP             |\n\n"
-            "## Goal\n\nBuild something.\n"
-        )
-        self.assertTrue(_is_pipeline_subtask(doc))
+    return True, ""
 
 
 # ---------------------------------------------------------------------------
-# Level:TOP validation
+# task-type validation
 # ---------------------------------------------------------------------------
 
-class TestLevelPattern(unittest.TestCase):
-    def _table(self, level: str) -> str:
-        return (
-            f"| Field       | Value           |\n"
-            f"| Task-type   | PIPELINE-SUBTASK |\n"
-            f"| Level       | {level}          |\n"
-        )
+class TestTaskTypeValidation(unittest.TestCase):
+    def test_pipeline_subtask_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "TOP")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertTrue(valid, msg)
 
-    def test_matches_top(self):
-        self.assertTrue(_is_level_top(self._table("TOP")))
+    def test_user_task_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "USER-TASK", "TOP")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertFalse(valid)
+            self.assertIn("task-type", msg)
 
-    def test_rejects_internal(self):
-        self.assertFalse(_is_level_top(self._table("INTERNAL")))
+    def test_user_subtask_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "USER-SUBTASK", "TOP")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertFalse(valid)
 
-    def test_rejects_dash(self):
-        self.assertFalse(_is_level_top(self._table("—")))
-
-    def test_tolerates_extra_spaces(self):
-        content = "|  Level  |  TOP  |"
-        self.assertTrue(_is_level_top(content))
-
-    def test_rejects_partial_match(self):
-        content = "| Level       | TOPMOST |"
-        self.assertFalse(_is_level_top(content))
-
-    def test_rejects_empty(self):
-        self.assertFalse(_is_level_top(""))
-
-    def test_multiline_document(self):
-        doc = (
-            "# Task: build-1\n\n"
-            "| Task-type   | PIPELINE-SUBTASK |\n"
-            "| Level       | TOP             |\n\n"
-            "## Goal\n\nBuild something.\n"
-        )
-        self.assertTrue(_is_level_top(doc))
+    def test_missing_task_json_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            valid, msg = _validate_entry_point(Path(tmp) / "task.json")
+            self.assertFalse(valid)
+            self.assertIn("not found", msg)
 
 
 # ---------------------------------------------------------------------------
-# Combined: both checks on a realistic README
+# Level: TOP validation
+# ---------------------------------------------------------------------------
+
+class TestLevelValidation(unittest.TestCase):
+    def test_top_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "TOP")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertTrue(valid, msg)
+
+    def test_internal_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "INTERNAL")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertFalse(valid)
+            self.assertIn("level", msg)
+
+    def test_dash_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "—")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertFalse(valid)
+
+    def test_internal_passes_with_resume(self):
+        """--resume skips the Level:TOP check."""
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "INTERNAL")
+            valid, msg = _validate_entry_point(task_json, resume=True)
+            self.assertTrue(valid, msg)
+
+
+# ---------------------------------------------------------------------------
+# Combined validation
 # ---------------------------------------------------------------------------
 
 class TestCombinedValidation(unittest.TestCase):
-    VALID_DOC = (
-        "# Task: build-1\n\n"
-        "| Field       | Value                   |\n"
-        "|-------------|-------------------------|\n"
-        "| Task-type   | PIPELINE-SUBTASK        |\n"
-        "| Status      | —                       |\n"
-        "| Level       | TOP                     |\n\n"
-        "## Goal\n\nBuild a service.\n"
-    )
-
-    USER_TASK_DOC = (
-        "# Task: user-service\n\n"
-        "| Field       | Value     |\n"
-        "| Task-type   | USER-TASK |\n"
-        "| Status      | backlog   |\n\n"
-        "## Goal\n\nOwner task.\n"
-    )
-
-    INTERNAL_DOC = (
-        "# Task: handler\n\n"
-        "| Task-type   | PIPELINE-SUBTASK |\n"
-        "| Level       | INTERNAL         |\n\n"
-        "## Goal\n\nA component.\n"
-    )
-
-    def test_valid_passes_both(self):
-        self.assertTrue(_is_pipeline_subtask(self.VALID_DOC))
-        self.assertTrue(_is_level_top(self.VALID_DOC))
+    def test_valid_entry_point(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "TOP")
+            valid, msg = _validate_entry_point(task_json)
+            self.assertTrue(valid, msg)
 
     def test_user_task_fails_type_check(self):
-        self.assertFalse(_is_pipeline_subtask(self.USER_TASK_DOC))
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "USER-TASK", "TOP")
+            valid, _ = _validate_entry_point(task_json)
+            self.assertFalse(valid)
 
-    def test_internal_passes_type_fails_level(self):
-        self.assertTrue(_is_pipeline_subtask(self.INTERNAL_DOC))
-        self.assertFalse(_is_level_top(self.INTERNAL_DOC))
+    def test_internal_pipeline_subtask_fails_level(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_json = _write_task_json(Path(tmp), "PIPELINE-SUBTASK", "INTERNAL")
+            valid, _ = _validate_entry_point(task_json)
+            self.assertFalse(valid)
+
+    def test_malformed_json_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "task.json"
+            p.write_text("{not valid json")
+            valid, msg = _validate_entry_point(p)
+            self.assertFalse(valid)
+            self.assertIn("parse", msg)
 
 
 if __name__ == "__main__":
