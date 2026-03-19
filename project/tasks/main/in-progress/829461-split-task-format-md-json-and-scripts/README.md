@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH        |
-| Next-subtask-id | 0007 |
+| Next-subtask-id | 0008 |
 
 ## Goal
 
@@ -110,6 +110,7 @@ _None._
 - [ ] [829461-0004-update-templates](829461-0004-update-templates/)
 - [ ] [829461-0005-unit-tests](829461-0005-unit-tests/)
 - [ ] [829461-0006-regression-validation](829461-0006-regression-validation/)
+- [ ] [829461-0007-audit-agent-script-knowledge-boundary](829461-0007-audit-agent-script-knowledge-boundary/)
 <!-- subtask-list-end -->
 
 ## Notes
