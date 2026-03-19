@@ -38,8 +38,8 @@ routes between agents based on that outcome.
 - **TM mode** (`--target-repo`): Oracle-driven outer loop. The Oracle places
   the top-level task in `in-progress/` and writes its README path to
   `current-job.txt`, then invokes the orchestrator. Task READMEs are the job
-  documents at every level — DECOMPOSE_HANDLER fills in Goal/Context for
-  component subtasks and updates `current-job.txt` to point at the next task README.
+  documents at every level. Internal handlers (DECOMPOSE_HANDLER,
+  LEAF_COMPLETE_HANDLER) manage task state without invoking any AI model.
 
 **Roles and agents:**
 
@@ -48,8 +48,8 @@ routes between agents based on that outcome.
 | ARCHITECT | claude | Designs the solution; fills Design + Acceptance Criteria |
 | IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed |
 | TESTER | claude | Verifies implementation against Acceptance Criteria |
-| DECOMPOSE_HANDLER     | claude | Creates subtasks from ARCHITECT's component table; advances pipeline to first subtask |
-| LEAF_COMPLETE_HANDLER | claude | Marks task complete, walks up the tree, advances to next sibling or signals DONE |
+| DECOMPOSE_HANDLER     | internal | Parses ARCHITECT's component table; creates subtask directories; advances pipeline to first subtask |
+| LEAF_COMPLETE_HANDLER | internal | Marks task complete; walks up the tree; advances to next sibling or signals DONE |
 
 ---
 
@@ -111,8 +111,9 @@ When `no_history: true`, the role's prompt contains only its role instructions
 and the current job document — no history of what prior agents said or did.
 
 **Use this to reduce token usage for roles that don't need prior context.**
-In `default.json`, `TESTER`, `DECOMPOSE_HANDLER`, and `LEAF_COMPLETE_HANDLER`
-all have `no_history: true`. Roles that actively reason about prior decisions
+In `default.json`, `TESTER` has `no_history: true`. `DECOMPOSE_HANDLER` and
+`LEAF_COMPLETE_HANDLER` are internal (no AI model invoked) so this field is
+irrelevant for them. Roles that actively reason about prior decisions
 (`ARCHITECT`, `IMPLEMENTOR`) keep `no_history: false`.
 
 The policy is fully configurable per machine file — different pipelines can
@@ -120,6 +121,34 @@ use different history strategies without touching the orchestrator source.
 
 See [`machines/README.md`](machines/README.md) for the full field reference
 and rationale.
+
+---
+
+## Agent Knowledge Boundary
+
+**AI agents (ARCHITECT, IMPLEMENTOR, TESTER) must never have knowledge of:**
+- Task management scripts (`new-pipeline-subtask.sh`, `complete-task.sh`, etc.)
+- `task.json` — its structure, fields, or location
+- `current-job.txt` — how the pipeline advances between tasks
+- Any orchestrator internals
+
+**AI agents know only:**
+- The job document (`README.md`) — provided via path in the prompt
+- Target-repo build/test commands — from `## Suggested Tools` in the job doc
+
+This boundary is enforced structurally:
+1. Agent prompts (`roles/*.md`) contain no script names, no `task.json`
+   references, and no `current-job.txt` references.
+2. `CLAUDE.md` is not injected into agent prompts. Agents run with
+   `cwd=output_dir` (not the repo root), so CLAUDE.md is not loaded.
+3. DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER are **internal** (no AI model
+   invoked) — the only roles that previously needed script knowledge are now
+   pure Python. No agent prompt covers these roles.
+
+**Rule for future prompt edits:** if a proposed change to any `roles/*.md`
+file would require an AI agent to know about scripts, task.json fields, or
+pipeline internals, the change is wrong. The orchestrator mediates all
+pipeline mechanics; agents read and write only the job doc prose.
 
 ---
 
@@ -179,8 +208,8 @@ All pipeline artifacts are written to `--output-dir`:
 ```
 
 In TM mode, `current-job.txt` in the output directory holds the absolute path
-to the active task README (the job document). Written by Oracle at startup and
-by LEAF_COMPLETE_HANDLER via `set-current-job.sh` when advancing to the next task.
+to the active task README (the job document). Written by the Oracle at startup
+and by the internal LEAF_COMPLETE_HANDLER when advancing to the next task.
 
 The `run-summary.md` content is also appended as a `## Run Summary` section to
 the Level:TOP pipeline-subtask README at the end of the run.

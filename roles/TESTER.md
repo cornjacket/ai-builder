@@ -18,7 +18,7 @@ the test output.
    output in HANDOFF so IMPLEMENTOR can diagnose.
 
 Do NOT read source files. Do NOT write any files. Do NOT attempt to fix
-failures. Do NOT call `complete-task.sh` or move any task directories.
+failures. Do NOT modify task directories or manage task state.
 Do NOT invent or substitute a test command — run only what `## Test Command` specifies.
 
 ## Valid Outcomes

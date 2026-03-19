@@ -110,7 +110,7 @@ _None._
 - [x] [X-829461-0004-update-templates](X-829461-0004-update-templates/)
 - [x] [X-829461-0005-unit-tests](X-829461-0005-unit-tests/)
 - [ ] [829461-0006-regression-validation](829461-0006-regression-validation/)
-- [ ] [829461-0007-audit-agent-script-knowledge-boundary](829461-0007-audit-agent-script-knowledge-boundary/)
+- [x] [X-829461-0007-audit-agent-script-knowledge-boundary](X-829461-0007-audit-agent-script-knowledge-boundary/)
 <!-- subtask-list-end -->
 
 ## Notes

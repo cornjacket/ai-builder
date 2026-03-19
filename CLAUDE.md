@@ -40,6 +40,28 @@ This is how context survives across sessions.
 
 ---
 
+## Pipeline Agent Knowledge Boundary
+
+This `CLAUDE.md` is for **human and Oracle operators**. It is **not** injected
+into pipeline agent prompts (agents run with `cwd=output_dir`, not the repo
+root, so CLAUDE.md is not loaded by the agent CLI).
+
+Pipeline AI agents (ARCHITECT, IMPLEMENTOR, TESTER) know only:
+- The job document (`README.md`) — provided by path in the prompt
+- Target-repo build/test commands — from `## Suggested Tools` in the job doc
+
+They have zero knowledge of:
+- Task management scripts (`new-pipeline-subtask.sh`, `complete-task.sh`, etc.)
+- `task.json` — its structure or location
+- `current-job.txt` — how the pipeline advances
+- Any orchestrator internals
+
+This boundary is enforced by keeping script/orchestrator knowledge out of all
+`roles/*.md` files. See [`ai-builder/orchestrator/README.md`](ai-builder/orchestrator/README.md)
+for the formal boundary definition.
+
+---
+
 ## Regression Tests
 
 **Never start a regression run without explicit user approval.** Do not reset,
