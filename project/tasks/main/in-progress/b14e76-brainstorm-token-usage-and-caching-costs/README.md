@@ -585,7 +585,9 @@ Run 9 revealed that stripping handoff history from TESTER reduced cached tokens 
 
 **Expected impact:** TESTER should drop from ~150–196K cached per invocation closer to the ~30K Claude Code floor, since the only thing TESTER reads is the `## Test Command` line from the job doc (already in context as part of the system prompt) plus whatever `go test` outputs to stdout. No file browsing, no source reads.
 
-**Run 10** (in progress) will validate this prediction.
+**Flow correctness:** TESTER only ever runs on atomic tasks. Atomic tasks always go through ARCHITECT in Design Mode before IMPLEMENTOR and TESTER run — so `## Test Command` is always filled by the time TESTER needs it. Composite tasks (Decompose Mode) never reach TESTER; DECOMPOSE_HANDLER creates subtask files from the template after ARCHITECT runs, and each subtask gets its own ARCHITECT invocation. No gap.
+
+**Run 10** (pending) will validate the token reduction prediction.
 
 ---
 
