@@ -13,6 +13,7 @@ next up, and key decisions made.
 
 | Date | Summary |
 |------|---------|
+| [2026-03-18](2026-03-18.md) | Token optimization: handler no-history, frame_stack, cwd=/tmp, TESTER no-history, Test Command, LCH internal agent; run 8+9 baselines recorded; run 11 pending |
 | [2026-03-17](2026-03-17.md) | Split TASK_MANAGER into DECOMPOSE_HANDLER/LEAF_COMPLETE_HANDLER; added --state-machine/--start-state flags; all three regression tests fixed and passing; platform-monolith build metrics recorded |
 | [2026-03-16](2026-03-16.md) | Completed tm-tree-traversal (advance-pipeline, on-task-complete, Level field, TM prompt fixes); platform-monolith regression test scaffolded and run twice; ARCHITECT.md contract propagation fix; regression test SOP written |
 | [2026-03-14](2026-03-14.md) | Closed f7a6af (three task types, typed scripts); closed d9c12f (orchestrator review); regression test clean; 0838a5-tm-tree-traversal created |
