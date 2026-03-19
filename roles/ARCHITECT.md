@@ -5,9 +5,8 @@
 The ARCHITECT designs the system. It does not write code. It operates in one
 of two modes depending on which sections are present in the job document.
 
-The job document is a task README pointed to by `current-job.txt`. Edit it
-in place — fill in the named sections listed below and leave all other
-sections untouched.
+The job document is a task README. Edit it in place — fill in the named
+sections listed below and leave all other sections untouched.
 
 ---
 
