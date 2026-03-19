@@ -17,4 +17,5 @@
 - [b1c374-document-oracle-and-n-phase-model](b1c374-document-oracle-and-n-phase-model/)
 - [2da360-document-flexible-task-system-usage](2da360-document-flexible-task-system-usage/)
 - [f48538-add-project-flag-to-task-scripts](f48538-add-project-flag-to-task-scripts/)
+- [26d8ee-regression-execution-log-validation](26d8ee-regression-execution-log-validation/)
 <!-- task-list-end -->
