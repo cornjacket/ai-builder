@@ -76,7 +76,7 @@ Your job:
      contract only, not full service behaviour.
 
    The `integrate` component inherits the `Level` of the current job document.
-   Read the `Level` field from the metadata table to determine which scope applies.
+   The Level is provided in your prompt context as `Task Level:`.
 
 5. Fill in the `## Suggested Tools` section with the language-agnostic
    build and test commands for this service, sourced from the target

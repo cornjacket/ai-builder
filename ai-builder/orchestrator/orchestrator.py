@@ -98,17 +98,22 @@ if TM_MODE:
         if not initial_job_doc.exists():
             print(f"[orchestrator] Initial job document not found: {initial_job_doc}")
             sys.exit(1)
-        _job_content = initial_job_doc.read_text()
-        if not re.search(r'\|\s*Task-type\s*\|\s*PIPELINE-SUBTASK\s*\|', _job_content):
+        _task_json = initial_job_doc.parent / "task.json"
+        if not _task_json.exists():
+            print(f"[orchestrator] ERROR: no task.json found alongside {initial_job_doc}.")
+            print(f"    TM mode requires a pipeline subtask created with new-pipeline-build.sh.")
+            sys.exit(1)
+        _task_data = json.loads(_task_json.read_text())
+        if _task_data.get("task-type") != "PIPELINE-SUBTASK":
             print(f"[orchestrator] ERROR: TM mode requires a PIPELINE-SUBTASK as the pipeline entry point.")
             print(f"    Job document: {initial_job_doc}")
-            print(f"    Task-type must be PIPELINE-SUBTASK, not a USER-TASK or USER-SUBTASK.")
-            print(f"    Create a pipeline build task with new-pipeline-subtask.sh and set Level: TOP.")
+            print(f"    task.json task-type is '{_task_data.get('task-type')}', expected 'PIPELINE-SUBTASK'.")
+            print(f"    Create a pipeline build task with new-pipeline-build.sh.")
             sys.exit(1)
-        if not args.resume and not re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', _job_content):
-            print(f"[orchestrator] ERROR: TM mode requires the pipeline entry point to have Level: TOP.")
+        if not args.resume and _task_data.get("level") != "TOP":
+            print(f"[orchestrator] ERROR: TM mode requires the pipeline entry point to have level: TOP.")
             print(f"    Job document: {initial_job_doc}")
-            print(f"    Set '| Level | TOP |' in the task metadata table.")
+            print(f"    task.json level is '{_task_data.get('level')}', expected 'TOP'.")
             print(f"    (Use --resume to skip this check when restarting a mid-run pipeline.)")
             sys.exit(1)
 else:
@@ -211,113 +216,41 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
             "\n\n---\n\n".join(handoff_history)
 
-    if role == "DECOMPOSE_HANDLER" and ROLE_PROMPTS.get(role) is None:
-        current_job_path = CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else "<job doc path>"
-        role_instructions = f"""\
-You are the DECOMPOSE HANDLER for the ai-builder pipeline.
-
-Target repository : {TARGET_REPO}
-Epic              : {EPIC}
-Current job doc   : {current_job_path}
-
-The ARCHITECT has decomposed a service (ARCHITECT_DECOMPOSITION_READY).
-The current job doc is the parent service task README. It contains a completed
-Components table in the ## Components section.
-
-Your job:
-1. Read the Components table from the current job doc.
-   Table format: | Name | Complexity | Description |
-
-   Determine the parent's path relative to in-progress/:
-     current job doc path: <TARGET_REPO>/project/tasks/<epic>/in-progress/<rel-path>/README.md
-     parent rel path     : <rel-path>   (everything between in-progress/ and /README.md)
-   You will need this for --parent below.
-
-2. Read the parent task's Level field from its metadata table (TOP or INTERNAL).
-
-3. For each component row, create a subtask directly in in-progress:
-     {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-rel-path> --name <component-name>
-
-4. For each created subtask, edit its README to fill in:
-   - The ## Goal section: the component's one-line description from the table
-   - The ## Context section: the parent service's Goal/Context
-   - The Complexity field in the metadata table: value from the Components table
-
-5. For the LAST subtask only (the integration component), also set:
-   - The Last-task field in the metadata table to: true
-   (Change `| Last-task   | false |` to `| Last-task   | true |`)
-   - The Level field to the parent task's Level value read in step 2
-   (Change `| Level       | INTERNAL |` to `| Level       | <parent-level> |`)
-
-6. Order subtasks by implementation dependency (foundations first).
-   The integration subtask must always be last.
-
-7. Point the pipeline at the first subtask:
-     {PM_SCRIPTS_DIR}/set-current-job.sh --output-dir {output_dir} <first-subtask-readme-path>
-
-8. Output OUTCOME: HANDLER_SUBTASKS_READY
-
-Available tools:
-  {PM_SCRIPTS_DIR}/new-pipeline-subtask.sh --epic {EPIC} --folder in-progress --parent <parent-rel-path> --name <name>
-  {PM_SCRIPTS_DIR}/set-current-job.sh      --output-dir {output_dir} <task-readme-path>
-
-Do NOT read any additional files or run any other commands.\
-"""
-        valid_outcomes = "HANDLER_SUBTASKS_READY | HANDLER_NEED_HELP"
-        job_section = ""
-
-    elif role == "LEAF_COMPLETE_HANDLER" and ROLE_PROMPTS.get(role) is None:
-        current_job_path = CURRENT_JOB_FILE.read_text().strip() if CURRENT_JOB_FILE.exists() else "<job doc path>"
-        role_instructions = f"""\
-You are the LEAF COMPLETE HANDLER for the ai-builder pipeline.
-
-Target repository : {TARGET_REPO}
-Epic              : {EPIC}
-Current job doc   : {current_job_path}
-
-The TESTER has just completed a subtask (TESTER_TESTS_PASS).
-The current job doc is the completed subtask's README.
-
-Your job:
-1. Run on-task-complete.sh with the current job doc path:
-     RESULT=$({PM_SCRIPTS_DIR}/on-task-complete.sh --current <current-job-doc> --output-dir {output_dir} --epic {EPIC})
-
-2. Interpret the result:
-   - "NEXT <path>"  → more subtasks remain; output OUTCOME: HANDLER_SUBTASKS_READY
-   - "DONE"         → all subtasks complete; output OUTCOME: HANDLER_ALL_DONE
-   - "STOP_AFTER"   → human review required; output OUTCOME: HANDLER_STOP_AFTER
-
-Available tools:
-  {PM_SCRIPTS_DIR}/on-task-complete.sh --current <readme-path> --output-dir {output_dir} --epic {EPIC}
-
-Do NOT read any additional files or run any other commands.\
-"""
-        valid_outcomes = "HANDLER_SUBTASKS_READY | HANDLER_ALL_DONE | HANDLER_STOP_AFTER | HANDLER_NEED_HELP"
-        job_section = ""
-
-    else:
-        role_file = ROLE_PROMPTS.get(role) or (ROLES_DIR / f"{role}.md")
-        role_instructions = role_file.read_text() if role_file.exists() \
-            else "Complete the work described in the job document."
-        if role == "ARCHITECT":
-            job_content = job_doc.read_text() if job_doc and job_doc.exists() else ""
-            complexity_match = re.search(r'\|\s*Complexity\s*\|\s*(\S+)\s*\|', job_content)
-            complexity = complexity_match.group(1) if complexity_match else "—"
-            if complexity == "atomic":
-                # Atomic component subtask: design mode
-                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
-            elif complexity in ("composite", "—"):
-                # composite = needs further decomposition; — = top-level service (unset)
-                valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
-            else:
-                # Fallback for legacy job docs without a Complexity field
-                valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
-        elif role == "IMPLEMENTOR":
-            valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
-        elif role == "TESTER":
-            valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
+    role_file = ROLE_PROMPTS.get(role) or (ROLES_DIR / f"{role}.md")
+    role_instructions = role_file.read_text() if role_file.exists() \
+        else "Complete the work described in the job document."
+    if role == "ARCHITECT":
+        # Read complexity and level from task.json (preferred) so the metadata
+        # table is not needed in the prose README.
+        task_json_path = job_doc.parent / "task.json" if job_doc else None
+        if task_json_path and task_json_path.exists():
+            try:
+                task_data = json.loads(task_json_path.read_text())
+                complexity = task_data.get("complexity", "—")
+                level = task_data.get("level", "TOP")
+            except Exception:
+                complexity, level = "—", "TOP"
         else:
-            valid_outcomes = "DONE | NEED_HELP"
+            complexity, level = "—", "TOP"
+        if complexity == "atomic":
+            valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
+        elif complexity in ("composite", "—"):
+            valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
+        else:
+            valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
+        job_section = (
+            f"\nThe shared job document is at: {job_doc}\n"
+            f"Task Level: {level}\n"
+            f"\nOutput directory (write all generated files here): {output_dir}\n"
+        )
+    elif role == "IMPLEMENTOR":
+        valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
+        job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
+    elif role == "TESTER":
+        valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
+        job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
+    else:
+        valid_outcomes = "DONE | NEED_HELP"
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
 
     return f"""Your role is {role}.
@@ -352,6 +285,167 @@ def parse_outcome(response: str) -> tuple[str, str]:
 # An "internal" agent is declared in the machine JSON with "agent": "internal".
 # It returns an AgentResult with zero token counts (no model was invoked).
 # ---------------------------------------------------------------------------
+
+def _parse_components_table(readme_text: str) -> list[dict]:
+    """Parse the Markdown Components table from a README.
+
+    Expects a table under ## Components with columns: Name | Complexity | Description.
+    Returns a list of dicts with keys 'name', 'complexity', 'description'.
+    Preserves row order; skips the header and separator rows.
+    """
+    components_match = re.search(r'## Components\s*\n(.*?)(?=\n## |\Z)', readme_text, re.DOTALL)
+    if not components_match:
+        return []
+
+    section = components_match.group(1)
+    rows = []
+    in_table = False
+    header_seen = False
+    sep_seen = False
+    for line in section.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith('|'):
+            if in_table:
+                break
+            continue
+        if not in_table and 'Name' in stripped:
+            in_table = True
+            header_seen = True
+            continue
+        if header_seen and not sep_seen:
+            sep_seen = True  # skip separator row (|---|---|---|)
+            continue
+        parts = [p.strip() for p in stripped.split('|')]
+        parts = [p for p in parts if p]  # drop empty strings from leading/trailing |
+        if len(parts) >= 3:
+            rows.append({
+                "name": parts[0],
+                "complexity": parts[1],
+                "description": "|".join(parts[2:]).strip(),  # description may contain |
+            })
+    return rows
+
+
+def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
+    """Execute DECOMPOSE_HANDLER logic directly without a claude subprocess.
+
+    Reads the Markdown Components table from the parent job doc, creates a
+    pipeline subtask for each component via new-pipeline-subtask.sh, fills
+    in Goal/Context in each subtask README, sets metadata in each task.json,
+    and points current-job.txt at the first subtask.
+    """
+    parent_dir = job_doc.parent
+    task_json_path = parent_dir / "task.json"
+    if not task_json_path.exists():
+        return AgentResult(exit_code=1, response=f"task.json not found at {task_json_path}")
+
+    try:
+        parent_data = json.loads(task_json_path.read_text())
+    except Exception as e:
+        return AgentResult(exit_code=1, response=f"Failed to parse task.json: {e}")
+
+    parent_level = parent_data.get("level", "TOP")
+
+    components = _parse_components_table(job_doc.read_text())
+    if not components:
+        return AgentResult(exit_code=1, response="No components found in ## Components table")
+
+    # Determine parent's path relative to in-progress/ (for --parent flag)
+    in_progress_dir = TARGET_REPO / "project" / "tasks" / EPIC / "in-progress"
+    try:
+        parent_rel = str(parent_dir.relative_to(in_progress_dir))
+    except ValueError:
+        return AgentResult(exit_code=1, response=f"Cannot compute parent rel path: {parent_dir}")
+
+    # Extract parent Goal + Context to inject into subtask Context sections
+    parent_content = job_doc.read_text()
+    goal_match = re.search(r'## Goal\s*\n\n(.*?)(?=\n## |\Z)', parent_content, re.DOTALL)
+    parent_goal = goal_match.group(1).strip() if goal_match else ""
+    context_match = re.search(r'## Context\s*\n\n(.*?)(?=\n## |\Z)', parent_content, re.DOTALL)
+    parent_context = context_match.group(1).strip() if context_match else ""
+
+    subtask_dirs = []
+    for i, component in enumerate(components):
+        comp_name = component["name"]
+        complexity = component["complexity"]
+        description = component["description"]
+
+        cmd = [
+            str(PM_SCRIPTS_DIR / "new-pipeline-subtask.sh"),
+            "--epic", EPIC,
+            "--folder", "in-progress",
+            "--parent", parent_rel,
+            "--name", comp_name,
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            err = proc.stderr.strip() or proc.stdout.strip()
+            return AgentResult(exit_code=1, response=f"new-pipeline-subtask.sh failed for '{comp_name}': {err}")
+
+        # Parse created subtask relative path from script output
+        created_rel = None
+        for line in proc.stdout.splitlines():
+            if line.startswith("Created pipeline-subtask:"):
+                created_rel = line.split(": ", 1)[1].strip().rstrip("/")
+                break
+        if created_rel is None:
+            return AgentResult(exit_code=1, response=f"Cannot parse subtask path from: {proc.stdout!r}")
+
+        subtask_dir = TARGET_REPO / created_rel
+        subtask_dirs.append(subtask_dir)
+
+        # Update task.json: set complexity; for last component also set last-task + level
+        subtask_json = subtask_dir / "task.json"
+        if subtask_json.exists():
+            try:
+                subtask_data = json.loads(subtask_json.read_text())
+                subtask_data["complexity"] = complexity
+                if i == len(components) - 1:
+                    subtask_data["last-task"] = True
+                    subtask_data["level"] = parent_level
+                subtask_json.write_text(json.dumps(subtask_data, indent=2) + "\n")
+            except Exception as e:
+                return AgentResult(exit_code=1, response=f"Failed to update subtask task.json for '{comp_name}': {e}")
+
+        # Update README: Goal = component description, Context = parent goal + context
+        subtask_readme = subtask_dir / "README.md"
+        if subtask_readme.exists():
+            readme = subtask_readme.read_text()
+            readme = readme.replace(
+                "## Goal\n\n_To be written._",
+                f"## Goal\n\n{description}",
+            )
+            context_body = parent_goal
+            if parent_context and parent_context != "_To be written._":
+                context_body += f"\n\n{parent_context}"
+            readme = readme.replace(
+                "## Context\n\n_To be written._",
+                f"## Context\n\n{context_body}",
+            )
+            subtask_readme.write_text(readme)
+
+    if not subtask_dirs:
+        return AgentResult(exit_code=1, response="No subtasks created")
+
+    # Point pipeline at first subtask
+    first_readme = subtask_dirs[0] / "README.md"
+    cmd = [
+        str(PM_SCRIPTS_DIR / "set-current-job.sh"),
+        "--output-dir", str(output_dir),
+        str(first_readme),
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        err = proc.stderr.strip() or proc.stdout.strip()
+        return AgentResult(exit_code=1, response=f"set-current-job.sh failed: {err}")
+
+    response = (
+        f"OUTCOME: HANDLER_SUBTASKS_READY\n"
+        f"HANDOFF: decomposed into {len(components)} components "
+        f"(level={parent_level}), first: {subtask_dirs[0].name}"
+    )
+    return AgentResult(exit_code=0, response=response)
+
 
 def _run_lch_internal(output_dir: Path) -> AgentResult:
     """Execute LEAF_COMPLETE_HANDLER logic directly without a claude subprocess.
@@ -401,10 +495,14 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
     return AgentResult(exit_code=0, response=response)
 
 
-def run_internal_agent(role: str, output_dir: Path) -> AgentResult:
+def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None) -> AgentResult:
     """Dispatch to the internal implementation for the given role."""
     if role == "LEAF_COMPLETE_HANDLER":
         return _run_lch_internal(output_dir)
+    if role == "DECOMPOSE_HANDLER":
+        if job_doc is None:
+            return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires a job_doc")
+        return _run_decompose_internal(job_doc, output_dir)
     return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
 
 
@@ -445,7 +543,7 @@ build_readme: Path | None = None  # Level:TOP pipeline-subtask README for live l
 
 
 def _find_level_top(readme: Path | None) -> Path | None:
-    """Return the nearest README (at or above readme's directory) that contains Level: TOP.
+    """Return the nearest README (at or above readme's directory) whose task.json has level: TOP.
 
     Walks upward through parent directories so that resuming from an INTERNAL
     task still finds the Level: TOP build-N README that owns the execution log.
@@ -454,8 +552,14 @@ def _find_level_top(readme: Path | None) -> Path | None:
         return None
     candidate = readme
     while candidate and candidate.exists():
-        if re.search(r'\|\s*Level\s*\|\s*TOP\s*\|', candidate.read_text()):
-            return candidate
+        task_json = candidate.parent / "task.json"
+        if task_json.exists():
+            try:
+                data = json.loads(task_json.read_text())
+                if data.get("level") == "TOP":
+                    return candidate
+            except Exception:
+                pass
         parent_readme = candidate.parent.parent / "README.md"
         if parent_readme == candidate:
             break
@@ -486,7 +590,7 @@ while current_role is not None:
 
     inv_start = datetime.now()
     if agent == "internal":
-        result: AgentResult = run_internal_agent(current_role, OUTPUT_DIR)
+        result: AgentResult = run_internal_agent(current_role, OUTPUT_DIR, job_doc)
     else:
         prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
         result = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
