@@ -572,6 +572,21 @@ This is the first uninterrupted full pipeline run (build-1 entry point, all 24 i
 
 **LCH at ~30.5K** confirms the Claude Code system prompt floor is stable.
 
+### Follow-on: language-agnostic Test Command (run 10)
+
+Run 9 revealed that stripping handoff history from TESTER reduced cached tokens only ~24% because TESTER's prompt caused it to read source and test files during execution — the file reads are the dominant cost, not the handoff history. Specifically, the old `roles/TESTER.md` said "verify the implementation against acceptance criteria" and hardcoded `go test ./...`, which led TESTER to open source files to understand what it was testing.
+
+**Fix implemented (2026-03-18):**
+
+- **`roles/ARCHITECT.md`**: both Design Mode and Decompose Mode now include a step to fill in `## Test Command` in the job doc with the exact shell command to run all tests (language-agnostic, sourced from target repo's `CLAUDE.md`).
+- **`roles/TESTER.md`**: rewritten to read only the `## Test Command` field from the job doc and run it verbatim. Explicitly prohibited from reading source files, inventing commands, or substituting language-specific commands. If `## Test Command` is missing, emit `TESTER_NEED_HELP`.
+- **`pipeline-build-template.md`** (both ai-builder and target copies): added `## Test Command` section between `## Acceptance Criteria` and `## Suggested Tools`.
+- **`reset.sh`** inline template: same `## Test Command` section added.
+
+**Expected impact:** TESTER should drop from ~150–196K cached per invocation closer to the ~30K Claude Code floor, since the only thing TESTER reads is the `## Test Command` line from the job doc (already in context as part of the system prompt) plus whatever `go test` outputs to stdout. No file browsing, no source reads.
+
+**Run 10** (in progress) will validate this prediction.
+
 ---
 
 ## Remaining Performance Opportunities (2026-03-18)
@@ -592,15 +607,19 @@ LCH at ~30K is the irreducible floor with the current claude-subprocess approach
 
 ---
 
-### Opportunity 1: TESTER no-history (low effort, high impact)
+### Opportunity 1: TESTER no-history — IMPLEMENTED (run 9)
 
-**Current state:** TESTER receives the full handoff history up to its point in the frame — typically ARCH/parent + DECOMPOSE/parent + ARCH/component + IMPLEMENTOR/component. It doesn't need any of it. TESTER's job is to run the tests and report pass/fail. The job doc alone is sufficient.
+**Result:** −24% on TESTER cached (863K → 653K), not the predicted −80%. The handoff history was not the main cost driver; TESTER's file-reading behaviour during execution was. See run 9 observations.
 
-**Expected impact:** TESTER averaged 149K cached/invocation in run 7 vs the 30K handler floor. Stripping handoff from TESTER should bring it to ~30K, saving ~120K/invocation × N TESTER calls per run. For a 24-invocation run (~5 TESTER calls) that's ~600K tokens saved.
+### Opportunity 1b: TESTER language-agnostic Test Command — IMPLEMENTED (run 10 pending)
 
-**Implementation:** Add `TESTER` to `_HANDLER_ROLES` in `build_prompt()` (same set that already strips DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER).
+**Problem:** even with no handoff history, TESTER reads source and test files because the old prompt said "verify the implementation against acceptance criteria" — implying it should understand the code. The remaining 150–196K cached per TESTER invocation is almost entirely file read overhead.
 
-**Risk:** Low. TESTER doesn't use handoff content — it reads the job doc for acceptance criteria and runs `go test`. Verified by the fact that TESTER already works correctly with zero cross-component context.
+**Fix:** ARCHITECT now fills in `## Test Command` in the job doc (exact shell command, language-agnostic). TESTER reads that field and runs it verbatim — no source file browsing, no hardcoded language commands.
+
+**Expected impact:** TESTER drops from ~150–196K → ~30K cached per invocation. For a 24-invocation run (~5 TESTER calls): ~800K tokens saved (~14% of total).
+
+**Risk:** Low. The test command is authoritative; TESTER has no reason to second-guess it.
 
 ---
 

@@ -42,6 +42,11 @@ This is how context survives across sessions.
 
 ## Regression Tests
 
+**Never start a regression run without explicit user approval.** Do not reset,
+launch the orchestrator, or start any pipeline run unless the user has directly
+asked you to run the regression in the current message. Completing a task or
+committing code does not imply permission to run a regression.
+
 **Never start a regression run if one is already in progress.** Before running
 `reset.sh` or launching the orchestrator, check whether a pipeline is currently
 running by inspecting the Level: TOP pipeline-subtask README in the target repo.
