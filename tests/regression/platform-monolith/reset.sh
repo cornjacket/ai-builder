@@ -28,6 +28,40 @@ for arg in "$@"; do
 done
 
 # ---------------------------------------------------------------------------
+# Save previous run (if any) to last_run/ before wiping.
+# Captures execution.log, run-metrics.json, run-summary.md, and the
+# Level:TOP pipeline README from the target repo (has the execution log table).
+# ---------------------------------------------------------------------------
+
+_save_last_run() {
+    if [[ ! -f "$OUTPUT_DIR/execution.log" ]]; then
+        return 0
+    fi
+    rm -rf "$DIR/last_run"
+    mkdir -p "$DIR/last_run"
+    mv "$OUTPUT_DIR/execution.log" "$DIR/last_run/"
+    [[ -f "$OUTPUT_DIR/run-metrics.json" ]] && mv "$OUTPUT_DIR/run-metrics.json" "$DIR/last_run/"
+    [[ -f "$OUTPUT_DIR/run-summary.md"  ]] && mv "$OUTPUT_DIR/run-summary.md"   "$DIR/last_run/"
+    # Find and copy the Level:TOP pipeline README (contains the execution log table).
+    if [[ -f "$OUTPUT_DIR/current-job.txt" ]]; then
+        local current_job search_dir level
+        current_job=$(cat "$OUTPUT_DIR/current-job.txt")
+        search_dir="$(dirname "$current_job")"
+        while [[ "$search_dir" != "/" && "$search_dir" != "$TARGET_REPO" ]]; do
+            if [[ -f "$search_dir/task.json" ]]; then
+                level=$(python3 -c "import json; d=json.load(open('$search_dir/task.json')); print(d.get('level',''))" 2>/dev/null || echo "")
+                if [[ "$level" == "TOP" ]]; then
+                    [[ -f "$search_dir/README.md" ]] && cp "$search_dir/README.md" "$DIR/last_run/build-README.md"
+                    break
+                fi
+            fi
+            search_dir="$(dirname "$search_dir")"
+        done
+    fi
+    echo "    saved previous run to last_run/"
+}
+
+# ---------------------------------------------------------------------------
 # Guard: abort if a pipeline run is currently in progress.
 #
 # Checks the Level: TOP pipeline-subtask README from the previous run.
@@ -66,6 +100,12 @@ fi
 
 echo "=== Resetting platform-monolith regression test ==="
 echo ""
+
+# ---------------------------------------------------------------------------
+# Save previous run before wiping.
+# ---------------------------------------------------------------------------
+
+_save_last_run
 
 # ---------------------------------------------------------------------------
 # 1. Fresh target repo
@@ -214,9 +254,8 @@ echo "    spec written to $ENTRY_DIR/README.md"
 # ---------------------------------------------------------------------------
 
 echo "[5/5] Pointing current-job.txt at build-1 README ..."
+rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
-rm -f  "$OUTPUT_DIR/execution.log"
-rm -rf "$OUTPUT_DIR/logs"
 
 "$SCRIPTS/set-current-job.sh" \
     --output-dir "$OUTPUT_DIR" \

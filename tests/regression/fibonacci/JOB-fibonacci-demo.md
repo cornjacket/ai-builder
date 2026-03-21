@@ -23,6 +23,7 @@ Build a correct, importable Golang package that computes Fibonacci numbers.
   - `n == 1`: return `[]int{0}`
   - `n == 2`: return `[]int{0, 1}`
 - **Files to produce:**
+  - `go.mod` — module declaration (`module fibonacci-demo`, `go 1.21`)
   - `fibonacci/fibonacci.go` — package implementation
   - `fibonacci/fibonacci_test.go` — table-driven tests covering edge cases and representative values
 - **Expected outputs for verification:**
@@ -48,6 +49,14 @@ Build a correct, importable Golang package that computes Fibonacci numbers.
 7. `Compute(5)` returns `[]int{0, 1, 1, 2, 3}`.
 8. `Compute(10)` returns `[]int{0, 1, 1, 2, 3, 5, 8, 13, 21, 34}`.
 9. The `fibonacci_test.go` file uses a table-driven test structure covering at least the cases above.
+
+---
+
+## Test Command
+
+```
+cd /Users/david/Go/src/github.com/cornjacket/ai-builder/sandbox/fibonacci-output && go test ./fibonacci/
+```
 
 ---
 

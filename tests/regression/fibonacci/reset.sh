@@ -13,10 +13,27 @@ REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 OUTPUT_DIR="$REPO_ROOT/sandbox/fibonacci-output"
 JOB_DOC="$DIR/JOB-fibonacci-demo.md"
 
+# ---------------------------------------------------------------------------
+# Save previous run (if any) to last_run/ before clearing.
+# ---------------------------------------------------------------------------
+
+_save_last_run() {
+    if [[ ! -f "$OUTPUT_DIR/execution.log" ]]; then
+        return 0
+    fi
+    rm -rf "$DIR/last_run"
+    mkdir -p "$DIR/last_run"
+    mv "$OUTPUT_DIR/execution.log" "$DIR/last_run/"
+    [[ -f "$OUTPUT_DIR/run-metrics.json" ]] && mv "$OUTPUT_DIR/run-metrics.json" "$DIR/last_run/"
+    [[ -f "$OUTPUT_DIR/run-summary.md"  ]] && mv "$OUTPUT_DIR/run-summary.md"   "$DIR/last_run/"
+    echo "    saved previous run to last_run/"
+}
+
 echo "=== Resetting fibonacci regression test ==="
 echo ""
 
 echo "[1/1] Clearing output dir at $OUTPUT_DIR ..."
+_save_last_run
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 

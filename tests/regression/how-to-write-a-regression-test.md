@@ -47,21 +47,24 @@ No other committed files. All generated output goes to `sandbox/` (see §4).
 
 Every `reset.sh` must perform these steps in order:
 
-1. **Wipe and recreate** the target repo at `sandbox/<test-name>-target/`.
-2. **Install the task system** using `target/setup-project.sh` and
+1. **Save the previous run** to `last_run/` (see §3a).
+2. **Wipe and recreate** the target repo at `sandbox/<test-name>-target/`.
+3. **Install the task system** using `target/setup-project.sh` and
    `target/init-claude-md.sh`.
-3. **Create a USER-TASK** (Oracle-owned pipeline boundary) in `in-progress/`
+4. **Create a USER-TASK** (Oracle-owned pipeline boundary) in `in-progress/`
    using `new-user-task.sh`. This is the human-owned node the pipeline must
    not traverse above.
-4. **Create a PIPELINE-SUBTASK** entry point under the USER-TASK using
+5. **Create a PIPELINE-SUBTASK** entry point under the USER-TASK using
    `new-pipeline-subtask.sh --level TOP`. This is where the pipeline starts.
-5. **Write the spec** into the PIPELINE-SUBTASK's README (overwrite the
+6. **Write the spec** into the PIPELINE-SUBTASK's README (overwrite the
    generated template). Complexity must be left as `—` to trigger ARCHITECT
    decompose mode.
-6. **Point `current-job.txt`** at the PIPELINE-SUBTASK README using
+7. **Point `current-job.txt`** at the PIPELINE-SUBTASK README using
    `set-current-job.sh --output-dir <sandbox-output-dir>`.
-7. **Clear previous output** — remove `execution.log` and `logs/` from the
-   output dir.
+8. **Wipe the output dir** — `rm -rf` the entire output dir and recreate it
+   empty. This removes all previously generated code, logs, and artifacts so
+   the pipeline starts from a clean slate and agents don't waste tokens
+   reading or rewriting stale output.
 
 Print the pipeline run command and gold test command at the end.
 
@@ -74,6 +77,42 @@ Print the pipeline run command and gold test command at the end.
 
 **Never use `/tmp/`** for target repos or output dirs. Sandbox paths are
 tracked in git (gitignored content, committed structure) and survive sessions.
+
+---
+
+## 3a. Last Run Preservation
+
+`reset.sh` automatically saves the previous run's artifacts to
+`tests/regression/<test-name>/last_run/` before wiping. This directory is
+gitignored — it is a local workspace artifact only.
+
+### What is saved
+
+| File | Source | Always present |
+|------|--------|----------------|
+| `execution.log` | `sandbox/<test-name>-output/` | yes (triggers save) |
+| `run-metrics.json` | `sandbox/<test-name>-output/` | only on normal completion |
+| `run-summary.md` | `sandbox/<test-name>-output/` | only on normal completion |
+| `build-README.md` | Level:TOP task README in target repo (TM mode only) | only when path resolves |
+
+`run-metrics.json` and `run-summary.md` are written by the orchestrator only
+when the pipeline exits normally. A stalled or interrupted run produces only
+`execution.log`.
+
+`build-README.md` contains the `## Execution Log` table written live during
+the run. The walk-up resolution depends on `current-job.txt` pointing into a
+still-intact target repo.
+
+### When `last_run/` is not populated
+
+- No previous run exists (first reset after a fresh clone).
+- The output dir contains no `execution.log` (e.g. the run was never started).
+
+### Comparing runs
+
+Use `last_run/run-metrics.json` for token and timing comparisons against a
+baseline. If the previous run was a stalled-and-resumed pair, see §8 on
+execution log merging.
 
 ---
 
@@ -176,7 +215,7 @@ Every regression test README must include:
 ## 7. Full Run Order
 
 ```bash
-# Step 1 — Reset to initial state
+# Step 1 — Reset to initial state (saves previous run to last_run/)
 tests/regression/<test-name>/reset.sh
 
 # Step 2 — Run the pipeline
@@ -194,7 +233,86 @@ running it twice without a reset will fail or produce incorrect results.
 
 ---
 
-## 8. Existing Tests Reference
+## 8. Resuming a Stalled Run
+
+If the pipeline halts mid-run (rate limit, agent error, process kill), the
+task tree and output dir are still intact. Do **not** run `reset.sh` — that
+would wipe the in-progress work. Instead, re-run the orchestrator with
+`--resume` (or `--clean-resume` — see below):
+
+```bash
+python3 ai-builder/orchestrator/orchestrator.py \
+    --target-repo sandbox/<test-name>-target \
+    --output-dir  sandbox/<test-name>-output \
+    --epic        main \
+    --resume
+```
+
+`--resume` skips the TM mode validation check that requires the initial job
+document to be a Level:TOP pipeline-subtask. This check is correct for fresh
+runs but wrong for resumes, where `current-job.txt` points to whatever
+internal node was active when the pipeline stalled.
+
+### Stale output and `--clean-resume`
+
+If the pipeline stalled during ARCHITECT or IMPLEMENTOR, the output directory
+may contain partial or incorrect output from the interrupted component. The
+IMPLEMENTOR will read these stale files on the next run, spending tokens
+analysing and rewriting wrong code. Use `--clean-resume` instead of
+`--resume` to delete them automatically:
+
+```bash
+python3 ai-builder/orchestrator/orchestrator.py \
+    --target-repo sandbox/<test-name>-target \
+    --output-dir  sandbox/<test-name>-output \
+    --epic        main \
+    --clean-resume
+```
+
+`--clean-resume` implies `--resume`. Before starting, it reads the last
+role from `execution.log` and applies these rules:
+
+| Stalled role | Action |
+|--------------|--------|
+| `ARCHITECT` or `IMPLEMENTOR` | Delete OUTPUT_DIR items newer than the last `LEAF_COMPLETE_HANDLER` timestamp. If no LCH has ever run, delete all unprotected items. |
+| `TESTER` | Leave output intact — the code was complete; deleting it would waste tokens rebuilding it. |
+
+Protected names are never deleted: `runs/`, `current-job.txt`,
+`execution.log`, `run-metrics.json`, `run-summary.md`.
+
+### Execution log behavior on resume
+
+The orchestrator is stateless — each invocation starts a fresh `RunData`.
+The resumed run does not inherit the stalled run's invocation records.
+
+| Artifact | Stalled run | Resumed run |
+|----------|-------------|-------------|
+| `execution.log` | entries appended up to failure | new entries appended after (both present, no separator) |
+| Level:TOP README `## Execution Log` table | partial invocations | **overwritten** with only the resumed run's invocations |
+| `run-metrics.json` | not written | written on normal completion of the resumed portion |
+| `run-summary.md` | not written | written on normal completion of the resumed portion |
+
+If you need to preserve the stalled run's execution log table before resuming,
+copy the Level:TOP README manually before re-running:
+
+```bash
+cp sandbox/<test-name>-target/project/tasks/main/in-progress/.../build-1/README.md \
+   sandbox/<test-name>-output/stalled-run-build-README.md
+```
+
+### Merging stalled and resumed execution logs
+
+`execution.log` is append-only and contains entries from both runs
+concatenated. Each orchestrator session begins with a `=== Orchestrator:
+starting ===` line, so run boundaries are identifiable by timestamp.
+
+The structured `run-metrics.json` only reflects the resumed portion. A merged
+JSON covering both runs is not produced automatically. Manual reconstruction
+is possible by parsing `execution.log`, but no tooling exists for this yet.
+
+---
+
+## 9. Existing Tests Reference
 
 | Test | Pipeline capability exercised |
 |------|-------------------------------|

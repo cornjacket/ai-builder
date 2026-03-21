@@ -2,6 +2,9 @@
 sandbox/*
 !sandbox/README.md
 
+# Regression test run artifacts
+tests/regression/*/last_run/
+
 # ai-builder runtime artifacts
 ai-builder/logs/
 ai-builder/execution.log
