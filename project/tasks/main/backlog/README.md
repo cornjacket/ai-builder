@@ -11,4 +11,5 @@
 - [a09648-optimize-pipeline-tm-prompt](a09648-optimize-pipeline-tm-prompt/)
 - [7eec4a-implement-prompt-template-variable-injection](7eec4a-implement-prompt-template-variable-injection/)
 - [bd3b59-add-timestamps-to-task-metadata](bd3b59-add-timestamps-to-task-metadata/)
+- [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
 <!-- task-list-end -->

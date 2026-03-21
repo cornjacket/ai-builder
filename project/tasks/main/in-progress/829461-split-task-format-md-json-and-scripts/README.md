@@ -95,6 +95,28 @@ TESTER Test Command, LCH internal agent.
 After this task, DECOMPOSE_HANDLER should also be 0 tokens (internal agent).
 Expected additional savings: ~924K cached tokens and ~4m 18s wall time per run.
 
+---
+
+### Platform-monolith run history (post-task)
+
+Eligibility rules: `eligible = gold_pass && !has_rate_limits && !is_resumed`
+
+| Run | Date | Optimization | Elapsed | Tokens out | Tokens cached | Resumed | Eligible |
+|-----|------|-------------|---------|-----------|---------------|---------|---------|
+| 11 | 2026-03-19 | Baseline (LCH internal, scope-bounded history) | 23m 15s | 64,275 | 3,503,765 | no | **yes** |
+| 12 | 2026-03-19 | DECOMPOSE_HANDLER internal | ~22m 43s | ~73K | 3,414,400 | **yes** | **no** |
+| 13 | 2026-03-19 | DECOMPOSE_HANDLER internal, stale output dir | 28m 25s | 74,733 | 3,130,427 | no | **yes** |
+| 14 | 2026-03-21 | DECOMPOSE_HANDLER internal, reset wipes output | 26m 6s | 75,061 | 2,538,065 | no | **yes** |
+
+**Gold test: PASS on runs 13 and 14.**
+
+#### Observations
+
+- **Run 12 vs 11:** DECOMPOSE_HANDLER going internal saved ~924K cached tokens as predicted, but confounded by resume — ineligible.
+- **Run 13 vs 11:** −373K cached (DECOMPOSE_HANDLER savings confirmed), but stale output dir caused IMPLEMENTORs to read/rewrite existing files (+5m wall time). Both eligible.
+- **Run 14 vs 13:** Reset now wipes output dir. −592K cached (IMPLEMENTORs no longer read stale code), −2m 19s elapsed. Run 14 is the new best eligible baseline.
+- **Eligible best:** Run 14 — 26m 6s, 75,061 tokens out, 2,538,065 cached.
+
 ## Notes
 
 _None._
@@ -109,7 +131,7 @@ _None._
 - [x] [X-829461-0003-update-orchestrator-and-internal-decompose-handler](X-829461-0003-update-orchestrator-and-internal-decompose-handler/)
 - [x] [X-829461-0004-update-templates](X-829461-0004-update-templates/)
 - [x] [X-829461-0005-unit-tests](X-829461-0005-unit-tests/)
-- [ ] [829461-0006-regression-validation](829461-0006-regression-validation/)
+- [x] [X-829461-0006-regression-validation](X-829461-0006-regression-validation/)
 - [x] [X-829461-0007-audit-agent-script-knowledge-boundary](X-829461-0007-audit-agent-script-knowledge-boundary/)
 <!-- subtask-list-end -->
 
