@@ -21,8 +21,8 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
 
     Streams text tokens to the terminal in real time.
     Appends raw events to execution.log inside output_dir.
-    The agent subprocess runs with output_dir as its working directory so
-    relative paths in generated files resolve correctly.
+    The agent subprocess runs with a neutral CWD to avoid loading unintended
+    context from the filesystem.
     Returns the full response text alongside the exit code.
     """
     print(f"[agent_wrapper] agent={agent} role={role} timeout={timeout_minutes}m", flush=True)
@@ -45,12 +45,6 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            # Use a neutral cwd with no CLAUDE.md ancestry. Claude Code walks upward
-            # from cwd at startup to find and inject CLAUDE.md files. If we used
-            # output_dir (which lives inside the ai-builder repo), agents would load
-            # ai-builder's developer CLAUDE.md — rules written for humans — and follow
-            # them (e.g. "run complete-task.sh --parent when done"). All context agents
-            # need is injected explicitly via the prompt; cwd is irrelevant for file I/O.
             cwd=Path("/tmp"),
             env=env,
         )
@@ -121,9 +115,6 @@ def _extract_text(event: dict) -> str:
         for block in event.get("message", {}).get("content", []):
             if isinstance(block, dict) and block.get("type") == "text":
                 return block.get("text", "")
-    if event_type == "message" and event.get("role") == "assistant":
-        # gemini CLI stream-json: delta message events
-        return event.get("content", "")
     return ""
 
 
@@ -142,13 +133,6 @@ def _build_command(agent: str, prompt: str) -> list:
             "--output-format", "stream-json",
             "--verbose",
             "--allowedTools", "Read,Edit,Write,Bash",
-            "-p", prompt,
-        ]
-    if agent == "gemini":
-        return [
-            exe,
-            "--output-format", "stream-json",
-            "--yolo",
             "-p", prompt,
         ]
     return [exe, "-p", prompt]
