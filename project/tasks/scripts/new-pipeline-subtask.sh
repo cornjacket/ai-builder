@@ -21,6 +21,8 @@ REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
 TASK_TEMPLATE="$SCRIPTS_DIR/pipeline-build-template.md"
 # shellcheck source=task-json-helpers.sh
 source "$SCRIPTS_DIR/task-json-helpers.sh"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -64,15 +66,27 @@ if [[ ! -d "$PARENT_DIR" ]]; then
 fi
 
 PARENT_JSON="$PARENT_DIR/task.json"
+PARENT_README="$PARENT_DIR/README.md"
 PARENT_SHORT_ID="$(get_parent_short_id "$PARENT_DIR")"
 
-# Read NEXT_ID from parent task.json (incrementing the counter in place)
-if [[ ! -f "$PARENT_JSON" ]]; then
-    echo "Parent task.json not found: $PARENT_JSON"
+# Read NEXT_ID from parent task.json (pipeline parent) or README (user-task parent).
+# Pipeline builds (Level:TOP) have user tasks as parents — no task.json there.
+if [[ -f "$PARENT_JSON" ]]; then
+    NEXT_ID="$(get_and_increment_subtask_id "$PARENT_JSON")"
+    PARENT_HAS_JSON=true
+elif [[ -f "$PARENT_README" ]]; then
+    NEXT_ID="$(get_next_subtask_id "$PARENT_README")"
+    if [[ -z "$NEXT_ID" ]]; then
+        NEXT_ID="0000"
+        sed -i '' "s/| Priority *|[^|]*|/&\n| Next-subtask-id | 0000               |/" "$PARENT_README"
+    fi
+    increment_subtask_id "$PARENT_README"
+    PARENT_HAS_JSON=false
+else
+    echo "Parent has neither task.json nor README.md: $PARENT_DIR"
     exit 1
 fi
 
-NEXT_ID="$(get_and_increment_subtask_id "$PARENT_JSON")"
 DIRNAME="$PARENT_SHORT_ID-$NEXT_ID-$NAME"
 
 TASK_DIR="$PARENT_DIR/$DIRNAME"
@@ -114,14 +128,22 @@ EOF
 sed -e "s/{{NAME}}/$NAME/g" "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------
-# Append subtask entry to parent task.json
+# Register subtask in parent (task.json for pipeline parents, README for user-task parents)
 # ---------------------------------------------------------------------------
 
-json_append_subtask "$PARENT_JSON" "$DIRNAME"
+if [[ "$PARENT_HAS_JSON" == true ]]; then
+    json_append_subtask "$PARENT_JSON" "$DIRNAME"
+    UPDATED="$PARENT_JSON"
+else
+    if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
+        sed -i '' "s|<!-- subtask-list-end -->|- [ ] [$DIRNAME]($DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
+    fi
+    UPDATED="$PARENT_README"
+fi
 
 # ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 
 echo "Created pipeline-subtask: project/tasks/$EPIC/$FOLDER/$PARENT/$DIRNAME/"
-echo "Updated:                  $PARENT_JSON"
+echo "Updated:                  $UPDATED"
