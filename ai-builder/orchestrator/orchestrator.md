@@ -16,13 +16,103 @@ encounters an unrecoverable state.
 | `--epic` | TM mode | Epic name in the task system (default: `main`) |
 | `--state-machine` | optional | Path to a JSON machine file; defaults to `machines/default.json` (TM mode) or `machines/simple.json` (non-TM mode) |
 | `--start-state` | optional | Override the machine's `start_state` at runtime; must be a role defined in the loaded machine |
+| `--resume` | optional | Skip the Level:TOP validation check; use when restarting a mid-run pipeline (see §Resuming a Stalled Run) |
+| `--clean-resume` | optional | Like `--resume`, but also deletes the interrupted component's output files before restarting (see §Resuming a Stalled Run). Implies `--resume`. |
 
 `TM_MODE` is true when `--target-repo` is provided. The two modes are
 mutually exclusive: `--job` is required in non-TM mode and ignored in TM mode.
 
 `--state-machine` and `--start-state` are orthogonal to the two modes and can
 be combined freely. `--start-state` is useful for testing a specific role in
-isolation or resuming a pipeline after a partial run.
+isolation.
+
+---
+
+## Resuming a Stalled Run
+
+If the pipeline halts mid-run (rate limit, agent error, process kill), the
+task tree and output dir remain intact. Re-run the orchestrator with the same
+arguments plus `--resume`:
+
+```bash
+python3 ai-builder/orchestrator/orchestrator.py \
+    --target-repo <target> \
+    --output-dir  <output> \
+    --epic        main \
+    --resume
+```
+
+`--resume` skips the TM mode validation that requires `current-job.txt` to
+point at a Level:TOP pipeline-subtask. On a fresh run this is always true;
+on a resume, `current-job.txt` points at whatever internal node was active
+when the pipeline stalled, which is correctly INTERNAL level.
+
+### State on resume
+
+The orchestrator is stateless between invocations. Each run creates a fresh
+`RunData` with an empty invocations list. The resumed run does not inherit
+the stalled run's metrics.
+
+| Artifact | Behaviour on resume |
+|----------|---------------------|
+| `current-job.txt` | read at startup — points to the interrupted job |
+| `execution.log` | **appended to** — entries from both runs are present; run boundaries are marked by the `=== Orchestrator: starting ===` header line |
+| Level:TOP README `## Execution Log` table | **overwritten** — shows only the resumed run's invocations (starting from #1) |
+| `run-metrics.json` | written on normal completion of the resumed portion only |
+| `run-summary.md` | written on normal completion of the resumed portion only |
+
+### Preserving the stalled run's execution log table
+
+Before resuming, copy the Level:TOP pipeline README if you need the partial
+invocation table:
+
+```bash
+cp <target>/project/tasks/.../build-1/README.md \
+   <output>/stalled-run-build-README.md
+```
+
+### Cleaning stale output before resuming (`--clean-resume`)
+
+If the pipeline stalled during ARCHITECT or IMPLEMENTOR, the output directory
+may contain partial or incorrect output from the interrupted component. The
+IMPLEMENTOR will read these stale files and spend tokens analysing and
+rewriting them. Use `--clean-resume` to delete them before restarting:
+
+```bash
+python3 ai-builder/orchestrator/orchestrator.py \
+    --target-repo <target> \
+    --output-dir  <output> \
+    --epic        main \
+    --clean-resume
+```
+
+`--clean-resume` implies `--resume`. Before starting the main loop it runs
+`_clean_for_resume`, which:
+
+1. Reads the last role from `execution.log` (the `[ISO] ROLE/agent` lines
+   written by `log_run`).
+2. Applies the stall-during rules:
+
+| Stalled role | Action |
+|--------------|--------|
+| `ARCHITECT` or `IMPLEMENTOR` | Delete OUTPUT_DIR items newer than the last `LEAF_COMPLETE_HANDLER` timestamp. If no LCH has ever run, delete all unprotected items. |
+| `TESTER` | Leave output intact — a TESTER stall means the code was complete; deletion would be wasteful. |
+| unknown / no prior run | No-op. |
+
+The following names are always protected and never deleted:
+
+```
+runs/  current-job.txt  execution.log  run-metrics.json  run-summary.md
+```
+
+### Merging stalled and resumed execution logs
+
+`execution.log` contains entries from both runs concatenated. The structured
+files (`run-metrics.json`, the README table) only reflect the resumed portion.
+No tooling exists to automatically produce a merged `run-metrics.json`
+spanning both runs. Manual reconstruction is possible by parsing
+`execution.log` — each run begins with a `=== Orchestrator: starting ===`
+line that serves as the boundary.
 
 ---
 

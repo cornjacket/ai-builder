@@ -1,6 +1,7 @@
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -54,7 +55,18 @@ parser.add_argument(
     help="Resume a mid-run pipeline. Skips the Level: TOP entry-point validation so the "
          "orchestrator can restart from an INTERNAL task (e.g. after a rate-limit halt).",
 )
+parser.add_argument(
+    "--clean-resume",
+    action="store_true",
+    help="Like --resume, but also deletes the interrupted component's output files before "
+         "restarting. Items in OUTPUT_DIR newer than the last LEAF_COMPLETE_HANDLER entry "
+         "are removed when the stall occurred during ARCHITECT or IMPLEMENTOR. TESTER stalls "
+         "are left intact. Implies --resume.",
+)
 args = parser.parse_args()
+
+if args.clean_resume:
+    args.resume = True
 
 TM_MODE = args.target_repo is not None
 
@@ -124,7 +136,7 @@ else:
 # State machine loader
 # ---------------------------------------------------------------------------
 
-def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict]:
+def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict, set[str]]:
     """Load and validate a machine JSON file.
 
     Returns (agents, routes, start_state, role_prompts, no_history_roles) where:
@@ -155,7 +167,7 @@ def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict]:
 
     agents = {role: cfg["agent"] for role, cfg in roles.items()}
 
-    routes: dict = {}
+    routes: dict[tuple[str, str], str | None] = {}
     for role, outcomes in transitions.items():
         if role not in roles:
             print(f"[orchestrator] Machine file error: transition source '{role}' not in roles")
@@ -519,6 +531,95 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Clean-resume helpers
+# ---------------------------------------------------------------------------
+
+_CLEAN_RESUME_PROTECTED = frozenset({
+    "runs", "current-job.txt", "execution.log",
+    "run-metrics.json", "run-summary.md",
+})
+
+_LOG_RUN_LINE = re.compile(r'^\[([^\]]+)\] ([A-Z_]+)/')
+
+
+def _last_lch_timestamp(execution_log: Path) -> datetime | None:
+    """Return the datetime of the last LEAF_COMPLETE_HANDLER log_run entry, or None."""
+    if not execution_log.exists():
+        return None
+    lch_pattern = re.compile(r'^\[([^\]]+)\] LEAF_COMPLETE_HANDLER/')
+    last_ts = None
+    for line in execution_log.read_text().splitlines():
+        m = lch_pattern.match(line)
+        if m:
+            try:
+                last_ts = datetime.fromisoformat(m.group(1))
+            except ValueError:
+                pass
+    return last_ts
+
+
+def _last_stalled_role(execution_log: Path) -> str | None:
+    """Return the role name from the last log_run entry in execution.log, or None."""
+    if not execution_log.exists():
+        return None
+    last_role = None
+    for line in execution_log.read_text().splitlines():
+        m = _LOG_RUN_LINE.match(line)
+        if m:
+            last_role = m.group(2)
+    return last_role
+
+
+def _clean_for_resume(output_dir: Path, execution_log: Path) -> None:
+    """Delete the interrupted component's output files before resuming.
+
+    Stall-during rules:
+      - ARCHITECT or IMPLEMENTOR stall: delete OUTPUT_DIR items newer than the
+        last LEAF_COMPLETE_HANDLER timestamp (delete everything unprotected if
+        no LCH has ever run).
+      - TESTER stall or unknown: leave output intact.
+
+    Protected names are never deleted: runs/, current-job.txt, execution.log,
+    run-metrics.json, run-summary.md.
+    """
+    stalled_role = _last_stalled_role(execution_log)
+    if stalled_role not in ("ARCHITECT", "IMPLEMENTOR"):
+        if stalled_role is None:
+            print("[orchestrator] --clean-resume: no prior run found in execution.log; nothing to clean.")
+        else:
+            print(f"[orchestrator] --clean-resume: stalled role was {stalled_role}; "
+                  f"leaving output intact (TESTER stall).")
+        return
+
+    lch_ts = _last_lch_timestamp(execution_log)
+    if lch_ts is None:
+        print(f"[orchestrator] --clean-resume: stalled during {stalled_role}, "
+              f"no prior LEAF_COMPLETE_HANDLER; deleting all unprotected output items.")
+        cutoff_ts = None
+    else:
+        cutoff_ts = lch_ts
+        print(f"[orchestrator] --clean-resume: stalled during {stalled_role}; "
+              f"deleting output items newer than last LCH ({lch_ts.isoformat()}).")
+
+    deleted = []
+    for item in output_dir.iterdir():
+        if item.name in _CLEAN_RESUME_PROTECTED:
+            continue
+        item_mtime = datetime.fromtimestamp(item.stat().st_mtime)
+        if cutoff_ts is None or item_mtime > cutoff_ts:
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+            deleted.append(item.name)
+
+    if deleted:
+        print(f"    deleted {len(deleted)} item(s): {', '.join(sorted(deleted))}")
+    else:
+        print("    nothing to delete.")
+
+
+# ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 
@@ -567,6 +668,9 @@ def _find_level_top(readme: Path | None) -> Path | None:
     return None
 
 build_readme = _find_level_top(initial_job_doc)
+
+if args.clean_resume:
+    _clean_for_resume(OUTPUT_DIR, EXECUTION_LOG)
 
 print("=== Orchestrator: starting ===")
 if TM_MODE:
