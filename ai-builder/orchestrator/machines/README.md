@@ -13,6 +13,8 @@ entry point, role→agent mapping, prompt files, and the full transition table.
 |------|---------|
 | `default.json` | Full pipeline with TM handlers. Used when `--target-repo` is provided and no `--state-machine` is specified. |
 | `simple.json` | Flat (non-TM) pipeline. Used when only `--job` is provided and no `--state-machine` is specified. |
+| `default-gemini.json` | Same as `default.json` but with all AI roles set to `"agent": "gemini"`. |
+| `simple-gemini.json` | Same as `simple.json` but with all AI roles set to `"agent": "gemini"`. |
 
 ---
 

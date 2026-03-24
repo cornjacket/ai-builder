@@ -1,9 +1,9 @@
-# Task: split-task-format-md-json-and-scripts
+# Task: split-task-format-and-internalize-decompose-handler
 
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH        |

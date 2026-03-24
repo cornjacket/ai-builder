@@ -19,9 +19,17 @@ class AgentResult:
     tokens_cached: int    # cache-read input tokens (claude CLI only; 0 for other agents)
 ```
 
-Token counts are captured from the `result` event in the claude CLI's stream-json
-output (`event.usage.input_tokens`, `output_tokens`, `cache_read_input_tokens`).
-Non-claude agents return zeros for all token fields.
+Token counts are captured from the `result` event in each CLI's stream-json output.
+
+| Agent | Token source | Field mapping |
+|-------|-------------|---------------|
+| `claude` | `event.usage` | `input_tokens` → `tokens_in`, `output_tokens` → `tokens_out`, `cache_read_input_tokens` → `tokens_cached` |
+| `gemini` | `event.stats` | `input` (non-cached only) → `tokens_in`, `output_tokens` → `tokens_out`, `cached` → `tokens_cached` |
+
+Note: Gemini's `stats.input_tokens` is total input including cached tokens. `stats.input`
+is the non-cached portion only — equivalent to Claude's `usage.input_tokens`. Using
+`stats.input_tokens` for `tokens_in` would inflate Gemini's input count by the cached
+amount, making cross-agent comparisons misleading.
 
 ---
 
@@ -93,14 +101,23 @@ is set by Claude Code and the claude CLI checks for it unconditionally to
 block nested interactive sessions. Subprocesses use `-p` (non-interactive)
 so blocking is unnecessary, but the check is unconditional in the CLI.
 
-The subprocess runs with `cwd=/tmp` — a neutral directory with no CLAUDE.md
-files in its ancestry. Claude Code walks upward from cwd at startup and injects
-every CLAUDE.md it finds into the agent's context. If cwd were inside the
-ai-builder repo (e.g. `output_dir`), agents would load the developer CLAUDE.md
-and follow rules written for human contributors (such as "run complete-task.sh
---parent when a subtask is done"), contaminating pipeline behaviour. All context
-the agent needs is injected explicitly through the prompt; cwd is irrelevant for
-actual file I/O because all paths in prompts are absolute.
+**Claude:** The subprocess runs with `cwd=/tmp`. The Claude CLI walks upward from
+cwd at startup to find and inject `CLAUDE.md` files into the agent's context. With
+`cwd=/tmp`, the walk reaches `/` without finding any `CLAUDE.md` — the developer
+`CLAUDE.md` in the ai-builder repo is never loaded. All context the agent needs is
+injected explicitly through the prompt; cwd is irrelevant for file I/O because all
+paths in prompts are absolute.
+
+**Gemini:** `cwd=/tmp` prevents `GEMINI.md` from being auto-loaded at startup, but
+Gemini is significantly more exploratory than Claude at runtime. When the prompt
+contains an absolute path to a file inside the repo, Gemini will actively traverse
+the repo directory structure, find `CLAUDE.md`, and treat it as authoritative
+session context — causing it to follow Oracle-level instructions (status file reads,
+task decomposition conventions) instead of pipeline agent instructions. The correct
+fix for Gemini is a per-invocation temp directory with a `GEMINI.md` that scopes
+Gemini's behaviour to the pipeline task. See
+[learning/agent-cwd-and-context-isolation.md](../../../learning/agent-cwd-and-context-isolation.md)
+for the full analysis.
 
 ---
 

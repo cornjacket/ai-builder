@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH        |

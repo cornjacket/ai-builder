@@ -2,8 +2,26 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+
+
+# GEMINI.md written to a per-invocation temp dir to scope Gemini's behaviour.
+# Gemini reads GEMINI.md from its cwd at startup as session configuration.
+# Without this, Gemini explores absolute paths in the prompt back to the repo,
+# finds CLAUDE.md, and follows Oracle instructions instead of pipeline instructions.
+_GEMINI_MD = """\
+You are a focused pipeline agent executing a specific role in a build pipeline.
+
+Rules:
+- Follow ONLY the instructions in your prompt. Nothing else takes priority.
+- Do NOT read CLAUDE.md, GEMINI.md, or any project configuration files.
+- Do NOT read session status files, task logs, or task management files.
+- Do NOT explore directory structures beyond paths explicitly given in your prompt.
+- Do NOT run project setup scripts, task management scripts, or shell commands
+  unrelated to the task described in your prompt.
+"""
 
 
 @dataclass
@@ -39,13 +57,26 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
     # doesn't apply, but the check is unconditional.
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
+    # Determine cwd for the subprocess.
+    # Claude: /tmp — prevents CLAUDE.md from being loaded (Claude walks up from
+    #   cwd at startup to find and inject CLAUDE.md files).
+    # Gemini: a per-invocation temp dir containing a scoped GEMINI.md — Gemini
+    #   reads GEMINI.md from cwd at startup. Without this, Gemini explores the
+    #   repo via absolute paths in the prompt, finds CLAUDE.md, and follows
+    #   Oracle instructions. See learning/agent-cwd-and-context-isolation.md.
+    if agent == "gemini":
+        agent_cwd = Path(tempfile.mkdtemp(prefix="ai-builder-gemini-"))
+        (agent_cwd / "GEMINI.md").write_text(_GEMINI_MD)
+    else:
+        agent_cwd = Path("/tmp")
+
     try:
         process = subprocess.Popen(
             _build_command(agent, prompt),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            cwd=Path("/tmp"),
+            cwd=agent_cwd,
             env=env,
         )
 
@@ -67,18 +98,29 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
 
                 print(f"[debug] event type: {event.get('type')}", flush=True)
 
-                # Capture token usage from the final result event (claude CLI)
+                # Capture token usage from the final result event.
+                # Claude: {"type":"result","usage":{"input_tokens":N,"output_tokens":N,"cache_read_input_tokens":N}}
+                # Gemini: {"type":"result","stats":{"input":N,"output_tokens":N,"cached":N}}
+                #   where "input" is non-cached input only; "input_tokens" is total (cached+non-cached).
                 if event.get("type") == "result":
-                    usage = event.get("usage") or {}
-                    tokens_in      = usage.get("input_tokens", 0)
-                    tokens_out     = usage.get("output_tokens", 0)
-                    tokens_cached  = usage.get("cache_read_input_tokens", 0)
+                    if "usage" in event:
+                        usage = event["usage"]
+                        tokens_in     = usage.get("input_tokens", 0)
+                        tokens_out    = usage.get("output_tokens", 0)
+                        tokens_cached = usage.get("cache_read_input_tokens", 0)
+                    elif "stats" in event:
+                        stats = event["stats"]
+                        tokens_in     = stats.get("input", 0)
+                        tokens_out    = stats.get("output_tokens", 0)
+                        tokens_cached = stats.get("cached", 0)
 
                 text = _extract_text(event)
                 if text:
-                    # Ensure adjacent blocks are separated by a newline so that
-                    # OUTCOME: always appears at the start of a line when parsed.
-                    if response_text and not response_text[-1].endswith("\n"):
+                    # If this chunk contains OUTCOME: and the previous accumulated
+                    # text doesn't end with a newline, inject one. Gemini can split
+                    # a delta mid-line, producing "...textOUTCOME: X" without a
+                    # preceding newline, which breaks the ^OUTCOME: regex.
+                    if "OUTCOME:" in text and response_text and not response_text[-1].endswith("\n"):
                         response_text.append("\n")
                     response_text.append(text)
                     print(text, end="", flush=True)
@@ -101,6 +143,9 @@ def run_agent(agent: str, timeout_minutes: int, role: str, prompt: str, output_d
         process.kill()
         print(f"\n[agent_wrapper] {role}/{agent} timed out after {timeout_minutes}m")
         return AgentResult(exit_code=2, response="")
+    finally:
+        if agent == "gemini":
+            shutil.rmtree(agent_cwd, ignore_errors=True)
 
 
 def _extract_text(event: dict) -> str:
@@ -115,6 +160,9 @@ def _extract_text(event: dict) -> str:
         for block in event.get("message", {}).get("content", []):
             if isinstance(block, dict) and block.get("type") == "text":
                 return block.get("text", "")
+    if event_type == "message" and event.get("role") == "assistant" and event.get("delta"):
+        # gemini CLI stream-json: streaming delta message events
+        return event.get("content", "")
     return ""
 
 
@@ -133,6 +181,13 @@ def _build_command(agent: str, prompt: str) -> list:
             "--output-format", "stream-json",
             "--verbose",
             "--allowedTools", "Read,Edit,Write,Bash",
+            "-p", prompt,
+        ]
+    if agent == "gemini":
+        return [
+            exe,
+            "--output-format", "stream-json",
+            "--yolo",
             "-p", prompt,
         ]
     return [exe, "-p", prompt]

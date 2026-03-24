@@ -1,5 +1,7 @@
 # Job: Fibonacci Package Demo
 
+Complexity: atomic
+
 ## Goal
 
 Build a correct, importable Golang package that computes Fibonacci numbers.

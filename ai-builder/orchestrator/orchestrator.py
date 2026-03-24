@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from agent_wrapper import run_agent, AgentResult
+from gemini_compat import gemini_role_addendum
 import metrics as metrics_mod
 from metrics import RunData, description_from_job_path
 
@@ -222,7 +223,7 @@ if args.start_state:
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str]) -> str:
+def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_history: list[str], agent: str = "") -> str:
     history_section = ""
     if handoff_history and role not in NO_HISTORY_ROLES:
         history_section = "\n\n## Handoff Notes from Previous Agents\n\n" + \
@@ -260,16 +261,22 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
     elif role == "TESTER":
         valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
-        job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
+        test_command = ""
+        if job_doc and job_doc.exists():
+            m = re.search(r'## Test Command\s*\n+(.*?)(?=\n## |\Z)', job_doc.read_text(), re.DOTALL)
+            if m:
+                test_command = f"\n\nTest command:\n```\n{m.group(1).strip()}\n```"
+        job_section = f"\nThe shared job document is at: {job_doc}{test_command}\n\nOutput directory (write all generated files here): {output_dir}\n"
     else:
         valid_outcomes = "DONE | NEED_HELP"
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
 
+    agent_addendum = gemini_role_addendum(role) if agent == "gemini" else ""
+
     return f"""Your role is {role}.
 {job_section}
 {role_instructions}
-{history_section}
-
+{history_section}{agent_addendum}
 When you are finished, end your response with exactly this block (fill in the values):
 
 OUTCOME: {valid_outcomes}
@@ -696,7 +703,7 @@ while current_role is not None:
     if agent == "internal":
         result: AgentResult = run_internal_agent(current_role, OUTPUT_DIR, job_doc)
     else:
-        prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history)
+        prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history, agent)
         result = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
     inv_end = datetime.now()
 

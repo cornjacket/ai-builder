@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | backlog             |
+| Status | wont-do |
 | Epic        | main               |
 | Tags        | orchestrator, prompts |
 | Priority    | MED                   |
@@ -59,4 +59,10 @@ must be complete before this task is meaningful.
 
 ## Notes
 
-_None._
+### Obsolete — superseded by handler internalization
+
+Both DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER were made internal Python
+functions (zero tokens, no prompt) as part of
+`829461-split-task-format-and-internalize-decompose-handler`. Since neither
+handler invokes an AI agent anymore, there is no prompt to extract or
+template — the problem this task was solving no longer exists.

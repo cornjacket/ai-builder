@@ -26,4 +26,7 @@
 - [bc5c01-task-script-cleanup](bc5c01-task-script-cleanup/)
 - [14efe0-repo-root-readme](14efe0-repo-root-readme/)
 - [3fa24b-bug-handler-prompt-inefficiency](3fa24b-bug-handler-prompt-inefficiency/)
+- [829461-split-task-format-and-internalize-decompose-handler](829461-split-task-format-and-internalize-decompose-handler/)
+- [b14e76-brainstorm-token-usage-and-caching-costs](b14e76-brainstorm-token-usage-and-caching-costs/)
+- [5ca80b-gemini-implementor-heredoc-parse-error](5ca80b-gemini-implementor-heredoc-parse-error/)
 <!-- task-list-end -->

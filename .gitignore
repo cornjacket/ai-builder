@@ -13,3 +13,7 @@ ai-builder/**/*.pyc
 ai-builder/TASK-*.md
 !ai-builder/TASK-TEMPLATE.md
 
+tests/regression/*/results/
+
+# Scratch/experimental copies
+ai-builder/orchestrator/*.py.gemini

@@ -24,7 +24,7 @@ One-line change: add `"TESTER"` to the `_HANDLER_ROLES` set in `orchestrator.py`
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [b14e76-0000-no-history-flag-in-state-machine](b14e76-0000-no-history-flag-in-state-machine/)
+- [x] [X-b14e76-0000-no-history-flag-in-state-machine](X-b14e76-0000-no-history-flag-in-state-machine/)
 <!-- subtask-list-end -->
 
 ## Notes
