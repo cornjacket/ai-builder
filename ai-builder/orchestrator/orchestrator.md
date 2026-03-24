@@ -169,6 +169,30 @@ In TM mode two handler roles replace the old single `TASK_MANAGER` role:
 | `DECOMPOSE_HANDLER` | `ARCHITECT_DECOMPOSITION_READY` | Creates subtasks from the Components table; points pipeline at the first subtask |
 | `LEAF_COMPLETE_HANDLER` | `TESTER_TESTS_PASS` | Marks the completed subtask done, advances to next subtask or halts |
 
+### DECOMPOSE_HANDLER: ancestry chain context
+
+Each child subtask's `## Context` is a **labelled ancestry chain** — one entry
+per ancestor level, newest appended last. This prevents the flat-copy duplication
+that occurs when context is copied verbatim at each descent.
+
+```
+### Level 2 — user-service
+Build a user authentication service supporting OAuth2 and local login.
+
+### Level 3 — handlers
+Routes incoming HTTP requests to the store and middleware components.
+```
+
+A `depth` field in `task.json` tracks numeric nesting depth. The pipeline entry
+point (Level:TOP) starts at `depth: 0`. DECOMPOSE_HANDLER sets
+`depth = parent_depth + 1` on each child and appends a new labelled entry
+(`### Level {child_depth} — {task_name}`) to the inherited chain.
+
+Downstream agents receive the full ancestry chain in their job doc's `## Context`
+without needing to traverse the task tree.
+
+See `learning/pipeline-task-context-ancestry-chain.md` for full rationale.
+
 Valid outcomes for each handler:
 
 | Role | Outcomes |

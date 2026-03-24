@@ -114,6 +114,7 @@ data = {
     "next-subtask-id": "0000",
     "complexity": "—",
     "level": level,
+    "depth": 0,
     "last-task": False,
     "stop-after": False,
     "components": [],

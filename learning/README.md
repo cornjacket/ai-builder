@@ -16,3 +16,4 @@ in practice, not just theory.
 | [agent-cwd-and-context-isolation.md](agent-cwd-and-context-isolation.md) | Why `cwd=/tmp` isolates Claude but not Gemini; Gemini file tool sandbox (read and write); shell command workaround |
 | [agent-model-selection.md](agent-model-selection.md) | Model selection for Claude and Gemini — per-turn routing, pinning, and observability differences |
 | [pipeline-extract-dont-delegate.md](pipeline-extract-dont-delegate.md) | Orchestrator should extract and inline document content into prompts rather than delegating file reads to agents |
+| [pipeline-task-context-ancestry-chain.md](pipeline-task-context-ancestry-chain.md) | How child task `## Context` is built as a labelled ancestry chain to prevent flat-copy duplication at deep nesting |

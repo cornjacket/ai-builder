@@ -364,6 +364,8 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
         return AgentResult(exit_code=1, response=f"Failed to parse task.json: {e}")
 
     parent_level = parent_data.get("level", "TOP")
+    parent_depth = parent_data.get("depth", 0)
+    child_depth  = parent_depth + 1
 
     components = _parse_components_table(job_doc.read_text())
     if not components:
@@ -376,12 +378,28 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
     except ValueError:
         return AgentResult(exit_code=1, response=f"Cannot compute parent rel path: {parent_dir}")
 
-    # Extract parent Goal + Context to inject into subtask Context sections
+    # Extract parent name and goal to append as a new ancestry level in child context.
+    # The child's ## Context is built as a labelled chain: one ### Level N entry per
+    # ancestor, newest appended last. This prevents the flat-copy duplication that
+    # occurs when context is copied verbatim at each descent.
     parent_content = job_doc.read_text()
     goal_match = re.search(r'## Goal\s*\n\n(.*?)(?=\n## |\Z)', parent_content, re.DOTALL)
     parent_goal = goal_match.group(1).strip() if goal_match else ""
     context_match = re.search(r'## Context\s*\n\n(.*?)(?=\n## |\Z)', parent_content, re.DOTALL)
     parent_context = context_match.group(1).strip() if context_match else ""
+    # Suppress placeholder context from freshly created tasks
+    if parent_context == "_To be written._":
+        parent_context = ""
+
+    # Build the new ancestry entry for this level
+    parent_task_name = parent_dir.name
+    new_level_entry = f"### Level {child_depth} — {parent_task_name}\n{parent_goal}"
+
+    # Compose child context: inherited chain + new entry for this level
+    if parent_context:
+        child_context = f"{parent_context}\n\n{new_level_entry}"
+    else:
+        child_context = new_level_entry
 
     subtask_dirs = []
     for i, component in enumerate(components):
@@ -413,12 +431,13 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
         subtask_dir = TARGET_REPO / created_rel
         subtask_dirs.append(subtask_dir)
 
-        # Update task.json: set complexity; for last component also set last-task + level
+        # Update task.json: set complexity and depth; for last component also set last-task + level
         subtask_json = subtask_dir / "task.json"
         if subtask_json.exists():
             try:
                 subtask_data = json.loads(subtask_json.read_text())
                 subtask_data["complexity"] = complexity
+                subtask_data["depth"] = child_depth
                 if i == len(components) - 1:
                     subtask_data["last-task"] = True
                     subtask_data["level"] = parent_level
@@ -426,7 +445,7 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
             except Exception as e:
                 return AgentResult(exit_code=1, response=f"Failed to update subtask task.json for '{comp_name}': {e}")
 
-        # Update README: Goal = component description, Context = parent goal + context
+        # Update README: Goal = component description, Context = ancestry chain
         subtask_readme = subtask_dir / "README.md"
         if subtask_readme.exists():
             readme = subtask_readme.read_text()
@@ -434,12 +453,9 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
                 "## Goal\n\n_To be written._",
                 f"## Goal\n\n{description}",
             )
-            context_body = parent_goal
-            if parent_context and parent_context != "_To be written._":
-                context_body += f"\n\n{parent_context}"
             readme = readme.replace(
                 "## Context\n\n_To be written._",
-                f"## Context\n\n{context_body}",
+                f"## Context\n\n{child_context}",
             )
             subtask_readme.write_text(readme)
 
