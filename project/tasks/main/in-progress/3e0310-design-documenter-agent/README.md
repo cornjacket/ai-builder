@@ -2,7 +2,7 @@
 
 | Field    | Value                                        |
 |----------|----------------------------------------------|
-| Status   | draft                                        |
+| Status | in-progress |
 | Epic     | main                                         |
 | Tags     | documentation, orchestrator, architecture    |
 | Parent   | —                                            |
@@ -78,6 +78,8 @@ DOCUMENTER is sole judge of whether a document needs splitting. When split:
 ## Documentation
 
 Design output: `roles/DOCUMENTER.md`.
+Brainstorm: `sandbox/brainstorm-documenter-agent-design.md` — records all
+design decisions, open questions, and planned subtasks.
 Reference: `sandbox/brainstorm-oracle-and-n-phase-pipeline.md` —
 "Documentation as First-Class Pipeline Output" section.
 
