@@ -11,58 +11,47 @@
 
 ## Goal
 
-Fix all pipeline roles (ARCHITECT, IMPLEMENTOR) so they do not depend on the
-Gemini file read tool to access job document content. Inline all required job
-doc sections directly into each role's prompt via the orchestrator.
+Fix all pipeline roles so they do not depend on Gemini's sandboxed file tools.
+Inline required content and use fully-qualified commands so agents never need
+to call `read_file` or `write_file` for pipeline-managed paths.
 
 ## Context
 
-Gemini's `read_file` tool is sandboxed to the agent's temp cwd. Any attempt
-to read a file at an absolute path outside that directory is rejected:
+Gemini's `read_file` and `write_file` tools are sandboxed to the agent's temp
+cwd. Any attempt to access an absolute path outside that directory is rejected:
 
 ```
 Path not in workspace: Attempted path "...README.md" resolves outside the
 allowed workspace directories: /tmp/ai-builder-gemini-xxx
 ```
 
-The orchestrator currently passes only the job doc path to ARCHITECT and
-IMPLEMENTOR. Both agents attempt to open it via the file read tool — which
-fails under Gemini, causing the pipeline to halt with `NEED_HELP`.
+**Fixes applied (2026-03-24):**
 
-**Affected roles:**
-- **ARCHITECT** — needs Goal, Context, Complexity, and Level inlined.
-  Currently receives only the job doc path.
-- **IMPLEMENTOR** — needs Goal, Design, Acceptance Criteria, and Test Command
-  inlined. Currently receives only the job doc path.
-- **TESTER** — already fixed. Test Command is extracted and inlined by the
-  orchestrator. See `learning/agent-cwd-and-context-isolation.md`.
-
-**Fix:** apply the same extract-and-inline pattern already used for TESTER
-to ARCHITECT and IMPLEMENTOR. The orchestrator reads the job doc in Python,
-extracts the relevant sections via regex, and inlines them directly into
-the prompt. The agent never needs to call the file read tool.
-
-**Section mapping:**
-| Role | Sections to inline |
-|------|--------------------|
-| ARCHITECT | Goal, Context, Complexity (from task.json), Level (from task.json) |
-| IMPLEMENTOR | Goal, Design, Acceptance Criteria, Test Command |
+| Role | Problem | Fix |
+|------|---------|-----|
+| ARCHITECT | Called `read_file` to get job doc | Inline Goal, Context, Complexity, Level into prompt |
+| ARCHITECT | Called `write_file` to write doc files | Added to `gemini_compat.py`: mandate `printf` via `run_shell_command` |
+| IMPLEMENTOR | Called `read_file` to get job doc | Inline Goal, Context, Design, AC, Test Command into prompt |
+| TESTER | Role prompt step 1 said "read job doc"; tried `read_file` | Updated role prompt to use inlined command; don't read job doc |
+| TESTER | Test command `go test ./...` run from temp cwd | Orchestrator prepends `cd <output_dir> &&` to test command |
 
 **Note on the pipeline redesign:**
 Under the proposed JSON-native pipeline architecture
 (`49352f-redesign-pipeline-communication-architecture`), job doc content will
 live in `task.json` and the orchestrator will read it directly — eliminating
-this class of bug entirely. This fix is a bridge solution for the current
+this class of bug entirely. These fixes are bridge solutions for the current
 architecture.
 
 See `learning/pipeline-extract-dont-delegate.md` for the general principle.
-Document findings in `ai-builder/orchestrator/gemini_compat.md` or a new
-companion doc.
+
+**Remaining:** Create `ai-builder/orchestrator/gemini_compat.md` documenting
+all known Gemini CLI behavioural differences and mitigations.
 
 ## Notes
 
 Discovered during user-service Gemini regression run (2026-03-24). ARCHITECT
 emitted `ARCHITECT_NEED_HELP` after failing to read the job doc via file tool.
+Multiple Gemini regression runs required to surface all five affected cases.
 
 ## Subtasks
 
