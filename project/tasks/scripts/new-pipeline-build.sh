@@ -60,3 +60,46 @@ echo "$OUTPUT"
 CREATED_REL=$(echo "$OUTPUT" | grep "^Created pipeline-subtask:" | sed 's/^Created pipeline-subtask: *//' | sed 's|/$||')
 README_PATH="$REPO_ROOT/$CREATED_REL/README.md"
 echo "README:                   $README_PATH"
+
+# ---------------------------------------------------------------------------
+# Extract Goal and Context from the Oracle's README and write to task.json
+# ---------------------------------------------------------------------------
+
+TASK_JSON="$REPO_ROOT/$CREATED_REL/task.json"
+
+python3 - "$README_PATH" "$TASK_JSON" <<'PYEOF'
+import sys, json, re
+
+readme_path, task_json_path = sys.argv[1], sys.argv[2]
+
+try:
+    readme = open(readme_path).read()
+except Exception:
+    sys.exit(0)  # README not yet written; skip silently
+
+goal_match = re.search(r'## Goal\s*\n+(.*?)(?=\n## |\Z)', readme, re.DOTALL)
+context_match = re.search(r'## Context\s*\n+(.*?)(?=\n## |\Z)', readme, re.DOTALL)
+
+goal = goal_match.group(1).strip() if goal_match else ""
+context = context_match.group(1).strip() if context_match else ""
+
+if context == "_To be written._":
+    context = ""
+
+if not goal and not context:
+    sys.exit(0)
+
+try:
+    data = json.loads(open(task_json_path).read())
+except Exception:
+    sys.exit(0)
+
+if goal:
+    data["goal"] = goal
+if context:
+    data["context"] = context
+
+with open(task_json_path, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+PYEOF

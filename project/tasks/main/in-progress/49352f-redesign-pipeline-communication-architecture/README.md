@@ -60,7 +60,7 @@ type being detected).
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [49352f-0000-oracle-goal-context-in-task-json](49352f-0000-oracle-goal-context-in-task-json/)
+- [x] [X-49352f-0000-oracle-goal-context-in-task-json](X-49352f-0000-oracle-goal-context-in-task-json/)
 - [ ] [49352f-0001-orchestrator-job-param-replace-current-job-txt](49352f-0001-orchestrator-job-param-replace-current-job-txt/)
 - [ ] [49352f-0002-leaf-complete-handler-last-job-json](49352f-0002-leaf-complete-handler-last-job-json/)
 - [ ] [49352f-0003-architect-decompose-returns-components-json](49352f-0003-architect-decompose-returns-components-json/)

@@ -251,7 +251,8 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
         else:
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
-        # Extract Goal and Context from job doc and inline into prompt.
+        # Extract Goal and Context — prefer task.json (JSON-native), fall back
+        # to README.md parsing for builds created before this change.
         # Gemini's file read tool is sandboxed to the temp cwd and cannot
         # read the job doc at its absolute path. Inlining eliminates the
         # file read dependency entirely.
@@ -259,7 +260,14 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
         goal_text = ""
         context_text = ""
-        if job_doc and job_doc.exists():
+        if task_json_path and task_json_path.exists():
+            try:
+                _tj = json.loads(task_json_path.read_text())
+                goal_text = _tj.get("goal", "")
+                context_text = _tj.get("context", "")
+            except Exception:
+                pass
+        if (not goal_text) and job_doc and job_doc.exists():
             doc = job_doc.read_text()
             m = re.search(r'## Goal\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
             if m:
@@ -474,13 +482,16 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
         subtask_dir = TARGET_REPO / created_rel
         subtask_dirs.append(subtask_dir)
 
-        # Update task.json: set complexity and depth; for last component also set last-task + level
+        # Update task.json: set complexity, depth, goal, context;
+        # for last component also set last-task + level
         subtask_json = subtask_dir / "task.json"
         if subtask_json.exists():
             try:
                 subtask_data = json.loads(subtask_json.read_text())
                 subtask_data["complexity"] = complexity
                 subtask_data["depth"] = child_depth
+                subtask_data["goal"] = description
+                subtask_data["context"] = child_context
                 if i == len(components) - 1:
                     subtask_data["last-task"] = True
                     subtask_data["level"] = parent_level
