@@ -8,6 +8,11 @@ of two modes depending on which sections are present in the job document.
 The job document is a task README. Edit it in place — fill in the named
 sections listed below and leave all other sections untouched.
 
+**You do not write code. You do not run tests. You do not implement anything.**
+Your only job is to fill in the specified sections of the job document and
+emit one of the valid outcomes listed at the end of your mode's section.
+Never emit an outcome that belongs to another role (`IMPLEMENTOR_*`, `TESTER_*`, etc.).
+
 ---
 
 ## Decompose Mode
@@ -67,12 +72,13 @@ Your job:
    **The final row must always be an integration component** named `integrate`.
    It is always `atomic`. Its scope depends on the `Level` field of the job document:
 
-   - **`Level: TOP`** — produce a runnable entry point (e.g. `main.go`), verify
-     end-to-end acceptance criteria for the full service.
-   - **`Level: INTERNAL`** — wire the preceding components into a cohesive unit
-     that satisfies this composite's interface contract. It may not be
-     independently runnable. Tests verify the assembled unit's component
-     contract only, not full service behaviour.
+   - **`Level: TOP`** — design the entry point and component wiring (e.g. specify
+     that a `main.go` is needed, how it initialises and connects the components,
+     what port it listens on). Define end-to-end acceptance criteria that verify
+     the full assembled service.
+   - **`Level: INTERNAL`** — design how the preceding components are wired into a
+     cohesive unit satisfying this composite's interface contract. Define tests
+     that verify the assembled unit's contract only, not full service behaviour.
 
    The `integrate` component inherits the `Level` of the current job document.
    The Level is provided in your prompt context as `Task Level:`.
@@ -81,7 +87,7 @@ Your job:
    build and test commands for this service, sourced from the target
    repo's `CLAUDE.md` if present (e.g. `go build ./...`, `go test ./...`).
 
-**Valid outcomes:**
+**Valid outcomes (decompose mode only — no other outcomes are permitted):**
 - `ARCHITECT_DECOMPOSITION_READY` — Components and Suggested Tools are filled
 - `ARCHITECT_NEEDS_REVISION` — the Goal is ambiguous; clarification needed
 - `ARCHITECT_NEED_HELP` — blocked by missing information that cannot be resolved
@@ -109,7 +115,7 @@ Your job:
 6. Scope each implementation step small enough that the IMPLEMENTOR
    requires minimal internal testing.
 
-**Valid outcomes:**
+**Valid outcomes (design mode only — no other outcomes are permitted):**
 - `ARCHITECT_DESIGN_READY` — Design, Acceptance Criteria, Test Command, and Suggested Tools are complete
 - `ARCHITECT_NEEDS_REVISION` — the Goal or Context has gaps; iterate before handing
   off to IMPLEMENTOR
