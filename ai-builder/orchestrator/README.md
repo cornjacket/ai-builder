@@ -36,10 +36,10 @@ routes between agents based on that outcome.
   Starts at ARCHITECT, terminates when TESTER passes.
 
 - **TM mode** (`--target-repo`): Oracle-driven outer loop. The Oracle places
-  the top-level task in `in-progress/` and writes its README path to
-  `current-job.txt`, then invokes the orchestrator. Task READMEs are the job
-  documents at every level. Internal handlers (DECOMPOSE_HANDLER,
-  LEAF_COMPLETE_HANDLER) manage task state without invoking any AI model.
+  the top-level task in `in-progress/` and passes its README path via `--job`,
+  then invokes the orchestrator. Task READMEs are the job documents at every
+  level. Internal handlers (DECOMPOSE_HANDLER, LEAF_COMPLETE_HANDLER) manage
+  task state without invoking any AI model.
 
 **Roles and agents:**
 
@@ -129,7 +129,7 @@ and rationale.
 **AI agents (ARCHITECT, IMPLEMENTOR, TESTER) must never have knowledge of:**
 - Task management scripts (`new-pipeline-subtask.sh`, `complete-task.sh`, etc.)
 - `task.json` — its structure, fields, or location
-- `current-job.txt` — how the pipeline advances between tasks
+- `last-job.json` — how the pipeline advances between tasks (written after each stage)
 - Any orchestrator internals
 
 **AI agents know only:**
@@ -138,7 +138,7 @@ and rationale.
 
 This boundary is enforced structurally:
 1. Agent prompts (`roles/*.md`) contain no script names, no `task.json`
-   references, and no `current-job.txt` references.
+   references, and no `last-job.json` references.
 2. `CLAUDE.md` is not injected into agent prompts. Agents run with
    `cwd=output_dir` (not the repo root), so CLAUDE.md is not loaded.
 3. DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER are **internal** (no AI model
@@ -177,12 +177,9 @@ README=$(project/tasks/scripts/new-pipeline-build.sh \
     --epic main --folder in-progress --parent <user-task-name> \
     | grep "^README:" | awk '{print $2}')
 
-# 2. Fill in Goal and Context in the created README, then register it
-<target-repo>/project/tasks/scripts/set-current-job.sh \
-    --output-dir <output-dir> "$README"
-
-# 3. Run the orchestrator
+# 2. Fill in Goal and Context in the created README, then run the orchestrator
 python3 ai-builder/orchestrator/orchestrator.py \
+    --job         "$README" \
     --target-repo <target-repo> \
     --output-dir  <output-dir> \
     --epic        main \
@@ -207,9 +204,10 @@ All pipeline artifacts are written to `--output-dir`:
     <generated files>   whatever the IMPLEMENTOR and TESTER produce
 ```
 
-In TM mode, `current-job.txt` in the output directory holds the absolute path
-to the active task README (the job document). Written by the Oracle at startup
-and by the internal LEAF_COMPLETE_HANDLER when advancing to the next task.
+In TM mode, `last-job.json` in the output directory records the active task
+README path after each stage advance. Written by the orchestrator whenever a
+handler emits `HANDLER_SUBTASKS_READY`. Used by `--resume` to restore the
+active job without requiring `--job`.
 
 The `run-summary.md` content is also appended as a `## Run Summary` section to
 the Level:TOP pipeline-subtask README at the end of the run.

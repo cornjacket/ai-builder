@@ -53,7 +53,7 @@ Pipeline AI agents (ARCHITECT, IMPLEMENTOR, TESTER) know only:
 They have zero knowledge of:
 - Task management scripts (`new-pipeline-subtask.sh`, `complete-task.sh`, etc.)
 - `task.json` — its structure or location
-- `current-job.txt` — how the pipeline advances
+- `last-job.json` — how the pipeline advances (written after each stage)
 - Any orchestrator internals
 
 This boundary is enforced by keeping script/orchestrator knowledge out of all
@@ -217,12 +217,9 @@ README=$(project/tasks/scripts/new-pipeline-build.sh \
     --epic main --folder in-progress --parent <user-task-name> \
     | grep "^README:" | awk '{print $2}')
 
-# 2. Fill in the Goal and Context in the created README, then point the pipeline at it
-<target-repo>/project/tasks/scripts/set-current-job.sh \
-    --output-dir <output-dir> "$README"
-
-# 3. Run the orchestrator
+# 2. Fill in the Goal and Context in the created README, then run the orchestrator
 python3 ai-builder/orchestrator/orchestrator.py \
+    --job         "$README" \
     --target-repo <target-repo> \
     --output-dir  <output-dir> \
     --epic        main \

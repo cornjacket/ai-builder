@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description="AIDT+ orchestrator")
 parser.add_argument(
     "--job",
     type=Path,
-    help="Path to the job document (non-TM mode)",
+    help="Path to the TOP-level pipeline README.md (required in TM mode unless --resume)",
 )
 parser.add_argument(
     "--output-dir",
@@ -93,6 +93,7 @@ TIMEOUT_MINUTES = 5
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 EXECUTION_LOG    = OUTPUT_DIR / "execution.log"
 CURRENT_JOB_FILE = OUTPUT_DIR / "current-job.txt"
+LAST_JOB_FILE    = OUTPUT_DIR / "last-job.json"
 
 if TM_MODE:
     TARGET_REPO    = args.target_repo.resolve()
@@ -100,35 +101,44 @@ if TM_MODE:
     PM_SCRIPTS_DIR = TARGET_REPO / "project" / "tasks" / "scripts"
     SETUP_SCRIPT   = REPO_ROOT / "target" / "setup-project.sh"
     INIT_SCRIPT    = REPO_ROOT / "target" / "init-claude-md.sh"
-    # If Oracle pre-seeded current-job.txt (e.g. regression test setup), use it.
-    if CURRENT_JOB_FILE.exists():
-        initial_job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
+
+    # Resolve initial job doc: --job takes precedence; --resume falls back to
+    # last-job.json written by a previous run.
+    if args.job:
+        initial_job_doc = args.job.resolve()
+    elif args.resume and LAST_JOB_FILE.exists():
+        try:
+            _last = json.loads(LAST_JOB_FILE.read_text())
+            initial_job_doc = Path(_last["job_doc"])
+        except Exception as e:
+            print(f"[orchestrator] ERROR: failed to read {LAST_JOB_FILE}: {e}")
+            sys.exit(1)
     else:
-        initial_job_doc = None
+        print("[orchestrator] --job is required in TM mode (or use --resume with a prior last-job.json)")
+        sys.exit(1)
 
     # Validate: TM mode requires a PIPELINE-SUBTASK with Level: TOP as entry point.
-    if initial_job_doc is not None:
-        if not initial_job_doc.exists():
-            print(f"[orchestrator] Initial job document not found: {initial_job_doc}")
-            sys.exit(1)
-        _task_json = initial_job_doc.parent / "task.json"
-        if not _task_json.exists():
-            print(f"[orchestrator] ERROR: no task.json found alongside {initial_job_doc}.")
-            print(f"    TM mode requires a pipeline subtask created with new-pipeline-build.sh.")
-            sys.exit(1)
-        _task_data = json.loads(_task_json.read_text())
-        if _task_data.get("task-type") != "PIPELINE-SUBTASK":
-            print(f"[orchestrator] ERROR: TM mode requires a PIPELINE-SUBTASK as the pipeline entry point.")
-            print(f"    Job document: {initial_job_doc}")
-            print(f"    task.json task-type is '{_task_data.get('task-type')}', expected 'PIPELINE-SUBTASK'.")
-            print(f"    Create a pipeline build task with new-pipeline-build.sh.")
-            sys.exit(1)
-        if not args.resume and _task_data.get("level") != "TOP":
-            print(f"[orchestrator] ERROR: TM mode requires the pipeline entry point to have level: TOP.")
-            print(f"    Job document: {initial_job_doc}")
-            print(f"    task.json level is '{_task_data.get('level')}', expected 'TOP'.")
-            print(f"    (Use --resume to skip this check when restarting a mid-run pipeline.)")
-            sys.exit(1)
+    if not initial_job_doc.exists():
+        print(f"[orchestrator] Initial job document not found: {initial_job_doc}")
+        sys.exit(1)
+    _task_json = initial_job_doc.parent / "task.json"
+    if not _task_json.exists():
+        print(f"[orchestrator] ERROR: no task.json found alongside {initial_job_doc}.")
+        print(f"    TM mode requires a pipeline subtask created with new-pipeline-build.sh.")
+        sys.exit(1)
+    _task_data = json.loads(_task_json.read_text())
+    if _task_data.get("task-type") != "PIPELINE-SUBTASK":
+        print(f"[orchestrator] ERROR: TM mode requires a PIPELINE-SUBTASK as the pipeline entry point.")
+        print(f"    Job document: {initial_job_doc}")
+        print(f"    task.json task-type is '{_task_data.get('task-type')}', expected 'PIPELINE-SUBTASK'.")
+        print(f"    Create a pipeline build task with new-pipeline-build.sh.")
+        sys.exit(1)
+    if not args.resume and _task_data.get("level") != "TOP":
+        print(f"[orchestrator] ERROR: TM mode requires the pipeline entry point to have level: TOP.")
+        print(f"    Job document: {initial_job_doc}")
+        print(f"    task.json level is '{_task_data.get('level')}', expected 'TOP'.")
+        print(f"    (Use --resume to skip this check when restarting a mid-run pipeline.)")
+        sys.exit(1)
 else:
     initial_job_doc = args.job.resolve()
 
@@ -610,7 +620,7 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 # ---------------------------------------------------------------------------
 
 _CLEAN_RESUME_PROTECTED = frozenset({
-    "runs", "current-job.txt", "execution.log",
+    "runs", "current-job.txt", "last-job.json", "execution.log",
     "run-metrics.json", "run-summary.md",
 })
 
@@ -848,6 +858,7 @@ while current_role is not None:
             print(f"\n[orchestrator] Job document not found: {job_doc}. Halting.")
             sys.exit(1)
         print(f"    current job:   {job_doc}")
+        LAST_JOB_FILE.write_text(json.dumps({"job_doc": str(job_doc)}, indent=2) + "\n")
         if build_readme is None:
             build_readme = _find_level_top(job_doc)
 
