@@ -40,7 +40,7 @@ Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 **Implementation order** (subtask IDs reflect creation order, not dependency order):
 
 ```
-0000 → 0001 → 0002 → 0003+0004* → 0005 → 0006 → 0007 → 0008 → 0017 → 0009 → 0010 → 0011 → 0012 → 0013 → 0014 → 0015 → 0016
+0000 → 0001 → 0002 → 0003+0004* → 0005 → 0006 → 0007 → 0008 → 0009 → 0010 → 0011 → 0012 → 0013 → 0014 → 0015 → 0016 → 0017
 ```
 
 `*` 0003 and 0004 must be implemented and deployed atomically — deploying
@@ -50,9 +50,11 @@ Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 `task.json`) and must precede 0008 (handoff persist/inject), which
 serializes the new frame structure.
 
-0017 (resume stale frame detection) requires 0008 (handoff persist/inject,
+0009 (resume stale frame detection) requires 0008 (handoff persist/inject,
 which provides the load path) and 0005 (which defines the component frame
 type being detected).
+
+0017 (post-completion flow) requires 0014 + 0015 + 0016.
 
 ## Subtasks
 
