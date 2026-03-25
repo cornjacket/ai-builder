@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0016 |
+| Next-subtask-id | 0017 |
 
 ## Goal
 
@@ -40,11 +40,15 @@ Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 **Implementation order** (subtask IDs reflect creation order, not dependency order):
 
 ```
-0000 → 0001 → 0008 → 0002+0003* → 0004 → 0009 → 0005 → 0006 → 0007 → 0011 → 0012 → 0013 → 0010
+0000 → 0001 → 0008 → 0002+0003* → 0016 → 0004 → 0009 → 0014 → 0015 → 0005 → 0006 → 0007 → 0011 → 0012 → 0013 → 0010
 ```
 
 `*` 0002 and 0003 must be implemented and deployed atomically — deploying
 0002 alone breaks DECOMPOSE_HANDLER.
+
+0016 (handoff frame stack redesign) requires 0003 (`output_dir` in
+`task.json`) and must precede 0014 (handoff persist/inject), which
+serializes the new frame structure.
 
 ## Subtasks
 
@@ -66,6 +70,7 @@ Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 - [ ] [49352f-0013-master-index-rebuild-script](49352f-0013-master-index-rebuild-script/)
 - [ ] [49352f-0014-handoff-state-persist-and-inject](49352f-0014-handoff-state-persist-and-inject/)
 - [ ] [49352f-0015-pipeline-component-tests](49352f-0015-pipeline-component-tests/)
+- [ ] [49352f-0016-handoff-frame-stack-redesign](49352f-0016-handoff-frame-stack-redesign/)
 <!-- subtask-list-end -->
 
 ## Notes
