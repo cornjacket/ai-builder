@@ -807,8 +807,17 @@ while current_role is not None:
             print(f"    Review the job document: {job_doc}")
         sys.exit(0)
 
-    if outcome not in [o for (_, o) in ROUTES]:
-        print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
+    # Validate outcome is a recognised transition FROM the current role.
+    # Checking against all routes (any role) is insufficient — it allows an agent
+    # to emit another role's outcome and silently mis-route the pipeline.
+    valid_for_role = [o for (r, o) in ROUTES if r == current_role]
+    if outcome not in valid_for_role:
+        all_known = [o for (_, o) in ROUTES]
+        if outcome in all_known:
+            print(f"\n[orchestrator] Invalid outcome '{outcome}' from {current_role} "
+                  f"(belongs to a different role). Halting.")
+        else:
+            print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
         sys.exit(1)
 
     # After a handler signals HANDLER_SUBTASKS_READY, read the current job path for downstream agents.
