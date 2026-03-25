@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0014 |
+| Next-subtask-id | 0016 |
 
 ## Goal
 
@@ -64,6 +64,8 @@ Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 - [ ] [49352f-0011-post-run-metrics-in-task-json](49352f-0011-post-run-metrics-in-task-json/)
 - [ ] [49352f-0012-readme-render-script](49352f-0012-readme-render-script/)
 - [ ] [49352f-0013-master-index-rebuild-script](49352f-0013-master-index-rebuild-script/)
+- [ ] [49352f-0014-handoff-state-persist-and-inject](49352f-0014-handoff-state-persist-and-inject/)
+- [ ] [49352f-0015-pipeline-component-tests](49352f-0015-pipeline-component-tests/)
 <!-- subtask-list-end -->
 
 ## Notes
