@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | gemini, orchestrator, bug               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0008 |
+| Next-subtask-id | 0009 |
 
 ## Goal
 
@@ -65,6 +65,7 @@ Multiple Gemini regression runs required to surface all five affected cases.
 - [x] [X-024459-0005-architect-prompt-boundary-enforcement](X-024459-0005-architect-prompt-boundary-enforcement/)
 - [x] [X-024459-0006-implementor-prompt-inlined-content](X-024459-0006-implementor-prompt-inlined-content/)
 - [x] [X-024459-0007-orchestrator-role-specific-outcome-validation](X-024459-0007-orchestrator-role-specific-outcome-validation/)
+- [ ] [024459-0008-gemini-regression-verification](024459-0008-gemini-regression-verification/)
 <!-- subtask-list-end -->
 
 ## Notes
