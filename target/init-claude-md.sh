@@ -54,6 +54,15 @@ SECTION_FILE=$(mktemp)
 trap 'rm -f "$SECTION_FILE"' EXIT
 
 cat > "$SECTION_FILE" <<'HEREDOC'
+## Brainstorming
+
+When the user says "let's brainstorm on X", "brainstorm X", or similar, immediately
+create `sandbox/brainstorm-{subject}.md` before the discussion begins. Write design
+decisions to that file in real time as the discussion unfolds — do not discuss first
+and reconstruct afterward. The file is the record; chat is ephemeral.
+
+---
+
 <!-- task-management-start -->
 ## Task Management
 
