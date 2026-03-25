@@ -37,8 +37,14 @@ pipeline tasks becomes a generated view, not the authoritative record.
 
 Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 
-This is a significant multi-task initiative. Subtasks to be defined once the
-brainstorm is sufficiently resolved.
+**Implementation order** (subtask IDs reflect creation order, not dependency order):
+
+```
+0000 → 0001 → 0008 → 0002+0003* → 0004 → 0009 → 0005 → 0006 → 0007 → 0011 → 0012 → 0013 → 0010
+```
+
+`*` 0002 and 0003 must be implemented and deployed atomically — deploying
+0002 alone breaks DECOMPOSE_HANDLER.
 
 ## Subtasks
 
