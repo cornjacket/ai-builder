@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | gemini, orchestrator, bug               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0008 |
 
 ## Goal
 
@@ -57,6 +57,14 @@ Multiple Gemini regression runs required to surface all five affected cases.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [x] [X-024459-0000-architect-inline-goal-context](X-024459-0000-architect-inline-goal-context/)
+- [x] [X-024459-0001-implementor-inline-all-sections](X-024459-0001-implementor-inline-all-sections/)
+- [x] [X-024459-0002-architect-file-write-gemini-compat](X-024459-0002-architect-file-write-gemini-compat/)
+- [x] [X-024459-0003-tester-role-prompt-inline-command](X-024459-0003-tester-role-prompt-inline-command/)
+- [x] [X-024459-0004-tester-cd-output-dir-in-command](X-024459-0004-tester-cd-output-dir-in-command/)
+- [x] [X-024459-0005-architect-prompt-boundary-enforcement](X-024459-0005-architect-prompt-boundary-enforcement/)
+- [x] [X-024459-0006-implementor-prompt-inlined-content](X-024459-0006-implementor-prompt-inlined-content/)
+- [x] [X-024459-0007-orchestrator-role-specific-outcome-validation](X-024459-0007-orchestrator-role-specific-outcome-validation/)
 <!-- subtask-list-end -->
 
 ## Notes
