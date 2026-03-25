@@ -303,7 +303,12 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         if job_doc and job_doc.exists():
             m = re.search(r'## Test Command\s*\n+(.*?)(?=\n## |\Z)', job_doc.read_text(), re.DOTALL)
             if m:
-                test_command = f"\n\nTest command:\n```\n{m.group(1).strip()}\n```"
+                # Prepend cd to output_dir so the test command is fully self-contained.
+                # TESTER's cwd is a temp sandbox; without an explicit cd the test command
+                # fails to find the Go module. Bug: 024459-bug-gemini-agent-cannot-read-job-doc
+                raw_cmd = m.group(1).strip()
+                full_cmd = f"cd {output_dir} && {raw_cmd}"
+                test_command = f"\n\nTest command:\n```\n{full_cmd}\n```"
         job_section = f"\nThe shared job document is at: {job_doc}{test_command}\n\nOutput directory (write all generated files here): {output_dir}\n"
     else:
         valid_outcomes = "DONE | NEED_HELP"
