@@ -22,4 +22,7 @@
 - [99ed0c-document-claude-vs-gemini-behavioral-differences](99ed0c-document-claude-vs-gemini-behavioral-differences/)
 - [463215-inline-job-doc-sections-per-role](463215-inline-job-doc-sections-per-role/)
 - [66251c-design-model-role-addendum-in-machine-config](66251c-design-model-role-addendum-in-machine-config/)
+- [b9529c-doc-pipeline](b9529c-doc-pipeline/)
+- [fe6b43-review-pipeline](fe6b43-review-pipeline/)
+- [b7249c-update-pipeline](b7249c-update-pipeline/)
 <!-- task-list-end -->
