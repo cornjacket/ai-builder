@@ -251,14 +251,52 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
         else:
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
+        # Extract Goal and Context from job doc and inline into prompt.
+        # Gemini's file read tool is sandboxed to the temp cwd and cannot
+        # read the job doc at its absolute path. Inlining eliminates the
+        # file read dependency entirely.
+        # See: learning/pipeline-extract-dont-delegate.md
+        # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
+        goal_text = ""
+        context_text = ""
+        if job_doc and job_doc.exists():
+            doc = job_doc.read_text()
+            m = re.search(r'## Goal\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
+            if m:
+                goal_text = m.group(1).strip()
+            m = re.search(r'## Context\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
+            if m and m.group(1).strip() != "_To be written._":
+                context_text = m.group(1).strip()
+        goal_section = f"\n\n## Goal\n\n{goal_text}" if goal_text else ""
+        context_section = f"\n\n## Context\n\n{context_text}" if context_text else ""
         job_section = (
             f"\nThe shared job document is at: {job_doc}\n"
             f"Task Level: {level}\n"
+            f"Complexity: {complexity}\n"
             f"\nOutput directory (write all generated files here): {output_dir}\n"
+            f"{goal_section}{context_section}\n"
         )
     elif role == "IMPLEMENTOR":
         valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
-        job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
+        # Extract Goal, Design, Acceptance Criteria, and Test Command from job
+        # doc and inline into prompt. Gemini's file read tool cannot access the
+        # job doc at its absolute path outside the temp cwd.
+        # See: learning/pipeline-extract-dont-delegate.md
+        # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
+        inline_sections = ""
+        if job_doc and job_doc.exists():
+            doc = job_doc.read_text()
+            for section in ("Goal", "Context", "Design", "Acceptance Criteria", "Test Command"):
+                m = re.search(rf'## {section}\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
+                if m:
+                    text = m.group(1).strip()
+                    if text and text != "_To be written._":
+                        inline_sections += f"\n\n## {section}\n\n{text}"
+        job_section = (
+            f"\nThe shared job document is at: {job_doc}\n"
+            f"\nOutput directory (write all generated files here): {output_dir}\n"
+            f"{inline_sections}\n"
+        )
     elif role == "TESTER":
         valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
         test_command = ""

@@ -9,4 +9,5 @@
 - [3e0310-design-documenter-agent](3e0310-design-documenter-agent/)
 - [bec5a3-fix-child-task-context-ancestry-chain](bec5a3-fix-child-task-context-ancestry-chain/)
 - [49352f-redesign-pipeline-communication-architecture](49352f-redesign-pipeline-communication-architecture/)
+- [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
 <!-- task-list-end -->

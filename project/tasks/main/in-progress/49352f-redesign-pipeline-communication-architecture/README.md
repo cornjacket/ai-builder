@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0014 |
 
 ## Goal
 
@@ -44,6 +44,20 @@ brainstorm is sufficiently resolved.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [ ] [49352f-0000-oracle-goal-context-in-task-json](49352f-0000-oracle-goal-context-in-task-json/)
+- [ ] [49352f-0001-orchestrator-job-param-replace-current-job-txt](49352f-0001-orchestrator-job-param-replace-current-job-txt/)
+- [ ] [49352f-0002-architect-decompose-returns-components-json](49352f-0002-architect-decompose-returns-components-json/)
+- [ ] [49352f-0003-decompose-handler-dual-tree-and-output-dir](49352f-0003-decompose-handler-dual-tree-and-output-dir/)
+- [ ] [49352f-0004-architect-atomic-returns-design-json](49352f-0004-architect-atomic-returns-design-json/)
+- [ ] [49352f-0005-documenter-scan-and-index](49352f-0005-documenter-scan-and-index/)
+- [ ] [49352f-0006-implementor-inline-content-companion-md](49352f-0006-implementor-inline-content-companion-md/)
+- [ ] [49352f-0007-tester-internal-handler](49352f-0007-tester-internal-handler/)
+- [ ] [49352f-0008-leaf-complete-handler-last-job-json](49352f-0008-leaf-complete-handler-last-job-json/)
+- [ ] [49352f-0009-integrate-step-parent-output-dir](49352f-0009-integrate-step-parent-output-dir/)
+- [ ] [49352f-0010-post-completion-flow](49352f-0010-post-completion-flow/)
+- [ ] [49352f-0011-post-run-metrics-in-task-json](49352f-0011-post-run-metrics-in-task-json/)
+- [ ] [49352f-0012-readme-render-script](49352f-0012-readme-render-script/)
+- [ ] [49352f-0013-master-index-rebuild-script](49352f-0013-master-index-rebuild-script/)
 <!-- subtask-list-end -->
 
 ## Notes

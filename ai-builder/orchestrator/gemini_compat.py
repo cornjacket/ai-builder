@@ -28,6 +28,23 @@ def gemini_role_addendum(role: str) -> str:
     """
     sections = []
 
+    if role == "ARCHITECT":
+        # Gemini's write_file tool is sandboxed to the launch cwd (a per-invocation
+        # temp directory). ARCHITECT writes documentation files (.md) to the output
+        # directory, which is an absolute path outside the sandbox. Use
+        # run_shell_command with printf instead — shell commands are not sandboxed.
+        # Same root cause as IMPLEMENTOR file write issue.
+        # Discovered: user-service TM regression (2026-03-24).
+        # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
+        sections.append(
+            "## File Writing Rules\n"
+            "Always write documentation files using run_shell_command with printf — "
+            "NOT the write_file tool and NOT heredocs:\n"
+            "  printf '%s' 'file content here' > /absolute/path/to/filename.md\n"
+            "Do NOT use the write_file tool. It cannot access paths outside the workspace.\n"
+            "Do NOT use cat <<'EOF' ... EOF syntax. It causes shell parse errors in this environment."
+        )
+
     if role == "IMPLEMENTOR":
         # Issue 1: Gemini's tool execution layer misinterprets heredoc syntax
         # (cat <<'EOF' ... EOF), producing shell parse errors before the
