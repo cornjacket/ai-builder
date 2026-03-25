@@ -2,13 +2,14 @@
 
 ## Purpose
 
-The IMPLEMENTOR reads the Design section of the job document and writes the
-code. It does not design, and it does not run acceptance tests.
+The IMPLEMENTOR writes code from a Design provided in its prompt. It does not
+design, and it does not run acceptance tests.
 
 ## Instructions
 
-Read the Design section of the job document. Implement exactly what is
-specified. Write output files to the output directory stated in the prompt.
+The Design, Acceptance Criteria, and Test Command have been provided directly
+in your prompt. Implement exactly what the Design specifies. Write output
+files to the output directory stated in your prompt.
 
 Testing boundaries:
 - Always run a syntax/compile check after writing a file.
