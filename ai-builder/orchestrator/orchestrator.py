@@ -251,8 +251,9 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
         else:
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
-        # Extract Goal and Context — prefer task.json (JSON-native), fall back
-        # to README.md parsing for builds created before this change.
+        # Extract Goal and Context from task.json (JSON-native).
+        # No README fallback — task.json must have these fields. If goal is
+        # missing the build was created before 49352f-0000 and must be ported.
         # Gemini's file read tool is sandboxed to the temp cwd and cannot
         # read the job doc at its absolute path. Inlining eliminates the
         # file read dependency entirely.
@@ -265,16 +266,13 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
                 _tj = json.loads(task_json_path.read_text())
                 goal_text = _tj.get("goal", "")
                 context_text = _tj.get("context", "")
-            except Exception:
-                pass
-        if (not goal_text) and job_doc and job_doc.exists():
-            doc = job_doc.read_text()
-            m = re.search(r'## Goal\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
-            if m:
-                goal_text = m.group(1).strip()
-            m = re.search(r'## Context\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
-            if m and m.group(1).strip() != "_To be written._":
-                context_text = m.group(1).strip()
+            except Exception as e:
+                print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
+                return
+        if not goal_text:
+            print(f"[orchestrator] ERROR: 'goal' field missing from task.json at {task_json_path}. "
+                  f"Port this build to include goal/context in task.json (see 49352f-0000).")
+            return
         goal_section = f"\n\n## Goal\n\n{goal_text}" if goal_text else ""
         context_section = f"\n\n## Context\n\n{context_text}" if context_text else ""
         job_section = (

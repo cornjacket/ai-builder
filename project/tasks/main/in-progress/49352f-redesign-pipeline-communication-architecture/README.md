@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0018 |
+| Next-subtask-id | 0019 |
 
 ## Goal
 
@@ -40,7 +40,7 @@ Brainstorm: `sandbox/brainstorm-pipeline-communication-architecture.md`
 **Implementation order** (subtask IDs reflect creation order, not dependency order):
 
 ```
-0000 → 0001 → 0002 → 0003+0004* → 0005 → 0006 → 0007 → 0008 → 0009 → 0010 → 0011 → 0012 → 0013 → 0014 → 0015 → 0016 → 0017
+0000 → 0001 → 0002 → 0003+0004* → 0005 → 0006 → 0007 → 0008 → 0009 → 0010 → 0011 → 0012 → 0013 → 0014 → 0015 → 0016 → 0017 → 0018
 ```
 
 `*` 0003 and 0004 must be implemented and deployed atomically — deploying
@@ -54,7 +54,9 @@ serializes the new frame structure.
 which provides the load path) and 0005 (which defines the component frame
 type being detected).
 
-0017 (post-completion flow) requires 0014 + 0015 + 0016.
+0010 (port-regression-task-json) must be done before running regression tests.
+
+0018 (post-completion flow) requires 0015 + 0016 + 0017.
 
 ## Subtasks
 
@@ -70,14 +72,15 @@ type being detected).
 - [ ] [49352f-0007-integrate-step-parent-output-dir](49352f-0007-integrate-step-parent-output-dir/)
 - [ ] [49352f-0008-handoff-state-persist-and-inject](49352f-0008-handoff-state-persist-and-inject/)
 - [ ] [49352f-0009-resume-stale-frame-detection](49352f-0009-resume-stale-frame-detection/)
-- [ ] [49352f-0010-pipeline-component-tests](49352f-0010-pipeline-component-tests/)
-- [ ] [49352f-0011-documenter-scan-and-index](49352f-0011-documenter-scan-and-index/)
-- [ ] [49352f-0012-implementor-inline-content-companion-md](49352f-0012-implementor-inline-content-companion-md/)
-- [ ] [49352f-0013-tester-internal-handler](49352f-0013-tester-internal-handler/)
-- [ ] [49352f-0014-post-run-metrics-in-task-json](49352f-0014-post-run-metrics-in-task-json/)
-- [ ] [49352f-0015-readme-render-script](49352f-0015-readme-render-script/)
-- [ ] [49352f-0016-master-index-rebuild-script](49352f-0016-master-index-rebuild-script/)
-- [ ] [49352f-0017-post-completion-flow](49352f-0017-post-completion-flow/)
+- [ ] [49352f-0010-port-regression-task-json](49352f-0010-port-regression-task-json/)
+- [ ] [49352f-0011-pipeline-component-tests](49352f-0011-pipeline-component-tests/)
+- [ ] [49352f-0012-documenter-scan-and-index](49352f-0012-documenter-scan-and-index/)
+- [ ] [49352f-0013-implementor-inline-content-companion-md](49352f-0013-implementor-inline-content-companion-md/)
+- [ ] [49352f-0014-tester-internal-handler](49352f-0014-tester-internal-handler/)
+- [ ] [49352f-0015-post-run-metrics-in-task-json](49352f-0015-post-run-metrics-in-task-json/)
+- [ ] [49352f-0016-readme-render-script](49352f-0016-readme-render-script/)
+- [ ] [49352f-0017-master-index-rebuild-script](49352f-0017-master-index-rebuild-script/)
+- [ ] [49352f-0018-post-completion-flow](49352f-0018-post-completion-flow/)
 <!-- subtask-list-end -->
 
 ## Notes
