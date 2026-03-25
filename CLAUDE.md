@@ -231,6 +231,15 @@ python3 ai-builder/orchestrator/orchestrator.py \
 
 ---
 
+## Brainstorming
+
+When the user says "let's brainstorm on X", "brainstorm X", or similar, immediately
+create `sandbox/brainstorm-{subject}.md` before the discussion begins. Write design
+decisions to that file in real time as the discussion unfolds — do not discuss first
+and reconstruct afterward. The file is the record; chat is ephemeral.
+
+---
+
 ## Documentation
 
 When adding functionality to ai-builder (new flags, new roles, new pipeline
