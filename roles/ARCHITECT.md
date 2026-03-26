@@ -107,7 +107,9 @@ Your job:
    verbatim by the TESTER — be precise.
 5. Scope each implementation step small enough that the IMPLEMENTOR
    requires minimal internal testing.
-6. Think through the design in your prose response, then emit a terminal
+6. **Optionally write a design doc** to the output directory for non-trivial
+   components (see rules below).
+7. Think through the design in your prose response, then emit a terminal
    fenced JSON block as the **last thing in your response**:
 
 ```json
@@ -124,8 +126,22 @@ Your job:
    **The JSON block must be the final content of your response — nothing after
    the closing fence.** Before emitting, mentally parse your JSON to verify it
    is valid. All field values are strings (Markdown prose where appropriate).
-   `documents_written` is a boolean: `true` if you wrote documentation files
-   to disk, `false` otherwise.
+   `documents_written` is a boolean: `true` if you wrote one or more
+   documentation files to disk, `false` otherwise.
+
+### Design doc rules (design mode)
+
+Write a design doc to the output directory when the component has non-obvious
+behaviour, complex data flow, or architectural decisions worth preserving.
+**Do not write docs for trivial or self-evident implementations** — if the
+design fits cleanly in the `design` JSON field, a separate doc adds no value.
+
+When you do write a doc:
+- Name it descriptively: `data-flow.md`, `locking-strategy.md`, etc.
+- Follow the format in `roles/doc-format.md`: Purpose:/Tags: header block,
+  first sentence of Purpose stands alone as the index entry.
+- Use `Tags: architecture, design` (no `implementation` tag).
+- Set `documents_written: true` in the JSON block.
 
 **Special case — `integrate` component:**
 

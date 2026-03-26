@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0021 |
+| Next-subtask-id | 0022 |
 
 ## Goal
 
@@ -74,15 +74,16 @@ type being detected).
 - [x] [X-49352f-0009-resume-stale-frame-detection](X-49352f-0009-resume-stale-frame-detection/)
 - [x] [X-49352f-0010-port-regression-task-json](X-49352f-0010-port-regression-task-json/)
 - [x] [X-49352f-0011-pipeline-component-tests](X-49352f-0011-pipeline-component-tests/)
-- [x] [X-49352f-0020-run-regression-bootstrap-component-tests](X-49352f-0020-run-regression-bootstrap-component-tests/)
-- [x] [X-49352f-0012-documenter-scan-and-index](X-49352f-0012-documenter-scan-and-index/)
-- [ ] [49352f-0013-implementor-inline-content-companion-md](49352f-0013-implementor-inline-content-companion-md/)
-- [ ] [49352f-0014-tester-internal-handler](49352f-0014-tester-internal-handler/)
-- [ ] [49352f-0015-post-run-metrics-in-task-json](49352f-0015-post-run-metrics-in-task-json/)
-- [ ] [49352f-0016-readme-render-script](49352f-0016-readme-render-script/)
-- [ ] [49352f-0017-master-index-rebuild-script](49352f-0017-master-index-rebuild-script/)
-- [ ] [49352f-0018-post-completion-flow](49352f-0018-post-completion-flow/)
-- [ ] [49352f-0019-pipeline-theory-of-operation-doc](49352f-0019-pipeline-theory-of-operation-doc/)
+- [x] [X-49352f-0012-run-regression-bootstrap-component-tests](X-49352f-0012-run-regression-bootstrap-component-tests/)
+- [x] [X-49352f-0013-documenter-scan-and-index](X-49352f-0013-documenter-scan-and-index/)
+- [x] [X-49352f-0014-architect-doc-format-convention](X-49352f-0014-architect-doc-format-convention/)
+- [ ] [49352f-0015-implementor-inline-content-companion-md](49352f-0015-implementor-inline-content-companion-md/)
+- [ ] [49352f-0016-tester-internal-handler](49352f-0016-tester-internal-handler/)
+- [ ] [49352f-0017-post-run-metrics-in-task-json](49352f-0017-post-run-metrics-in-task-json/)
+- [ ] [49352f-0018-readme-render-script](49352f-0018-readme-render-script/)
+- [ ] [49352f-0019-master-index-rebuild-script](49352f-0019-master-index-rebuild-script/)
+- [ ] [49352f-0020-post-completion-flow](49352f-0020-post-completion-flow/)
+- [ ] [49352f-0021-pipeline-theory-of-operation-doc](49352f-0021-pipeline-theory-of-operation-doc/)
 <!-- subtask-list-end -->
 
 ## Notes
