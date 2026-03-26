@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0019 |
+| Next-subtask-id | 0020 |
 
 ## Goal
 
@@ -67,11 +67,11 @@ type being detected).
 - [x] [X-49352f-0002-leaf-complete-handler-last-job-json](X-49352f-0002-leaf-complete-handler-last-job-json/)
 - [x] [X-49352f-0003-architect-decompose-returns-components-json](X-49352f-0003-architect-decompose-returns-components-json/)
 - [x] [X-49352f-0004-decompose-handler-dual-tree-and-output-dir](X-49352f-0004-decompose-handler-dual-tree-and-output-dir/)
-- [ ] [49352f-0005-handoff-frame-stack-redesign](49352f-0005-handoff-frame-stack-redesign/)
-- [ ] [49352f-0006-architect-atomic-returns-design-json](49352f-0006-architect-atomic-returns-design-json/)
-- [ ] [49352f-0007-integrate-step-parent-output-dir](49352f-0007-integrate-step-parent-output-dir/)
-- [ ] [49352f-0008-handoff-state-persist-and-inject](49352f-0008-handoff-state-persist-and-inject/)
-- [ ] [49352f-0009-resume-stale-frame-detection](49352f-0009-resume-stale-frame-detection/)
+- [x] [X-49352f-0005-handoff-frame-stack-redesign](X-49352f-0005-handoff-frame-stack-redesign/)
+- [x] [X-49352f-0006-architect-atomic-returns-design-json](X-49352f-0006-architect-atomic-returns-design-json/)
+- [x] [X-49352f-0007-integrate-step-parent-output-dir](X-49352f-0007-integrate-step-parent-output-dir/)
+- [x] [X-49352f-0008-handoff-state-persist-and-inject](X-49352f-0008-handoff-state-persist-and-inject/)
+- [x] [X-49352f-0009-resume-stale-frame-detection](X-49352f-0009-resume-stale-frame-detection/)
 - [ ] [49352f-0010-port-regression-task-json](49352f-0010-port-regression-task-json/)
 - [ ] [49352f-0011-pipeline-component-tests](49352f-0011-pipeline-component-tests/)
 - [ ] [49352f-0012-documenter-scan-and-index](49352f-0012-documenter-scan-and-index/)
@@ -81,6 +81,7 @@ type being detected).
 - [ ] [49352f-0016-readme-render-script](49352f-0016-readme-render-script/)
 - [ ] [49352f-0017-master-index-rebuild-script](49352f-0017-master-index-rebuild-script/)
 - [ ] [49352f-0018-post-completion-flow](49352f-0018-post-completion-flow/)
+- [ ] [49352f-0019-pipeline-theory-of-operation-doc](49352f-0019-pipeline-theory-of-operation-doc/)
 <!-- subtask-list-end -->
 
 ## Notes
