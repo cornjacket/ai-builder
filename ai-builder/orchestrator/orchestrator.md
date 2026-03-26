@@ -354,12 +354,12 @@ this block; `run-summary.md` and `run-metrics.json` are not written for those ca
 
 | Operation | File | When |
 |-----------|------|------|
-| Read | `--job` (job document) | non-TM mode startup |
-| Read | `current-job.txt` | TM mode startup — if present, initialises `job_doc` for the first ARCHITECT call (Oracle pre-seeds this before invoking the orchestrator) |
+| Read | `--job` (job document) | TM and non-TM mode startup; in TM mode `--resume` reads `last-job.json` instead |
 | Read | `roles/<ROLE>.md` | each `build_prompt()` call for non-TM roles |
 | Write | `execution.log` | after every role run (append) |
-| Write | `current-job.txt` | by `DECOMPOSE_HANDLER` or `LEAF_COMPLETE_HANDLER` after `HANDLER_SUBTASKS_READY` — path to the next job document |
+| Write | `current-job.txt` | by `DECOMPOSE_HANDLER` or `LEAF_COMPLETE_HANDLER` after `HANDLER_SUBTASKS_READY` — internal handler comms; path to the next job README |
 | Read | `current-job.txt` | by orchestrator after a handler emits `HANDLER_SUBTASKS_READY` — updates `job_doc` for downstream roles |
+| Write | `last-job.json` | by orchestrator after each `HANDLER_SUBTASKS_READY` advance — `{"active_task": "/abs/path/to/task.json"}`; read by `--resume` to restore active task |
 | Read/Write | Level:TOP `README.md` | after every invocation — `update_task_doc` rewrites the `## Execution Log` table |
 | Write | `run-summary.md` | on pipeline completion (normal exit only) |
 | Write | `run-metrics.json` | on pipeline completion (normal exit only) |
@@ -367,11 +367,9 @@ this block; `run-summary.md` and `run-metrics.json` are not written for those ca
 
 **Oracle contract (TM mode):** before invoking the orchestrator, Oracle must:
 1. Place the top-level task in `in-progress/` in the target repo's task system
-2. Use `set-current-job.sh` to write the task README's absolute path to
-   `OUTPUT_DIR/current-job.txt`
+2. Pass its README path via `--job path/to/README.md`
 
-The orchestrator reads `current-job.txt` at startup and uses it as `job_doc`
-for the first ARCHITECT call.
+To resume a mid-run pipeline: `--resume` (reads `last-job.json`; no `--job` required).
 
 ---
 
@@ -385,5 +383,5 @@ for the first ARCHITECT call.
   working around PATH limitations when the orchestrator is called from
   environments where nvm-managed node paths are not inherited.
 - The orchestrator is stateless between runs. All state lives in the output
-  directory (`current-job.txt`, `execution.log`) and the target repo's task
+  directory (`last-job.json`, `execution.log`) and the target repo's task
   system.

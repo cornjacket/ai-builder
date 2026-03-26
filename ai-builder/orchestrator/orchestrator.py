@@ -109,7 +109,7 @@ if TM_MODE:
     elif args.resume and LAST_JOB_FILE.exists():
         try:
             _last = json.loads(LAST_JOB_FILE.read_text())
-            initial_job_doc = Path(_last["job_doc"])
+            initial_job_doc = Path(_last["active_task"]).parent / "README.md"
         except Exception as e:
             print(f"[orchestrator] ERROR: failed to read {LAST_JOB_FILE}: {e}")
             sys.exit(1)
@@ -858,7 +858,7 @@ while current_role is not None:
             print(f"\n[orchestrator] Job document not found: {job_doc}. Halting.")
             sys.exit(1)
         print(f"    current job:   {job_doc}")
-        LAST_JOB_FILE.write_text(json.dumps({"job_doc": str(job_doc)}, indent=2) + "\n")
+        LAST_JOB_FILE.write_text(json.dumps({"active_task": str(job_doc.parent / "task.json")}, indent=2) + "\n")
         if build_readme is None:
             build_readme = _find_level_top(job_doc)
 
