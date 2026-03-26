@@ -294,38 +294,50 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         )
     elif role == "IMPLEMENTOR":
         valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
-        # Extract Goal, Design, Acceptance Criteria, and Test Command from job
-        # doc and inline into prompt. Gemini's file read tool cannot access the
-        # job doc at its absolute path outside the temp cwd.
+        # Read Goal, Design, Acceptance Criteria, and Test Command from task.json
+        # (written by ARCHITECT). Inlining eliminates the file read dependency.
         # See: learning/pipeline-extract-dont-delegate.md
         # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
         inline_sections = ""
-        if job_doc and job_doc.exists():
-            doc = job_doc.read_text()
-            for section in ("Goal", "Context", "Design", "Acceptance Criteria", "Test Command"):
-                m = re.search(rf'## {section}\s*\n+(.*?)(?=\n## |\Z)', doc, re.DOTALL)
-                if m:
-                    text = m.group(1).strip()
-                    if text and text != "_To be written._":
-                        inline_sections += f"\n\n## {section}\n\n{text}"
+        if job_doc:
+            task_json_path = job_doc.parent / "task.json"
+            if task_json_path.exists():
+                try:
+                    _tj = json.loads(task_json_path.read_text())
+                    for label, key in (
+                        ("Goal", "goal"),
+                        ("Context", "context"),
+                        ("Design", "design"),
+                        ("Acceptance Criteria", "acceptance_criteria"),
+                        ("Test Command", "test_command"),
+                    ):
+                        text = _tj.get(key, "").strip()
+                        if text and text != "_To be written._":
+                            inline_sections += f"\n\n## {label}\n\n{text}"
+                except Exception as e:
+                    print(f"[orchestrator] Warning: failed to read task.json for IMPLEMENTOR prompt: {e}")
         job_section = (
-            f"\nThe shared job document is at: {job_doc}\n"
             f"\nOutput directory (write all generated files here): {output_dir}\n"
             f"{inline_sections}\n"
         )
     elif role == "TESTER":
         valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
+        # Read test_command from task.json (written by ARCHITECT). Inlining
+        # eliminates the file read dependency on the job doc README.
+        # Prepend cd to output_dir so the command is fully self-contained.
         test_command = ""
-        if job_doc and job_doc.exists():
-            m = re.search(r'## Test Command\s*\n+(.*?)(?=\n## |\Z)', job_doc.read_text(), re.DOTALL)
-            if m:
-                # Prepend cd to output_dir so the test command is fully self-contained.
-                # TESTER's cwd is a temp sandbox; without an explicit cd the test command
-                # fails to find the Go module. Bug: 024459-bug-gemini-agent-cannot-read-job-doc
-                raw_cmd = m.group(1).strip()
-                full_cmd = f"cd {output_dir} && {raw_cmd}"
-                test_command = f"\n\nTest command:\n```\n{full_cmd}\n```"
-        job_section = f"\nThe shared job document is at: {job_doc}{test_command}\n\nOutput directory (write all generated files here): {output_dir}\n"
+        if job_doc:
+            task_json_path = job_doc.parent / "task.json"
+            if task_json_path.exists():
+                try:
+                    _tj = json.loads(task_json_path.read_text())
+                    raw_cmd = _tj.get("test_command", "").strip()
+                    if raw_cmd:
+                        full_cmd = f"cd {output_dir} && {raw_cmd}"
+                        test_command = f"\n\nTest command:\n```\n{full_cmd}\n```"
+                except Exception as e:
+                    print(f"[orchestrator] Warning: failed to read task.json for TESTER prompt: {e}")
+        job_section = f"{test_command}\n\nOutput directory (write all generated files here): {output_dir}\n"
     else:
         valid_outcomes = "DONE | NEED_HELP"
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
@@ -580,6 +592,33 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
 
     response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {token_line}"
     return AgentResult(exit_code=0, response=response)
+
+
+def _store_architect_design_fields(response: str, job_doc: Path) -> None:
+    """Parse design fields from ARCHITECT's JSON block and write them to task.json.
+
+    Fields stored: design, acceptance_criteria, test_command.
+    Called immediately after ARCHITECT returns ARCHITECT_DESIGN_READY.
+    """
+    json_match = re.search(r'```json\s*\n(\{.*?\})\s*```\s*$', response, re.DOTALL)
+    if not json_match:
+        return
+    try:
+        data = json.loads(json_match.group(1))
+    except json.JSONDecodeError:
+        return
+
+    task_json_path = job_doc.parent / "task.json"
+    if not task_json_path.exists():
+        return
+    try:
+        tj = json.loads(task_json_path.read_text())
+        for field in ("design", "acceptance_criteria", "test_command"):
+            if field in data:
+                tj[field] = data[field]
+        task_json_path.write_text(json.dumps(tj, indent=2) + "\n")
+    except Exception as e:
+        print(f"[orchestrator] Warning: failed to store design fields in task.json: {e}")
 
 
 def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], completed_job_doc: Path | None) -> None:
@@ -873,6 +912,11 @@ while current_role is not None:
     outcome, handoff, last_components = parse_response(result.response)
     handoff_history.append(f"[{current_role}] {handoff}")
     log_run(current_role, agent, outcome, handoff)
+
+    # Store ARCHITECT design fields in task.json so IMPLEMENTOR/TESTER can
+    # read them without a file dependency on the job doc.
+    if outcome == "ARCHITECT_DESIGN_READY" and TM_MODE and job_doc:
+        _store_architect_design_fields(result.response, job_doc)
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
 
