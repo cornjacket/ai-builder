@@ -26,33 +26,38 @@ Your job:
 3. For each component, decide:
    - `atomic` — can be fully designed and implemented in a single pass
    - `composite` — too large or complex; needs further decomposition first
-4. Fill in the `## Components` section with a short data flow description
-   and a component table:
+4. Fill in the `## Suggested Tools` section of the job document with the
+   language-agnostic build and test commands for this service, sourced from
+   the target repo's `CLAUDE.md` if present (e.g. `go build ./...`,
+   `go test ./...`).
+5. Think through the component breakdown in your prose response, then emit a
+   terminal fenced JSON block as the **last thing in your response**:
 
-```markdown
-<one paragraph describing how components interact>
-
-| Name | Complexity | Description |
-|------|------------|-------------|
-| <name> | atomic | <full API contract — see requirements below> |
-| <name> | composite | <one-line responsibility; sub-contracts defined at next decomposition level> |
-| integrate | atomic | Wire all components into a cohesive unit and verify this level's acceptance criteria |
+```json
+{
+  "outcome": "ARCHITECT_DECOMPOSITION_READY",
+  "handoff": "one paragraph summarising the decomposition and what the next agent needs to know",
+  "components": [
+    {"name": "store",    "complexity": "atomic",    "description": "<full contract — see requirements below>"},
+    {"name": "handlers", "complexity": "composite", "description": "<one-line responsibility>"},
+    {"name": "integrate","complexity": "atomic",    "description": "Wire all components into a cohesive unit and verify this level's acceptance criteria"}
+  ]
+}
 ```
 
-   **Description column requirements:**
+   **The JSON block must be the final content of your response — nothing after the closing fence.**
+   Before emitting, mentally parse your JSON to verify it is valid.
 
-   TM copies each component's description verbatim into its Goal. The
+   **Description field requirements:**
+
+   The TM copies each component's description verbatim into its Goal. The
    design-mode ARCHITECT will only see that Goal — if a contract is missing
    or summarised here, it will be invented incorrectly downstream.
 
-   What to include depends on the component's role:
-
    - **HTTP-handling components** (handlers, routers, API layers): include the
-     full API contract — every endpoint assigned to this component (method,
-     path, success and error status codes) plus the complete parameter models
-     for each endpoint (request body field names and types, response field
-     names and types). Do not paraphrase or abbreviate field names — copy them
-     exactly from the parent spec.
+     full API contract — every endpoint (method, path, success and error status
+     codes) plus complete parameter models (request/response field names and
+     types). Do not paraphrase or abbreviate field names — copy them exactly.
 
      Example:
      ```
@@ -62,33 +67,23 @@ Your job:
      ```
 
    - **Internal components** (stores, validators, processors): omit HTTP routes.
-     Include only the data models this component operates on — the struct fields
-     and types it stores, validates, or transforms. These are typically derived
-     from the parameter models of the HTTP-handling component that calls them.
+     Include only the data models — struct fields and types it stores, validates,
+     or transforms.
 
-   - **Composite components**: one line is sufficient — the sub-contracts will
-     be defined when that component is decomposed in a subsequent pass.
+   - **Composite components**: one line is sufficient — sub-contracts are defined
+     when that component is decomposed in a subsequent pass.
 
-   **The final row must always be an integration component** named `integrate`.
-   It is always `atomic`. Its scope depends on the `Level` field of the job document:
+   **The final entry must always be `integrate`**, always `atomic`. Its scope
+   depends on the `Level` field (provided in your prompt as `Task Level:`):
 
-   - **`Level: TOP`** — design the entry point and component wiring (e.g. specify
-     that a `main.go` is needed, how it initialises and connects the components,
-     what port it listens on). Define end-to-end acceptance criteria that verify
-     the full assembled service.
+   - **`Level: TOP`** — design the entry point and component wiring (e.g. a
+     `main.go`, how it initialises and connects components, what port it listens
+     on). Define end-to-end acceptance criteria for the fully assembled service.
    - **`Level: INTERNAL`** — design how the preceding components are wired into a
-     cohesive unit satisfying this composite's interface contract. Define tests
-     that verify the assembled unit's contract only, not full service behaviour.
+     unit satisfying this composite's interface contract.
 
-   The `integrate` component inherits the `Level` of the current job document.
-   The Level is provided in your prompt context as `Task Level:`.
-
-5. Fill in the `## Suggested Tools` section with the language-agnostic
-   build and test commands for this service, sourced from the target
-   repo's `CLAUDE.md` if present (e.g. `go build ./...`, `go test ./...`).
-
-**Valid outcomes (decompose mode only — no other outcomes are permitted):**
-- `ARCHITECT_DECOMPOSITION_READY` — Components and Suggested Tools are filled
+**Valid outcome values (decompose mode only):**
+- `ARCHITECT_DECOMPOSITION_READY` — components array is complete and Suggested Tools filled
 - `ARCHITECT_NEEDS_REVISION` — the Goal is ambiguous; clarification needed
 - `ARCHITECT_NEED_HELP` — blocked by missing information that cannot be resolved
 

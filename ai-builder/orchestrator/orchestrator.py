@@ -347,13 +347,31 @@ HANDOFF: one paragraph summarising what you did and what the next agent needs to
 # Outcome parser
 # ---------------------------------------------------------------------------
 
-def parse_outcome(response: str) -> tuple[str, str]:
+def parse_response(response: str) -> tuple[str, str, list[dict]]:
+    """Extract outcome, handoff, and components from an agent response.
+
+    Looks for a terminal fenced ```json block containing at minimum 'outcome'
+    and 'handoff' keys. The 'components' key is optional (decompose mode only).
+    Falls back to OUTCOME:/HANDOFF: regex for internal agents that don't emit
+    a JSON block.
+    """
+    json_match = re.search(r'```json\s*\n(\{.*?\})\s*```\s*$', response, re.DOTALL)
+    if json_match:
+        try:
+            data = json.loads(json_match.group(1))
+            outcome = data.get("outcome", "UNKNOWN")
+            handoff = data.get("handoff", "(no handoff provided)")
+            components = data.get("components", [])
+            return outcome, handoff, components
+        except json.JSONDecodeError as e:
+            print(f"[orchestrator] WARNING: JSON block parse failed ({e}); falling back to regex")
+
+    # Fallback: plain OUTCOME:/HANDOFF: lines (internal agents)
     outcome_match = re.search(r'^OUTCOME:\s*(\S+)', response, re.MULTILINE)
     handoff_match = re.search(r'^HANDOFF:\s*(.+)', response, re.MULTILINE | re.DOTALL)
-
     outcome = outcome_match.group(1).strip() if outcome_match else "UNKNOWN"
     handoff = handoff_match.group(1).strip() if handoff_match else "(no handoff provided)"
-    return outcome, handoff
+    return outcome, handoff, []
 
 
 # ---------------------------------------------------------------------------
@@ -364,52 +382,12 @@ def parse_outcome(response: str) -> tuple[str, str]:
 # It returns an AgentResult with zero token counts (no model was invoked).
 # ---------------------------------------------------------------------------
 
-def _parse_components_table(readme_text: str) -> list[dict]:
-    """Parse the Markdown Components table from a README.
-
-    Expects a table under ## Components with columns: Name | Complexity | Description.
-    Returns a list of dicts with keys 'name', 'complexity', 'description'.
-    Preserves row order; skips the header and separator rows.
-    """
-    components_match = re.search(r'## Components\s*\n(.*?)(?=\n## |\Z)', readme_text, re.DOTALL)
-    if not components_match:
-        return []
-
-    section = components_match.group(1)
-    rows = []
-    in_table = False
-    header_seen = False
-    sep_seen = False
-    for line in section.splitlines():
-        stripped = line.strip()
-        if not stripped.startswith('|'):
-            if in_table:
-                break
-            continue
-        if not in_table and 'Name' in stripped:
-            in_table = True
-            header_seen = True
-            continue
-        if header_seen and not sep_seen:
-            sep_seen = True  # skip separator row (|---|---|---|)
-            continue
-        parts = [p.strip() for p in stripped.split('|')]
-        parts = [p for p in parts if p]  # drop empty strings from leading/trailing |
-        if len(parts) >= 3:
-            rows.append({
-                "name": parts[0],
-                "complexity": parts[1],
-                "description": "|".join(parts[2:]).strip(),  # description may contain |
-            })
-    return rows
-
-
-def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
+def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResult:
     """Execute DECOMPOSE_HANDLER logic directly without a claude subprocess.
 
-    Reads the Markdown Components table from the parent job doc, creates a
-    pipeline subtask for each component via new-pipeline-subtask.sh, fills
-    in Goal/Context in each subtask README, sets metadata in each task.json,
+    Receives the components array from ARCHITECT's JSON response (already parsed
+    by the orchestrator). Creates a pipeline subtask and output subdirectory for
+    each component, stores output_dir in each task.json, fills in Goal/Context,
     and points current-job.txt at the first subtask.
     """
     parent_dir = job_doc.parent
@@ -425,10 +403,10 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
     parent_level = parent_data.get("level", "TOP")
     parent_depth = parent_data.get("depth", 0)
     child_depth  = parent_depth + 1
+    parent_output_dir = Path(parent_data.get("output_dir", str(OUTPUT_DIR)))
 
-    components = _parse_components_table(job_doc.read_text())
     if not components:
-        return AgentResult(exit_code=1, response="No components found in ## Components table")
+        return AgentResult(exit_code=1, response="No components provided to DECOMPOSE_HANDLER")
 
     # Determine parent's path relative to in-progress/ (for --parent flag)
     in_progress_dir = TARGET_REPO / "project" / "tasks" / EPIC / "in-progress"
@@ -490,7 +468,17 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
         subtask_dir = TARGET_REPO / created_rel
         subtask_dirs.append(subtask_dir)
 
-        # Update task.json: set complexity, depth, goal, context;
+        # Determine output directory for this component
+        if comp_name == "integrate":
+            comp_output_dir = parent_output_dir  # integrate uses parent's output dir
+        else:
+            comp_output_dir = parent_output_dir / comp_name
+            comp_output_dir.mkdir(parents=True, exist_ok=True)
+            placeholder = comp_output_dir / "README.md"
+            if not placeholder.exists():
+                placeholder.write_text(f"# {comp_name}\n\n_Placeholder. ARCHITECT fills in documentation._\n")
+
+        # Update task.json: set complexity, depth, goal, context, output_dir;
         # for last component also set last-task + level
         subtask_json = subtask_dir / "task.json"
         if subtask_json.exists():
@@ -500,6 +488,7 @@ def _run_decompose_internal(job_doc: Path, output_dir: Path) -> AgentResult:
                 subtask_data["depth"] = child_depth
                 subtask_data["goal"] = description
                 subtask_data["context"] = child_context
+                subtask_data["output_dir"] = str(comp_output_dir)
                 if i == len(components) - 1:
                     subtask_data["last-task"] = True
                     subtask_data["level"] = parent_level
@@ -592,14 +581,16 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
     return AgentResult(exit_code=0, response=response)
 
 
-def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None) -> AgentResult:
+def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, components: list[dict] | None = None) -> AgentResult:
     """Dispatch to the internal implementation for the given role."""
     if role == "LEAF_COMPLETE_HANDLER":
         return _run_lch_internal(output_dir)
     if role == "DECOMPOSE_HANDLER":
         if job_doc is None:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires a job_doc")
-        return _run_decompose_internal(job_doc, output_dir)
+        if not components:
+            return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires components from ARCHITECT JSON response")
+        return _run_decompose_internal(job_doc, components)
     return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
 
 
@@ -754,6 +745,18 @@ def _find_level_top(readme: Path | None) -> Path | None:
 
 build_readme = _find_level_top(initial_job_doc)
 
+# In TM mode, ensure the TOP task's task.json has output_dir set.
+if TM_MODE and initial_job_doc:
+    _top_tj = initial_job_doc.parent / "task.json"
+    if _top_tj.exists():
+        try:
+            _top_data = json.loads(_top_tj.read_text())
+            if "output_dir" not in _top_data:
+                _top_data["output_dir"] = str(OUTPUT_DIR)
+                _top_tj.write_text(json.dumps(_top_data, indent=2) + "\n")
+        except Exception:
+            pass
+
 if args.clean_resume:
     _clean_for_resume(OUTPUT_DIR, EXECUTION_LOG)
 
@@ -769,19 +772,34 @@ print(f"    start state:   {current_role}")
 print(f"    output dir:    {OUTPUT_DIR}")
 print(f"    execution log: {EXECUTION_LOG}\n")
 
+last_components: list[dict] = []  # components from most recent ARCHITECT JSON response
+
 while current_role is not None:
     agent = AGENTS.get(current_role)
     if agent is None:
         print(f"[orchestrator] No agent configured for role {current_role}. Halting.")
         sys.exit(1)
 
+    # Derive per-task output dir from task.json (falls back to OUTPUT_DIR)
+    task_output_dir = OUTPUT_DIR
+    if job_doc and TM_MODE:
+        _tj = job_doc.parent / "task.json"
+        if _tj.exists():
+            try:
+                _tjd = json.loads(_tj.read_text())
+                if "output_dir" in _tjd:
+                    task_output_dir = Path(_tjd["output_dir"])
+            except Exception:
+                pass
+
     print(f"\n>>> [{current_role} / {agent}]")
 
     inv_start = datetime.now()
     if agent == "internal":
-        result: AgentResult = run_internal_agent(current_role, OUTPUT_DIR, job_doc)
+        result: AgentResult = run_internal_agent(current_role, task_output_dir, job_doc,
+                                                  last_components if current_role == "DECOMPOSE_HANDLER" else None)
     else:
-        prompt = build_prompt(current_role, job_doc, OUTPUT_DIR, handoff_history, agent)
+        prompt = build_prompt(current_role, job_doc, task_output_dir, handoff_history, agent)
         result = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
     inv_end = datetime.now()
 
@@ -792,7 +810,7 @@ while current_role is not None:
         print(f"\n[orchestrator] {current_role} agent error. Halting.")
         sys.exit(1)
 
-    outcome, handoff = parse_outcome(result.response)
+    outcome, handoff, last_components = parse_response(result.response)
     handoff_history.append(f"[{current_role}] {handoff}")
     log_run(current_role, agent, outcome, handoff)
 
