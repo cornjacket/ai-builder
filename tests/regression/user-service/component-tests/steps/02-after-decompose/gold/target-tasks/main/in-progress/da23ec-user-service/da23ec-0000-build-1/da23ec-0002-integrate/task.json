@@ -1,0 +1,20 @@
+{
+  "task-type": "PIPELINE-SUBTASK",
+  "status": "\u2014",
+  "epic": "main",
+  "parent": "da23ec-0000-build-1",
+  "tags": "\u2014",
+  "priority": "\u2014",
+  "next-subtask-id": "0000",
+  "complexity": "atomic",
+  "level": "TOP",
+  "last-task": true,
+  "stop-after": false,
+  "components": [],
+  "subtasks": [],
+  "name": "integrate",
+  "depth": 1,
+  "goal": "Wire store and handlers into the service entry point. Write main.go at the output root (github.com/cornjacket/ai-builder/sandbox/user-service-output). Initialise a store.Store, pass it to handlers.NewHandler, and start an http.Server listening on :8080. Write go.mod with module path github.com/cornjacket/ai-builder/sandbox/user-service-output and Go 1.22 (minimum needed for enhanced ServeMux routing). End-to-end acceptance criteria: (1) POST /users with valid JSON body returns 201 and a JSON user object with a non-empty id field; (2) GET /users/{id} with the returned id returns 200 and the same user; (3) GET /users/{nonexistent-id} returns 404; (4) PUT /users/{id} with updated fields returns 200 with updated values; (5) DELETE /users/{id} returns 204; (6) GET /users/{id} after deletion returns 404; (7) server listens on port 8080.",
+  "context": "### Level 1 \u2014 da23ec-0000-build-1\n_To be written._",
+  "output_dir": "/Users/david/Go/src/github.com/cornjacket/ai-builder/sandbox/user-service-output"
+}

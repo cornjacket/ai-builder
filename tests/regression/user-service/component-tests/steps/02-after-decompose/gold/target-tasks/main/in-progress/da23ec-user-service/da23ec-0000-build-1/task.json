@@ -1,0 +1,47 @@
+{
+  "task-type": "PIPELINE-SUBTASK",
+  "status": "\u2014",
+  "epic": "main",
+  "parent": "da23ec-user-service",
+  "tags": "\u2014",
+  "priority": "\u2014",
+  "next-subtask-id": "0003",
+  "complexity": "\u2014",
+  "level": "TOP",
+  "last-task": false,
+  "stop-after": true,
+  "components": [
+    {
+      "name": "store",
+      "complexity": "atomic",
+      "description": "In-memory thread-safe store for User records. User struct fields: ID string (UUID v4, assigned on create), Name string, Email string. Operations: Create(u User) User \u2014 assigns a new UUID to ID, stores the record, returns the stored record; GetByID(id string) (User, bool) \u2014 returns the record and true, or zero value and false if not found; Update(id string, u User) (User, bool) \u2014 replaces the stored record's Name and Email (preserves ID), returns updated record and true, or false if not found; Delete(id string) bool \u2014 removes the record, returns true if it existed. Must be safe for concurrent use (sync.RWMutex or sync.Map). Package: store. Output path: github.com/cornjacket/ai-builder/sandbox/user-service-output/store."
+    },
+    {
+      "name": "handlers",
+      "complexity": "atomic",
+      "description": "HTTP handler functions for the user CRUD API. Depends on the store package. Full API contract: POST /users \u2014 request body {\"name\":string,\"email\":string} \u2192 201 {\"id\":string,\"name\":string,\"email\":string}; returns 400 {\"error\":string} on invalid or missing JSON body. GET /users/{id} \u2192 200 {\"id\":string,\"name\":string,\"email\":string} or 404 {\"error\":\"not found\"}. PUT /users/{id} \u2014 request body {\"name\":string,\"email\":string} \u2192 200 {\"id\":string,\"name\":string,\"email\":string}; returns 404 {\"error\":\"not found\"} if id absent, 400 {\"error\":string} on invalid JSON. DELETE /users/{id} \u2192 204 (no body) or 404 {\"error\":\"not found\"}. All responses use Content-Type: application/json except 204. Handler constructor: NewHandler(s *store.Store) http.Handler \u2014 registers all routes on a new ServeMux using the Go 1.22+ pattern syntax (e.g. \"POST /users\", \"GET /users/{id}\") and returns the mux. Package: handlers. Output path: github.com/cornjacket/ai-builder/sandbox/user-service-output/handlers."
+    },
+    {
+      "name": "integrate",
+      "complexity": "atomic",
+      "description": "Wire store and handlers into the service entry point. Write main.go at the output root (github.com/cornjacket/ai-builder/sandbox/user-service-output). Initialise a store.Store, pass it to handlers.NewHandler, and start an http.Server listening on :8080. Write go.mod with module path github.com/cornjacket/ai-builder/sandbox/user-service-output and Go 1.22 (minimum needed for enhanced ServeMux routing). End-to-end acceptance criteria: (1) POST /users with valid JSON body returns 201 and a JSON user object with a non-empty id field; (2) GET /users/{id} with the returned id returns 200 and the same user; (3) GET /users/{nonexistent-id} returns 404; (4) PUT /users/{id} with updated fields returns 200 with updated values; (5) DELETE /users/{id} returns 204; (6) GET /users/{id} after deletion returns 404; (7) server listens on port 8080."
+    }
+  ],
+  "subtasks": [
+    {
+      "name": "da23ec-0000-store",
+      "complete": false
+    },
+    {
+      "name": "da23ec-0001-handlers",
+      "complete": false
+    },
+    {
+      "name": "da23ec-0002-integrate",
+      "complete": false
+    }
+  ],
+  "goal": "Build a user management HTTP service in Go with the following API:\n\n- `POST /users` \u2014 create a user (JSON body), return the created user with generated ID\n- `GET /users/{id}` \u2014 retrieve user by ID; return 404 if not found\n- `PUT /users/{id}` \u2014 update user by ID; return 404 if not found\n- `DELETE /users/{id}` \u2014 delete user by ID; return 404 if not found\n\nPort: 8080. Response format: JSON. Storage: in-memory. No authentication.",
+  "context": "This is a regression test for the ai-builder decomposition pipeline.\nThe pipeline must decompose this service into components, implement each\none, and verify the assembled service passes the acceptance criteria.",
+  "output_dir": "/Users/david/Go/src/github.com/cornjacket/ai-builder/sandbox/user-service-output"
+}

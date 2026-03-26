@@ -1,0 +1,34 @@
+{
+  "task_name": "build-1",
+  "start": "2026-03-25T21:16:27.432963",
+  "end": "2026-03-25T21:17:44.748760",
+  "elapsed_s": 77.315797,
+  "invocations": [
+    {
+      "role": "ARCHITECT",
+      "agent": "claude",
+      "n": 1,
+      "description": "build-1",
+      "start": "2026-03-25T21:16:27.457091",
+      "end": "2026-03-25T21:17:42.933030",
+      "elapsed_s": 75.475939,
+      "tokens_in": 49,
+      "tokens_out": 3330,
+      "tokens_cached": 125873,
+      "outcome": "ARCHITECT_DECOMPOSITION_READY"
+    },
+    {
+      "role": "DECOMPOSE_HANDLER",
+      "agent": "internal",
+      "n": 1,
+      "description": "build-1",
+      "start": "2026-03-25T21:17:42.941431",
+      "end": "2026-03-25T21:17:44.745876",
+      "elapsed_s": 1.804445,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "tokens_cached": 0,
+      "outcome": "HANDLER_STOP_AFTER"
+    }
+  ]
+}

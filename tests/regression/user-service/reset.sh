@@ -94,9 +94,20 @@ fi
 PARENT_FULL_NAME="$(basename "$PARENT_DIR")"
 echo "    parent task: $PARENT_FULL_NAME"
 
-# Write the spec into the parent USER-TASK README.
+# Write Goal and Context from build-spec.md into the parent USER-TASK README.
+# Preserves the metadata table (Next-subtask-id etc.) created by new-user-task.sh.
 # new-pipeline-build.sh reads goal/context from here to populate task.json.
-cp "$DIR/build-spec.md" "$PARENT_DIR/README.md"
+python3 - "$DIR/build-spec.md" "$PARENT_DIR/README.md" <<'PYEOF'
+import sys, re
+spec  = open(sys.argv[1]).read()
+readme = open(sys.argv[2]).read()
+for field in ("Goal", "Context"):
+    m = re.search(rf'## {field}\s*\n(.*?)(?=\n## |\Z)', spec, re.DOTALL)
+    if m:
+        new_section = f"## {field}\n{m.group(1)}"
+        readme = re.sub(rf'## {field}\s*\n.*?(?=\n## |\Z)', new_section, readme, flags=re.DOTALL)
+open(sys.argv[2], 'w').write(readme)
+PYEOF
 echo "    spec written to $PARENT_DIR/README.md"
 
 # ---------------------------------------------------------------------------

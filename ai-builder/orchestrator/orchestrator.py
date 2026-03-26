@@ -562,7 +562,7 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
     first_readme = subtask_dirs[0] / "README.md"
     cmd = [
         str(PM_SCRIPTS_DIR / "set-current-job.sh"),
-        "--output-dir", str(output_dir),
+        "--output-dir", str(parent_output_dir),
         str(first_readme),
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
@@ -743,7 +743,9 @@ def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], comp
 def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, components: list[dict] | None = None) -> AgentResult:
     """Dispatch to the internal implementation for the given role."""
     if role == "LEAF_COMPLETE_HANDLER":
-        return _run_lch_internal(output_dir)
+        # LCH always uses the root output dir (where current-job.txt lives),
+        # not the per-component subdirectory that task_output_dir may point to.
+        return _run_lch_internal(OUTPUT_DIR)
     if role == "DECOMPOSE_HANDLER":
         if job_doc is None:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires a job_doc")
@@ -1012,6 +1014,17 @@ while current_role is not None:
             except Exception:
                 pass
 
+    # If DECOMPOSE_HANDLER is starting without components (e.g. --start-state resume),
+    # load them from task.json where ARCHITECT stored them.
+    if current_role == "DECOMPOSE_HANDLER" and not last_components and job_doc:
+        _tj_path = job_doc.parent / "task.json"
+        if _tj_path.exists():
+            try:
+                _tj = json.loads(_tj_path.read_text())
+                last_components = _tj.get("components", [])
+            except Exception:
+                pass
+
     inv_start = datetime.now()
     if agent == "internal":
         result: AgentResult = run_internal_agent(current_role, task_output_dir, job_doc,
@@ -1036,6 +1049,17 @@ while current_role is not None:
     # read them without a file dependency on the job doc.
     if outcome == "ARCHITECT_DESIGN_READY" and job_doc:
         _store_architect_design_fields(result.response, job_doc)
+
+    # Store components to task.json so DECOMPOSE_HANDLER can load them on resume.
+    if outcome == "ARCHITECT_DECOMPOSITION_READY" and last_components and job_doc:
+        _tj_path = job_doc.parent / "task.json"
+        if _tj_path.exists():
+            try:
+                _tj = json.loads(_tj_path.read_text())
+                _tj["components"] = last_components
+                _tj_path.write_text(json.dumps(_tj, indent=2) + "\n")
+            except Exception as e:
+                print(f"[orchestrator] Warning: failed to store components in task.json: {e}")
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
 

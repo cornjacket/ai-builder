@@ -64,9 +64,11 @@ Every `reset.sh` must perform these steps in order:
 4. **Create a USER-TASK** (Oracle-owned pipeline boundary) in `in-progress/`
    using `new-user-task.sh`. This is the human-owned node the pipeline must
    not traverse above.
-5. **Write the spec** into the USER-TASK README (`build-spec.md` copied to
-   the parent task's README). The spec lives in the Oracle-owned task, which
-   exists before the pipeline-subtask is created.
+5. **Write the spec** into the USER-TASK README by merging Goal and Context
+   from `build-spec.md` into the existing README (do **not** replace the whole
+   file — `new-user-task.sh` created a metadata table with `Next-subtask-id`
+   that must be preserved for `new-pipeline-build.sh` to work). Use a Python
+   snippet to overwrite only the `## Goal` and `## Context` sections.
 6. **Create a PIPELINE-SUBTASK** entry point under the USER-TASK using
    `new-pipeline-build.sh`. The script reads `goal` and `context` from the
    parent USER-TASK README and writes them into the new subtask's `task.json`

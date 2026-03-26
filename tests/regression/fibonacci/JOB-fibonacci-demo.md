@@ -13,6 +13,14 @@ Build a correct, importable Golang package that computes Fibonacci numbers.
 
 ---
 
+## Execution Log
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | fibonacci | 20:45:14 | 20s | 3 | 1,185 | 28,668 |
+| 2 | IMPLEMENTOR | claude | fibonacci | 20:45:42 | 27s | 6 | 1,047 | 80,269 |
+| 3 | TESTER | claude | fibonacci | 20:46:02 | 19s | 3 | 199 | 27,628 |
+
 ## Design
 
 - **Language:** Go
@@ -68,3 +76,48 @@ cd /Users/david/Go/src/github.com/cornjacket/ai-builder/sandbox/fibonacci-output
 go build ./...
 go test ./fibonacci/
 ```
+
+## Run Summary
+
+| Field          | Value |
+|----------------|-------|
+| Task           | fibonacci |
+| Start          | 2026-03-25 20:44:54 |
+| End            | 2026-03-25 20:46:02 |
+| Total time     | 1m 07s |
+| Invocations    | 3 |
+| Tokens in      | 12 |
+| Tokens out     | 2,431 |
+| Tokens cached  | 136,565 |
+| Tokens total   | 139,008 |
+
+### Invocations
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | fibonacci | 20:45:14 | 20s | 3 | 1,185 | 28,668 |
+| 2 | IMPLEMENTOR | claude | fibonacci | 20:45:42 | 27s | 6 | 1,047 | 80,269 |
+| 3 | TESTER | claude | fibonacci | 20:46:02 | 19s | 3 | 199 | 27,628 |
+
+### Per-Role Totals
+
+| Role | Count | Total Time | Avg/Invocation |
+|------|-------|------------|----------------|
+| ARCHITECT | 1 | 20s | 20s |
+| IMPLEMENTOR | 1 | 27s | 27s |
+| TESTER | 1 | 19s | 19s |
+
+### Token Usage by Role
+
+| Role | Tokens In | Tokens Out | Tokens Cached | Total |
+|------|-----------|------------|---------------|-------|
+| ARCHITECT | 3 | 1,185 | 28,668 | 29,856 |
+| IMPLEMENTOR | 6 | 1,047 | 80,269 | 81,322 |
+| TESTER | 3 | 199 | 27,628 | 27,830 |
+| **Total** | **12** | **2,431** | **136,565** | **139,008** |
+
+### Invocations by Agent
+
+| Agent | Count |
+|-------|-------|
+| claude | 3 |

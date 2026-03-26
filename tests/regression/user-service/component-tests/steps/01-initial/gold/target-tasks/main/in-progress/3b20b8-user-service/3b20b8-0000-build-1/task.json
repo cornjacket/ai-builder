@@ -1,0 +1,17 @@
+{
+  "task-type": "PIPELINE-SUBTASK",
+  "status": "\u2014",
+  "epic": "main",
+  "parent": "3b20b8-user-service",
+  "tags": "\u2014",
+  "priority": "\u2014",
+  "next-subtask-id": "0000",
+  "complexity": "\u2014",
+  "level": "TOP",
+  "last-task": false,
+  "stop-after": true,
+  "components": [],
+  "subtasks": [],
+  "goal": "Build a user management HTTP service in Go with the following API:\n\n- `POST /users` \u2014 create a user (JSON body), return the created user with generated ID\n- `GET /users/{id}` \u2014 retrieve user by ID; return 404 if not found\n- `PUT /users/{id}` \u2014 update user by ID; return 404 if not found\n- `DELETE /users/{id}` \u2014 delete user by ID; return 404 if not found\n\nPort: 8080. Response format: JSON. Storage: in-memory. No authentication.",
+  "context": "This is a regression test for the ai-builder decomposition pipeline.\nThe pipeline must decompose this service into components, implement each\none, and verify the assembled service passes the acceptance criteria."
+}

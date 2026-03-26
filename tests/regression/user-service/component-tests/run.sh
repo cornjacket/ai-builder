@@ -97,11 +97,14 @@ fi
 echo "[4/4] Running orchestrator..."
 echo ""
 
+CURRENT_JOB="$(cat "$OUTPUT_DIR/current-job.txt")"
+
 python3 "$REPO_ROOT/ai-builder/orchestrator/orchestrator.py" \
     --target-repo   "$TARGET_REPO" \
     --output-dir    "$OUTPUT_DIR" \
     --epic          "$EPIC" \
     --state-machine "$REPO_ROOT/ai-builder/orchestrator/machines/default.json" \
+    --job           "$CURRENT_JOB" \
     --start-state   "$START_STATE" \
     --resume
 ORCHESTRATOR_EXIT=$?

@@ -1,0 +1,20 @@
+{
+  "task-type": "PIPELINE-SUBTASK",
+  "status": "\u2014",
+  "epic": "main",
+  "parent": "da23ec-0000-build-1",
+  "tags": "\u2014",
+  "priority": "\u2014",
+  "next-subtask-id": "0000",
+  "complexity": "atomic",
+  "level": "INTERNAL",
+  "last-task": false,
+  "stop-after": false,
+  "components": [],
+  "subtasks": [],
+  "name": "store",
+  "depth": 1,
+  "goal": "In-memory thread-safe store for User records. User struct fields: ID string (UUID v4, assigned on create), Name string, Email string. Operations: Create(u User) User \u2014 assigns a new UUID to ID, stores the record, returns the stored record; GetByID(id string) (User, bool) \u2014 returns the record and true, or zero value and false if not found; Update(id string, u User) (User, bool) \u2014 replaces the stored record's Name and Email (preserves ID), returns updated record and true, or false if not found; Delete(id string) bool \u2014 removes the record, returns true if it existed. Must be safe for concurrent use (sync.RWMutex or sync.Map). Package: store. Output path: github.com/cornjacket/ai-builder/sandbox/user-service-output/store.",
+  "context": "### Level 1 \u2014 da23ec-0000-build-1\n_To be written._",
+  "output_dir": "/Users/david/Go/src/github.com/cornjacket/ai-builder/sandbox/user-service-output/store"
+}
