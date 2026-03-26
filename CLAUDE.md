@@ -36,6 +36,13 @@ next up, and any key decisions. Also add a new row to the top of the log
 table in `project/status/README.md` with the date and a one-line summary.
 This is how context survives across sessions.
 
+**Reviews:** `project/reviews/` contains session review documents named
+`YYYY-MM-DD.md`. Reviews examine workflow, collaboration patterns, and AI
+behaviour — not just code. When the user asks for a review, create a new
+review doc using today's date. Reviews should be done at least once per major
+task or milestone. Each critique should include the user's response and a
+revised position where applicable.
+
 **Full documentation:** [`project/README.md`](project/README.md)
 
 ---
