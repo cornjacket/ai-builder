@@ -94,6 +94,11 @@ fi
 PARENT_FULL_NAME="$(basename "$PARENT_DIR")"
 echo "    parent task: $PARENT_FULL_NAME"
 
+# Write the spec into the parent USER-TASK README.
+# new-pipeline-build.sh reads goal/context from here to populate task.json.
+cp "$DIR/build-spec.md" "$PARENT_DIR/README.md"
+echo "    spec written to $PARENT_DIR/README.md"
+
 # ---------------------------------------------------------------------------
 # 4. Create PIPELINE-SUBTASK "build-1" under the user-service task with Level=TOP
 # ---------------------------------------------------------------------------
@@ -101,11 +106,10 @@ echo "    parent task: $PARENT_FULL_NAME"
 echo "[4/5] Creating pipeline entry point 'build-1' (Level=TOP) ..."
 
 BUILD_OUTPUT=$("$SCRIPTS/new-pipeline-build.sh" \
-    --epic       "$EPIC" \
-    --folder     in-progress \
-    --parent     "$PARENT_FULL_NAME" \
-    --name       "$ENTRY_TASK_NAME" \
-    --spec-file  "$DIR/build-spec.md")
+    --epic   "$EPIC" \
+    --folder in-progress \
+    --parent "$PARENT_FULL_NAME" \
+    --name   "$ENTRY_TASK_NAME")
 
 ENTRY_README=$(echo "$BUILD_OUTPUT" | grep "^README:" | awk '{print $2}')
 ENTRY_DIR="$(dirname "$ENTRY_README")"

@@ -60,13 +60,13 @@ Every `reset.sh` must perform these steps in order:
 4. **Create a USER-TASK** (Oracle-owned pipeline boundary) in `in-progress/`
    using `new-user-task.sh`. This is the human-owned node the pipeline must
    not traverse above.
-5. **Create a PIPELINE-SUBTASK** entry point under the USER-TASK using
-   `new-pipeline-subtask.sh --level TOP`. This is where the pipeline starts.
-6. **Write the spec** by passing `--spec-file build-spec.md` to
-   `new-pipeline-build.sh`. This copies the spec into the entry README and
-   extracts `goal`/`context` into `task.json` in one step. Do not use an
-   inline heredoc — keep the spec in `build-spec.md` so it is
-   version-controlled. Complexity must be left as `—` to trigger ARCHITECT
+5. **Write the spec** into the USER-TASK README (`build-spec.md` copied to
+   the parent task's README). The spec lives in the Oracle-owned task, which
+   exists before the pipeline-subtask is created.
+6. **Create a PIPELINE-SUBTASK** entry point under the USER-TASK using
+   `new-pipeline-build.sh`. The script reads `goal` and `context` from the
+   parent USER-TASK README and writes them into the new subtask's `task.json`
+   — no separate step needed. Complexity is left as `—` to trigger ARCHITECT
    decompose mode.
 7. **Point `current-job.txt`** at the PIPELINE-SUBTASK README using
    `set-current-job.sh --output-dir <sandbox-output-dir>`.

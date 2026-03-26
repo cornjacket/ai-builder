@@ -6,18 +6,15 @@
 # path so it can be piped directly to set-current-job.sh.
 #
 # Usage:
-#   new-pipeline-build.sh --epic <epic> --folder <status> --parent <task> [--name <name>] [--spec-file <path>]
+#   new-pipeline-build.sh --epic <epic> --folder <status> --parent <task> [--name <name>]
 #
 # --name defaults to "build-1" if not supplied.
-# --spec-file copies the given file to the entry README and extracts goal/context
-#   into task.json. Use this in reset.sh so task.json is populated in one step.
 #
-# Example (Oracle interactive):
-#   README=$(new-pipeline-build.sh --epic main --folder in-progress --parent my-project | grep "^README:" | awk '{print $2}')
-#   # write spec to $README, then run orchestrator
+# goal and context are read automatically from the parent task's README.
+# Write the spec into the parent USER-TASK before calling this script.
 #
-# Example (reset.sh):
-#   new-pipeline-build.sh --epic main --folder in-progress --parent my-project --spec-file "$DIR/build-spec.md"
+# Example:
+#   new-pipeline-build.sh --epic main --folder in-progress --parent my-project
 
 set -euo pipefail
 
@@ -32,26 +29,19 @@ EPIC="main"
 FOLDER=""
 PARENT=""
 NAME="build-1"
-SPEC_FILE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --epic)      EPIC="$2";      shift 2 ;;
-        --folder)    FOLDER="$2";    shift 2 ;;
-        --parent)    PARENT="$2";    shift 2 ;;
-        --name)      NAME="$2";      shift 2 ;;
-        --spec-file) SPEC_FILE="$2"; shift 2 ;;
+        --epic)   EPIC="$2";   shift 2 ;;
+        --folder) FOLDER="$2"; shift 2 ;;
+        --parent) PARENT="$2"; shift 2 ;;
+        --name)   NAME="$2";   shift 2 ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
 
 if [[ -z "$FOLDER" || -z "$PARENT" ]]; then
-    echo "Usage: new-pipeline-build.sh --folder <status> --parent <task> [--epic <epic>] [--name <name>] [--spec-file <path>]"
-    exit 1
-fi
-
-if [[ -n "$SPEC_FILE" && ! -f "$SPEC_FILE" ]]; then
-    echo "ERROR: --spec-file not found: $SPEC_FILE"
+    echo "Usage: new-pipeline-build.sh --folder <status> --parent <task> [--epic <epic>] [--name <name>]"
     exit 1
 fi
 
@@ -74,22 +64,26 @@ README_PATH="$REPO_ROOT/$CREATED_REL/README.md"
 echo "README:                   $README_PATH"
 
 # ---------------------------------------------------------------------------
-# If --spec-file provided: copy spec to README and extract goal/context into
-# task.json. Without --spec-file the README is left as the generated template
-# and the caller is responsible for writing the spec and populating task.json.
+# Read goal/context from the parent USER-TASK README and write to task.json.
+# The parent already exists with its spec written before this script runs —
+# no timing issue.
 # ---------------------------------------------------------------------------
 
 TASK_JSON="$REPO_ROOT/$CREATED_REL/task.json"
 
-if [[ -n "$SPEC_FILE" ]]; then
-    cp "$SPEC_FILE" "$README_PATH"
-    echo "    spec:   $README_PATH"
+# Find the parent task directory (same search the subtask script uses)
+PARENT_DIR=$(find "$REPO_ROOT/project/tasks/$EPIC" -maxdepth 2 -type d -name "*-$PARENT" | head -1)
+PARENT_README=""
+if [[ -n "$PARENT_DIR" ]]; then
+    PARENT_README="$PARENT_DIR/README.md"
+fi
 
-    python3 - "$README_PATH" "$TASK_JSON" <<'PYEOF'
+if [[ -n "$PARENT_README" && -f "$PARENT_README" ]]; then
+    python3 - "$PARENT_README" "$TASK_JSON" <<'PYEOF'
 import sys, json, re
 
-readme_path, task_json_path = sys.argv[1], sys.argv[2]
-readme = open(readme_path).read()
+parent_readme_path, task_json_path = sys.argv[1], sys.argv[2]
+readme = open(parent_readme_path).read()
 data = json.loads(open(task_json_path).read())
 
 for field, label in (("goal", "Goal"), ("context", "Context")):
@@ -103,5 +97,7 @@ with open(task_json_path, 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
 PYEOF
-    echo "    task.json updated with goal/context"
+    echo "    task.json: goal/context read from parent README"
+else
+    echo "    task.json: parent README not found; goal/context not set"
 fi
