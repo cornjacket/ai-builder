@@ -1,4 +1,5 @@
 import argparse
+import atexit
 import json
 import re
 import shutil
@@ -64,6 +65,14 @@ parser.add_argument(
          "are removed when the stall occurred during ARCHITECT or IMPLEMENTOR. TESTER stalls "
          "are left intact. Implies --resume.",
 )
+parser.add_argument(
+    "--handoff-file",
+    type=Path,
+    metavar="FILE",
+    help="JSON file to pre-populate handoff_history and frame_stack at startup. "
+         "When --resume is passed, handoff-state.json in the output directory is "
+         "loaded automatically (this flag is not needed for normal resumes).",
+)
 args = parser.parse_args()
 
 if args.clean_resume:
@@ -91,9 +100,10 @@ OUTPUT_DIR      = args.output_dir.resolve()
 TIMEOUT_MINUTES = 5
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-EXECUTION_LOG    = OUTPUT_DIR / "execution.log"
-CURRENT_JOB_FILE = OUTPUT_DIR / "current-job.txt"
-LAST_JOB_FILE    = OUTPUT_DIR / "last-job.json"
+EXECUTION_LOG       = OUTPUT_DIR / "execution.log"
+CURRENT_JOB_FILE    = OUTPUT_DIR / "current-job.txt"
+LAST_JOB_FILE       = OUTPUT_DIR / "last-job.json"
+HANDOFF_STATE_FILE  = OUTPUT_DIR / "handoff-state.json"
 
 if TM_MODE:
     TARGET_REPO    = args.target_repo.resolve()
@@ -594,6 +604,37 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
     return AgentResult(exit_code=0, response=response)
 
 
+def _save_handoff_state(output_dir: Path, handoff_history: list[str], frame_stack: list[dict]) -> None:
+    """Write handoff_history and frame_stack to handoff-state.json in output_dir."""
+    state = {
+        "handoff_history": handoff_history,
+        "frame_stack": frame_stack,
+    }
+    try:
+        (output_dir / "handoff-state.json").write_text(json.dumps(state, indent=2) + "\n")
+    except Exception as e:
+        print(f"[orchestrator] Warning: failed to save handoff state: {e}")
+
+
+def _load_handoff_state(path: Path) -> tuple[list[str], list[dict]]:
+    """Load handoff_history and frame_stack from a JSON file.
+
+    Returns (handoff_history, frame_stack) — empty lists if the file cannot
+    be read or is missing required keys.
+    """
+    try:
+        data = json.loads(path.read_text())
+        history = data.get("handoff_history", [])
+        stack = data.get("frame_stack", [])
+        if not isinstance(history, list) or not isinstance(stack, list):
+            print(f"[orchestrator] Warning: handoff state file has unexpected shape: {path}")
+            return [], []
+        return history, stack
+    except Exception as e:
+        print(f"[orchestrator] Warning: failed to load handoff state from {path}: {e}")
+        return [], []
+
+
 def _store_architect_design_fields(response: str, job_doc: Path) -> None:
     """Parse design fields from ARCHITECT's JSON block and write them to task.json.
 
@@ -793,6 +834,19 @@ handoff_history: list[str] = []
 #       Pushed just before ARCHITECT runs in atomic/design mode; popped by LCH
 #       after every TESTER pass.
 frame_stack: list[dict] = []
+
+# Pre-populate handoff state if --handoff-file provided or --resume + auto-load.
+_handoff_load_path: Path | None = None
+if args.handoff_file:
+    _handoff_load_path = args.handoff_file
+elif args.resume and HANDOFF_STATE_FILE.exists():
+    _handoff_load_path = HANDOFF_STATE_FILE
+if _handoff_load_path:
+    _loaded_history, _loaded_stack = _load_handoff_state(_handoff_load_path)
+    handoff_history.extend(_loaded_history)
+    frame_stack.extend(_loaded_stack)
+    print(f"[orchestrator] Loaded handoff state from {_handoff_load_path} "
+          f"({len(handoff_history)} history entries, {len(frame_stack)} frame(s))")
 role_iteration_counts: dict[str, int] = {}
 role_counters: dict[str, int] = {}
 
@@ -856,6 +910,9 @@ print(f"    output dir:    {OUTPUT_DIR}")
 print(f"    execution log: {EXECUTION_LOG}\n")
 
 last_components: list[dict] = []  # components from most recent ARCHITECT JSON response
+
+# Register handoff state save on every exit (clean, sys.exit, KeyboardInterrupt).
+atexit.register(lambda: _save_handoff_state(OUTPUT_DIR, handoff_history, frame_stack))
 
 while current_role is not None:
     agent = AGENTS.get(current_role)
