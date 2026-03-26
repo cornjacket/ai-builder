@@ -592,6 +592,86 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
     return AgentResult(exit_code=0, response=response)
 
 
+def _run_documenter_internal(job_doc: Path, output_dir: Path) -> AgentResult:
+    """Scan output_dir for *.md files and rebuild README.md with a documentation index.
+
+    Reads documents_written from task.json; returns DOCUMENTER_DONE immediately
+    (no-op) if the field is false or absent.
+    """
+    task_json_path = job_doc.parent / "task.json"
+    documents_written = False
+    if task_json_path.exists():
+        try:
+            documents_written = json.loads(task_json_path.read_text()).get("documents_written", False)
+        except Exception:
+            pass
+
+    if not documents_written:
+        return AgentResult(exit_code=0, response="OUTCOME: DOCUMENTER_DONE\nHANDOFF: documents_written=false; skipped")
+
+    design_docs: list[tuple[str, str]] = []
+    impl_docs:   list[tuple[str, str]] = []
+
+    for md_file in sorted(output_dir.glob("*.md")):
+        if md_file.name == "README.md":
+            continue
+        content = md_file.read_text()
+
+        purpose = ""
+        m = re.search(r'[Pp]urpose[:\s]+([^\n.]+\.?)', content)
+        if m:
+            purpose = m.group(1).strip().rstrip('.')
+
+        tags: list[str] = []
+        m = re.search(r'[Tt]ags[:\s]+([^\n]+)', content)
+        if m:
+            tags = [t.strip() for t in m.group(1).split(',')]
+
+        entry = (md_file.name, purpose)
+        if "implementation" in tags:
+            impl_docs.append(entry)
+        else:
+            design_docs.append(entry)
+
+    if not design_docs and not impl_docs:
+        return AgentResult(exit_code=0, response="OUTCOME: DOCUMENTER_DONE\nHANDOFF: no .md files found to index")
+
+    lines: list[str] = ["## Documentation", ""]
+    if design_docs:
+        lines += ["### Design", "| File | Description |", "|------|-------------|"]
+        for name, desc in design_docs:
+            lines.append(f"| {name} | {desc} |")
+        lines.append("")
+    if impl_docs:
+        lines += ["### Implementation Notes", "| File | Description |", "|------|-------------|"]
+        for name, desc in impl_docs:
+            lines.append(f"| {name} | {desc} |")
+        lines.append("")
+
+    doc_section = "\n".join(lines)
+
+    readme_path = output_dir / "README.md"
+    if readme_path.exists():
+        readme = readme_path.read_text()
+        if "## Documentation" in readme:
+            readme = re.sub(r'## Documentation.*?(?=\n## |\Z)', doc_section + "\n", readme, flags=re.DOTALL)
+        else:
+            readme = readme.rstrip() + "\n\n" + doc_section + "\n"
+    else:
+        readme = f"# Documentation\n\n{doc_section}\n"
+    readme_path.write_text(readme)
+
+    n = len(design_docs) + len(impl_docs)
+    return AgentResult(
+        exit_code=0,
+        response=(
+            f"OUTCOME: DOCUMENTER_DONE\n"
+            f"HANDOFF: indexed {n} doc(s) into README.md "
+            f"({len(design_docs)} design, {len(impl_docs)} implementation)"
+        ),
+    )
+
+
 def _run_lch_internal(output_dir: Path) -> AgentResult:
     """Execute LEAF_COMPLETE_HANDLER logic directly without a claude subprocess.
 
@@ -752,6 +832,10 @@ def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, compon
         if not components:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires components from ARCHITECT JSON response")
         return _run_decompose_internal(job_doc, components)
+    if role in ("DOCUMENTER_POST_ARCHITECT", "DOCUMENTER_POST_IMPLEMENTOR"):
+        if job_doc is None:
+            return AgentResult(exit_code=1, response=f"{role} requires a job_doc")
+        return _run_documenter_internal(job_doc, output_dir)
     return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
 
 
