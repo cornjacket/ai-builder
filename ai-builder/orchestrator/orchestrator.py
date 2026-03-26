@@ -484,6 +484,7 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
         if subtask_json.exists():
             try:
                 subtask_data = json.loads(subtask_json.read_text())
+                subtask_data["name"] = comp_name
                 subtask_data["complexity"] = complexity
                 subtask_data["depth"] = child_depth
                 subtask_data["goal"] = description
@@ -579,6 +580,48 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
 
     response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {token_line}"
     return AgentResult(exit_code=0, response=response)
+
+
+def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], completed_job_doc: Path | None) -> None:
+    """Two-phase frame pop executed after each TESTER pass (via LCH).
+
+    Phase 1: always pop the component frame, truncate history to anchor,
+    append '{component} complete' entry with the component's output_dir.
+
+    Phase 2: if the completed task had last-task=true, also pop the decompose
+    frame, truncate further, and append a level summary.
+    """
+    completed_task_data: dict = {}
+    if completed_job_doc:
+        tj = completed_job_doc.parent / "task.json"
+        if tj.exists():
+            try:
+                completed_task_data = json.loads(tj.read_text())
+            except Exception:
+                pass
+
+    # Phase 1: pop component frame
+    if frame_stack and frame_stack[-1].get("type") == "component":
+        frame = frame_stack.pop()
+        anchor = frame["anchor_index"]
+        handoff_history[:] = handoff_history[:anchor + 1]
+        comp_name = frame["component_name"]
+        output_dir_str = completed_task_data.get("output_dir", "")
+        handoff_history.append(f"[{comp_name} complete] {output_dir_str}")
+
+    # Phase 2: if last component, pop decompose frame and emit level summary
+    if completed_task_data.get("last-task"):
+        if frame_stack and frame_stack[-1].get("type") == "decompose":
+            frame = frame_stack.pop()
+            anchor = frame["anchor_index"]
+            # Collect component completion entries from this level
+            level_summaries = " | ".join(
+                e for e in handoff_history[anchor + 1:]
+                if e.startswith("[") and "complete" in e
+            )
+            handoff_history[:] = handoff_history[:anchor + 1]
+            parent_name = completed_job_doc.parent.parent.name if completed_job_doc else "level"
+            handoff_history.append(f"[{parent_name} complete] {level_summaries}")
 
 
 def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, components: list[dict] | None = None) -> AgentResult:
@@ -704,11 +747,12 @@ MAX_ROLE_ITERATIONS = 3
 current_role = _start_state
 job_doc      = initial_job_doc
 handoff_history: list[str] = []
-# Stack of decomposition frames for scope-bounded handoff history.
-# Each frame: {"anchor_index": int, "scope_dir": Path}
-# anchor_index — index in handoff_history of the DECOMPOSE_HANDLER entry that opened this frame.
-# scope_dir    — job_doc.parent at the moment DECOMPOSE_HANDLER fired; equals the parent
-#                directory of every subtask created by that decomposition.
+# Frame stack for scope-bounded handoff history. Two frame types:
+#   {"type": "decompose", "anchor_index": N}
+#       Pushed by DECOMPOSE_HANDLER; popped by LCH when last-task=true.
+#   {"type": "component", "anchor_index": N, "component_name": X}
+#       Pushed just before ARCHITECT runs in atomic/design mode; popped by LCH
+#       after every TESTER pass.
 frame_stack: list[dict] = []
 role_iteration_counts: dict[str, int] = {}
 role_counters: dict[str, int] = {}
@@ -794,6 +838,22 @@ while current_role is not None:
 
     print(f"\n>>> [{current_role} / {agent}]")
 
+    # Push component frame just before ARCHITECT runs in atomic/design mode.
+    # This frame is popped by LCH after each TESTER pass.
+    if current_role == "ARCHITECT" and TM_MODE and job_doc:
+        _tj = job_doc.parent / "task.json"
+        if _tj.exists():
+            try:
+                _tjd = json.loads(_tj.read_text())
+                if _tjd.get("complexity") == "atomic":
+                    frame_stack.append({
+                        "type": "component",
+                        "anchor_index": len(handoff_history) - 1,
+                        "component_name": _tjd.get("name", job_doc.parent.name),
+                    })
+            except Exception:
+                pass
+
     inv_start = datetime.now()
     if agent == "internal":
         result: AgentResult = run_internal_agent(current_role, task_output_dir, job_doc,
@@ -858,8 +918,8 @@ while current_role is not None:
         sys.exit(1)
 
     # After a handler signals HANDLER_SUBTASKS_READY, read the current job path for downstream agents.
-    # DECOMPOSE: push a new frame BEFORE job_doc is updated (scope_dir = current job_doc.parent).
-    # LEAF:      pop frames and truncate handoff history AFTER job_doc is updated (uses next job path).
+    # DECOMPOSE: push a decompose frame BEFORE job_doc is updated.
+    # LEAF:      two-phase pop AFTER job_doc is updated.
     if current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER") and outcome == "HANDLER_SUBTASKS_READY":
         if not CURRENT_JOB_FILE.exists():
             print(f"\n[orchestrator] Handler did not write job path to {CURRENT_JOB_FILE}. Halting.")
@@ -867,10 +927,11 @@ while current_role is not None:
 
         if current_role == "DECOMPOSE_HANDLER" and job_doc:
             frame_stack.append({
+                "type": "decompose",
                 "anchor_index": len(handoff_history) - 1,
-                "scope_dir": job_doc.parent,
             })
 
+        old_job_doc = job_doc
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
         if not job_doc.exists():
             print(f"\n[orchestrator] Job document not found: {job_doc}. Halting.")
@@ -881,13 +942,11 @@ while current_role is not None:
             build_readme = _find_level_top(job_doc)
 
         if current_role == "LEAF_COMPLETE_HANDLER":
-            # Pop frames whose scope doesn't contain the next task, then truncate.
-            while frame_stack and frame_stack[-1]["scope_dir"] != job_doc.parent:
-                frame_stack.pop()
-            if frame_stack:
-                handoff_history[:] = handoff_history[:frame_stack[-1]["anchor_index"] + 1]
-            else:
-                handoff_history.clear()
+            _lch_two_phase_pop(frame_stack, handoff_history, old_job_doc)
+
+    # Pipeline fully done: still need the two-phase pop for the last component.
+    if current_role == "LEAF_COMPLETE_HANDLER" and outcome == "HANDLER_ALL_DONE":
+        _lch_two_phase_pop(frame_stack, handoff_history, job_doc)
 
     next_role = ROUTES.get((current_role, outcome))
 
