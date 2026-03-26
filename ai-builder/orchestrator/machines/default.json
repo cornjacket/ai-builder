@@ -26,6 +26,7 @@
     },
     "DECOMPOSE_HANDLER": {
       "HANDLER_SUBTASKS_READY": "ARCHITECT",
+      "HANDLER_STOP_AFTER":     null,
       "HANDLER_NEED_HELP":      null
     },
     "LEAF_COMPLETE_HANDLER": {

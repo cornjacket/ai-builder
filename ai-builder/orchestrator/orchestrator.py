@@ -272,23 +272,22 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         else:
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
         # Extract Goal and Context from task.json (JSON-native).
-        # No README fallback — task.json must have these fields. If goal is
-        # missing the build was created before 49352f-0000 and must be ported.
+        # Inlining eliminates the file read dependency entirely.
         # Gemini's file read tool is sandboxed to the temp cwd and cannot
-        # read the job doc at its absolute path. Inlining eliminates the
-        # file read dependency entirely.
+        # read the job doc at its absolute path.
         # See: learning/pipeline-extract-dont-delegate.md
         # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
-        goal_text = ""
-        context_text = ""
-        if task_json_path and task_json_path.exists():
-            try:
-                _tj = json.loads(task_json_path.read_text())
-                goal_text = _tj.get("goal", "")
-                context_text = _tj.get("context", "")
-            except Exception as e:
-                print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
-                return
+        if not task_json_path or not task_json_path.exists():
+            print(f"[orchestrator] ERROR: task.json not found at {task_json_path}. "
+                  f"ARCHITECT requires a task.json with goal/complexity fields.")
+            return
+        try:
+            _tj = json.loads(task_json_path.read_text())
+        except Exception as e:
+            print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
+            return
+        goal_text = _tj.get("goal", "")
+        context_text = _tj.get("context", "")
         if not goal_text:
             print(f"[orchestrator] ERROR: 'goal' field missing from task.json at {task_json_path}. "
                   f"Port this build to include goal/context in task.json (see 49352f-0000).")
@@ -304,10 +303,6 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         )
     elif role == "IMPLEMENTOR":
         valid_outcomes = "IMPLEMENTOR_IMPLEMENTATION_DONE | IMPLEMENTOR_NEEDS_ARCHITECT | IMPLEMENTOR_NEED_HELP"
-        # Read Goal, Design, Acceptance Criteria, and Test Command from task.json
-        # (written by ARCHITECT). Inlining eliminates the file read dependency.
-        # See: learning/pipeline-extract-dont-delegate.md
-        # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
         if not job_doc:
             print("[orchestrator] ERROR: IMPLEMENTOR requires a job_doc but none is set.")
             return
@@ -345,9 +340,6 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         )
     elif role == "TESTER":
         valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
-        # Read test_command from task.json (written by ARCHITECT). Inlining
-        # eliminates the file read dependency on the job doc README.
-        # Prepend cd to output_dir so the command is fully self-contained.
         if not job_doc:
             print("[orchestrator] ERROR: TESTER requires a job_doc but none is set.")
             return
@@ -373,6 +365,16 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
 
     agent_addendum = gemini_role_addendum(role) if agent == "gemini" else ""
+
+    # ARCHITECT uses a terminal JSON block (defined in roles/ARCHITECT.md) that
+    # already includes outcome, handoff, and design fields. Appending the generic
+    # OUTCOME/HANDOFF footer would conflict with that instruction and cause Claude
+    # to emit both, making the JSON block non-terminal and breaking field storage.
+    if role == "ARCHITECT":
+        return f"""Your role is {role}.
+{job_section}
+{role_instructions}
+{history_section}{agent_addendum}"""
 
     return f"""Your role is {role}.
 {job_section}
@@ -567,6 +569,20 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
     if proc.returncode != 0:
         err = proc.stderr.strip() or proc.stdout.strip()
         return AgentResult(exit_code=1, response=f"set-current-job.sh failed: {err}")
+
+    # Check stop-after on the parent task.  When set, the orchestrator pauses
+    # here instead of advancing to the first component's ARCHITECT.  This is
+    # the mechanism used by component-level regression tests to isolate the
+    # decompose step: capture the initial state with stop-after=true in the
+    # TOP task.json, run the orchestrator, verify it stops here.
+    if parent_data.get("stop-after"):
+        response = (
+            f"OUTCOME: HANDLER_STOP_AFTER\n"
+            f"HANDOFF: decomposed into {len(components)} components "
+            f"(level={parent_level}), first: {subtask_dirs[0].name}; "
+            f"stop-after=true on parent task — pausing"
+        )
+        return AgentResult(exit_code=0, response=response)
 
     response = (
         f"OUTCOME: HANDLER_SUBTASKS_READY\n"
@@ -1018,7 +1034,7 @@ while current_role is not None:
 
     # Store ARCHITECT design fields in task.json so IMPLEMENTOR/TESTER can
     # read them without a file dependency on the job doc.
-    if outcome == "ARCHITECT_DESIGN_READY" and TM_MODE and job_doc:
+    if outcome == "ARCHITECT_DESIGN_READY" and job_doc:
         _store_architect_design_fields(result.response, job_doc)
 
     print(f"\n<<< [{current_role}] outcome={outcome}")

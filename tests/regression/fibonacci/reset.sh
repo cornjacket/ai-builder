@@ -32,10 +32,22 @@ _save_last_run() {
 echo "=== Resetting fibonacci regression test ==="
 echo ""
 
-echo "[1/1] Clearing output dir at $OUTPUT_DIR ..."
+echo "[1/2] Clearing output dir at $OUTPUT_DIR ..."
 _save_last_run
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
+
+echo "[2/2] Resetting task.json (clearing ARCHITECT-written fields) ..."
+python3 - "$DIR/task.json" <<'PYEOF'
+import json, sys
+path = sys.argv[1]
+data = json.loads(open(path).read())
+for field in ("design", "acceptance_criteria", "test_command"):
+    data[field] = ""
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+PYEOF
 
 echo ""
 echo "=== Reset complete ==="
