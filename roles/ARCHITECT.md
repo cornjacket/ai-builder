@@ -114,6 +114,7 @@ Your job:
 {
   "outcome": "ARCHITECT_DESIGN_READY",
   "handoff": "one paragraph summarising the design for downstream agents",
+  "documents_written": false,
   "design": "## Design\n\nFull design prose here — language, files, deps, constraints...",
   "acceptance_criteria": "## Acceptance Criteria\n\n1. ...\n2. ...",
   "test_command": "cd /abs/path/to/output && go test ./..."
@@ -123,6 +124,19 @@ Your job:
    **The JSON block must be the final content of your response — nothing after
    the closing fence.** Before emitting, mentally parse your JSON to verify it
    is valid. All field values are strings (Markdown prose where appropriate).
+   `documents_written` is a boolean: `true` if you wrote documentation files
+   to disk, `false` otherwise.
+
+**Special case — `integrate` component:**
+
+When the component name is `integrate`, your role is to wire existing
+components together (e.g. write `main.go`, dependency injection, package
+init). You must:
+- Set `documents_written: false` — the parent ARCHITECT already produced
+  documentation during decompose mode; `integrate` adds none
+- Write wiring code to the output directory directly (same directory as the
+  sibling component packages, not a subdirectory)
+- Do **not** produce new documentation files
 
 **Valid outcomes (design mode only — no other outcomes are permitted):**
 - `ARCHITECT_DESIGN_READY` — all design fields present in the JSON block

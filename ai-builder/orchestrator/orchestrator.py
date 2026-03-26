@@ -613,7 +613,7 @@ def _store_architect_design_fields(response: str, job_doc: Path) -> None:
         return
     try:
         tj = json.loads(task_json_path.read_text())
-        for field in ("design", "acceptance_criteria", "test_command"):
+        for field in ("design", "acceptance_criteria", "test_command", "documents_written"):
             if field in data:
                 tj[field] = data[field]
         task_json_path.write_text(json.dumps(tj, indent=2) + "\n")
