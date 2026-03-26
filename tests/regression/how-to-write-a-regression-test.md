@@ -33,17 +33,21 @@ standard layout:
 ```
 tests/regression/<test-name>/
     reset.sh          # resets to initial state; creates sandbox/ target repo
-    build-spec.md     # the job spec copied into the pipeline entry README on each reset
+    build-spec.md     # the spec written into the parent USER-TASK README on each reset
     gold/
         go.mod        # or equivalent
         gold_test.go  # behavioural gold tests (build tag: regression)
     README.md         # test documentation, architecture diagram, run instructions
 ```
 
-`build-spec.md` is the authoritative spec for TM-mode tests. `reset.sh` copies
-it into the pipeline entry task's README and backfills `task.json` with `goal`
-and `context`. For non-TM tests (e.g. `fibonacci/`), the job document is a
-standalone `.md` file committed directly to the test directory instead.
+`build-spec.md` is the authoritative spec for TM-mode tests. It is written into
+the parent USER-TASK README by `reset.sh`, and `new-pipeline-build.sh` reads
+`goal` and `context` from the parent to populate the pipeline-subtask's
+`task.json`. This tests the full Oracle flow — spec lives in the USER-TASK,
+pipeline picks it up from there.
+
+For non-TM tests (e.g. `fibonacci/`), the job document is a standalone `.md`
+file committed directly to the test directory and passed via `--job`.
 
 No generated output is committed. All pipeline output goes to `sandbox/` (see §4).
 
