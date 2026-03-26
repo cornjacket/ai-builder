@@ -107,8 +107,8 @@ Your job:
    verbatim by the TESTER — be precise.
 5. Scope each implementation step small enough that the IMPLEMENTOR
    requires minimal internal testing.
-6. **Optionally write a design doc** to the output directory for non-trivial
-   components (see rules below).
+6. **Write a README.md** to the output directory documenting this component
+   (see rules below). This is mandatory — every output directory must have one.
 7. Think through the design in your prose response, then emit a terminal
    fenced JSON block as the **last thing in your response**:
 
@@ -129,19 +129,23 @@ Your job:
    `documents_written` is a boolean: `true` if you wrote one or more
    documentation files to disk, `false` otherwise.
 
-### Design doc rules (design mode)
+### Documentation rules (design mode)
 
-Write a design doc to the output directory when the component has non-obvious
-behaviour, complex data flow, or architectural decisions worth preserving.
-**Do not write docs for trivial or self-evident implementations** — if the
-design fits cleanly in the `design` JSON field, a separate doc adds no value.
+**README.md is mandatory.** Write a `README.md` to the output directory for
+every component you design. Every output directory must have one. It must include:
 
-When you do write a doc:
-- Name it descriptively: `data-flow.md`, `locking-strategy.md`, etc.
-- Follow the format in `roles/doc-format.md`: Purpose:/Tags: header block,
-  first sentence of Purpose stands alone as the index entry.
-- Use `Tags: architecture, design` (no `implementation` tag).
-- Set `documents_written: true` in the JSON block.
+1. **Purpose** — 1-2 sentences: what this package does and why it exists.
+   Follow the format in `roles/doc-format.md` (Purpose:/Tags: header block).
+   Use `Tags: architecture, design`.
+2. **File index** — table of files IMPLEMENTOR will create, with one-line descriptions.
+3. **Overview** — key design decisions, data flow, non-obvious constraints.
+
+Set `documents_written: true` whenever you write a README.md (which is always,
+except for `integrate` — see below).
+
+**Additional detail docs** (e.g. `data-flow.md`, `locking-strategy.md`) are
+optional — write them only when a topic overflows the README. Follow the same
+Purpose:/Tags: format.
 
 **Special case — `integrate` component:**
 
@@ -149,10 +153,10 @@ When the component name is `integrate`, your role is to wire existing
 components together (e.g. write `main.go`, dependency injection, package
 init). You must:
 - Set `documents_written: false` — the parent ARCHITECT already produced
-  documentation during decompose mode; `integrate` adds none
+  documentation covering the full service; `integrate` adds none
 - Write wiring code to the output directory directly (same directory as the
   sibling component packages, not a subdirectory)
-- Do **not** produce new documentation files
+- Do **not** write a README.md or any documentation files
 
 **Valid outcomes (design mode only — no other outcomes are permitted):**
 - `ARCHITECT_DESIGN_READY` — all design fields present in the JSON block

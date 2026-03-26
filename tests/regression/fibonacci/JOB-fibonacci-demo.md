@@ -17,9 +17,11 @@ Build a correct, importable Golang package that computes Fibonacci numbers.
 
 | # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
 |---|------|-------|-------------|-------|---------|-----------|------------|---------------|
-| 1 | ARCHITECT | claude | fibonacci | 20:45:14 | 20s | 3 | 1,185 | 28,668 |
-| 2 | IMPLEMENTOR | claude | fibonacci | 20:45:42 | 27s | 6 | 1,047 | 80,269 |
-| 3 | TESTER | claude | fibonacci | 20:46:02 | 19s | 3 | 199 | 27,628 |
+| 1 | ARCHITECT | claude | fibonacci | 22:40:12 | 29s | 3 | 1,250 | 28,876 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 22:40:12 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 22:40:35 | 22s | 6 | 1,194 | 80,643 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 22:40:35 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | claude | fibonacci | 22:40:48 | 13s | 3 | 215 | 27,673 |
 
 ## Design
 
@@ -121,3 +123,107 @@ go test ./fibonacci/
 | Agent | Count |
 |-------|-------|
 | claude | 3 |
+
+## Run Summary
+
+| Field          | Value |
+|----------------|-------|
+| Task           | fibonacci |
+| Start          | 2026-03-25 21:53:58 |
+| End            | 2026-03-25 21:54:58 |
+| Total time     | 59s |
+| Invocations    | 5 |
+| Tokens in      | 13 |
+| Tokens out     | 2,506 |
+| Tokens cached  | 153,967 |
+| Tokens total   | 156,486 |
+
+### Invocations
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | fibonacci | 21:54:24 | 25s | 3 | 1,194 | 28,668 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 21:54:24 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 21:54:47 | 22s | 7 | 1,122 | 97,677 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 21:54:47 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | claude | fibonacci | 21:54:58 | 11s | 3 | 190 | 27,622 |
+
+### Per-Role Totals
+
+| Role | Count | Total Time | Avg/Invocation |
+|------|-------|------------|----------------|
+| ARCHITECT | 1 | 25s | 25s |
+| DOCUMENTER_POST_ARCHITECT | 1 | 0s | 0s |
+| IMPLEMENTOR | 1 | 22s | 22s |
+| DOCUMENTER_POST_IMPLEMENTOR | 1 | 0s | 0s |
+| TESTER | 1 | 11s | 11s |
+
+### Token Usage by Role
+
+| Role | Tokens In | Tokens Out | Tokens Cached | Total |
+|------|-----------|------------|---------------|-------|
+| ARCHITECT | 3 | 1,194 | 28,668 | 29,865 |
+| DOCUMENTER_POST_ARCHITECT | 0 | 0 | 0 | 0 |
+| IMPLEMENTOR | 7 | 1,122 | 97,677 | 98,806 |
+| DOCUMENTER_POST_IMPLEMENTOR | 0 | 0 | 0 | 0 |
+| TESTER | 3 | 190 | 27,622 | 27,815 |
+| **Total** | **13** | **2,506** | **153,967** | **156,486** |
+
+### Invocations by Agent
+
+| Agent | Count |
+|-------|-------|
+| claude | 3 |
+| internal | 2 |
+
+## Run Summary
+
+| Field          | Value |
+|----------------|-------|
+| Task           | fibonacci |
+| Start          | 2026-03-25 22:39:43 |
+| End            | 2026-03-25 22:40:48 |
+| Total time     | 1m 05s |
+| Invocations    | 5 |
+| Tokens in      | 12 |
+| Tokens out     | 2,659 |
+| Tokens cached  | 137,192 |
+| Tokens total   | 139,863 |
+
+### Invocations
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | fibonacci | 22:40:12 | 29s | 3 | 1,250 | 28,876 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 22:40:12 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 22:40:35 | 22s | 6 | 1,194 | 80,643 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 22:40:35 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | claude | fibonacci | 22:40:48 | 13s | 3 | 215 | 27,673 |
+
+### Per-Role Totals
+
+| Role | Count | Total Time | Avg/Invocation |
+|------|-------|------------|----------------|
+| ARCHITECT | 1 | 29s | 29s |
+| DOCUMENTER_POST_ARCHITECT | 1 | 0s | 0s |
+| IMPLEMENTOR | 1 | 22s | 22s |
+| DOCUMENTER_POST_IMPLEMENTOR | 1 | 0s | 0s |
+| TESTER | 1 | 13s | 13s |
+
+### Token Usage by Role
+
+| Role | Tokens In | Tokens Out | Tokens Cached | Total |
+|------|-----------|------------|---------------|-------|
+| ARCHITECT | 3 | 1,250 | 28,876 | 30,129 |
+| DOCUMENTER_POST_ARCHITECT | 0 | 0 | 0 | 0 |
+| IMPLEMENTOR | 6 | 1,194 | 80,643 | 81,843 |
+| DOCUMENTER_POST_IMPLEMENTOR | 0 | 0 | 0 | 0 |
+| TESTER | 3 | 215 | 27,673 | 27,891 |
+| **Total** | **12** | **2,659** | **137,192** | **139,863** |
+
+### Invocations by Agent
+
+| Agent | Count |
+|-------|-------|
+| claude | 3 |
+| internal | 2 |
