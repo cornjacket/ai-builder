@@ -847,6 +847,32 @@ if _handoff_load_path:
     frame_stack.extend(_loaded_stack)
     print(f"[orchestrator] Loaded handoff state from {_handoff_load_path} "
           f"({len(handoff_history)} history entries, {len(frame_stack)} frame(s))")
+
+    # Stale component frame detection: if the top frame is a component frame
+    # and the component's task.json doesn't have complete:true, the previous run
+    # did not finish this component cleanly (NEED_HELP or interrupt).
+    # Recovery: pop the frame and truncate handoff_history to the pre-component
+    # anchor so the resumed ARCHITECT sees clean context.
+    #
+    # Note: complete:true is not yet written to task.json; the check always
+    # treats a component frame as stale, which is the safe default.
+    if frame_stack and frame_stack[-1].get("type") == "component":
+        _stale_frame = frame_stack[-1]
+        _comp_name = _stale_frame["component_name"]
+        _is_complete = False
+        if initial_job_doc:
+            _comp_tj = initial_job_doc.parent / "task.json"
+            if _comp_tj.exists():
+                try:
+                    _is_complete = json.loads(_comp_tj.read_text()).get("complete", False)
+                except Exception:
+                    pass
+        if not _is_complete:
+            frame_stack.pop()
+            handoff_history[:] = handoff_history[:_stale_frame["anchor_index"] + 1]
+            print(f"[orchestrator] WARNING: stale component frame detected for '{_comp_name}'.")
+            print(f"    The previous run did not complete this component cleanly (NEED_HELP or interrupt).")
+            print(f"    Truncating handoff history to the pre-component anchor and retrying.")
 role_iteration_counts: dict[str, int] = {}
 role_counters: dict[str, int] = {}
 
