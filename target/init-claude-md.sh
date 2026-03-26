@@ -99,9 +99,20 @@ submitted. Can only contain pipeline-subtasks. Created with `new-pipeline-subtas
 - Top-level tasks: `{6-char-hex-id}-{name}` (e.g. `a3f2c1-my-task`)
 - Subtasks: `{parent-short-id}-{NNNN}-{name}` (e.g. `a3f2c1-0001-design-review`)
 
-The `NNNN` counter is stored in the parent's `Next-subtask-id` metadata field and
-incremented automatically by the creation scripts. When a subtask is marked complete,
-its directory is renamed with an `X-` prefix (e.g. `X-a3f2c1-0001-design-review`).
+The `NNNN` four-digit number **defines the implementation order** of subtasks within
+a parent task. Subtasks must be worked in ascending `NNNN` order unless explicitly
+noted otherwise. The number is assigned at creation time by `Next-subtask-id` in
+the parent's metadata and incremented automatically by the creation scripts.
+
+If the intended implementation order changes after creation, use
+`project/tasks/scripts/reorder-subtasks.py` to renumber the directories to match
+the new order. Never implement subtasks out of their numbered sequence without
+first reordering them — the numbers are the contract.
+
+When a subtask is completed, its directory is renamed with an `X-` prefix
+(e.g. `X-a3f2c1-0001-design-review`). The `X-` prefix marks the subtask as done
+and preserves its number for audit purposes. Completed subtasks are shown with
+`[x]` in the parent README's subtask list.
 
 **Domain ownership:**
 - **Frontend AI** (Oracle/human assistant): creates user-tasks, user-subtasks,

@@ -25,6 +25,25 @@ complete, wont-do). Managed via scripts in `tasks/scripts/`.
 
 **Full documentation:** [`tasks/README.md`](tasks/README.md)
 
+### Subtask ordering convention
+
+Subtask directory names follow the pattern `{parent-id}-{NNNN}-{name}`.
+The `NNNN` four-digit number **defines the intended implementation order**.
+Subtasks must be worked in ascending numeric order unless the parent README
+explicitly states otherwise.
+
+If the intended order changes, use `tasks/scripts/reorder-subtasks.py` to
+renumber directories to match. The numbers are the contract — never implement
+out of sequence without first reordering.
+
+### Completion convention
+
+When a subtask is completed, its directory is renamed with an `X-` prefix:
+`X-{parent-id}-{NNNN}-{name}`. The number is preserved for audit purposes.
+Completed subtasks appear as `[x]` in the parent README's subtask list.
+The `X-` prefix makes completion status visible at a glance in any file
+viewer, without opening any file.
+
 ---
 
 ## status/
