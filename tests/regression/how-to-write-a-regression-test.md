@@ -33,13 +33,19 @@ standard layout:
 ```
 tests/regression/<test-name>/
     reset.sh          # resets to initial state; creates sandbox/ target repo
+    build-spec.md     # the job spec copied into the pipeline entry README on each reset
     gold/
         go.mod        # or equivalent
         gold_test.go  # behavioural gold tests (build tag: regression)
     README.md         # test documentation, architecture diagram, run instructions
 ```
 
-No other committed files. All generated output goes to `sandbox/` (see §4).
+`build-spec.md` is the authoritative spec for TM-mode tests. `reset.sh` copies
+it into the pipeline entry task's README and backfills `task.json` with `goal`
+and `context`. For non-TM tests (e.g. `fibonacci/`), the job document is a
+standalone `.md` file committed directly to the test directory instead.
+
+No generated output is committed. All pipeline output goes to `sandbox/` (see §4).
 
 ---
 
@@ -56,8 +62,11 @@ Every `reset.sh` must perform these steps in order:
    not traverse above.
 5. **Create a PIPELINE-SUBTASK** entry point under the USER-TASK using
    `new-pipeline-subtask.sh --level TOP`. This is where the pipeline starts.
-6. **Write the spec** into the PIPELINE-SUBTASK's README (overwrite the
-   generated template). Complexity must be left as `—` to trigger ARCHITECT
+6. **Write the spec** into the PIPELINE-SUBTASK's README by copying
+   `build-spec.md` — do not use an inline heredoc. After copying, extract
+   `goal` and `context` from the spec and write them into the task's
+   `task.json` (the creation script runs before the spec exists and cannot
+   do this itself). Complexity must be left as `—` to trigger ARCHITECT
    decompose mode.
 7. **Point `current-job.txt`** at the PIPELINE-SUBTASK README using
    `set-current-job.sh --output-dir <sandbox-output-dir>`.

@@ -111,55 +111,32 @@ ENTRY_DIR="$(dirname "$ENTRY_README")"
 ENTRY_FULL_NAME="$(basename "$ENTRY_DIR")"
 echo "    entry task:  $ENTRY_FULL_NAME"
 
-# Write the user-service spec into the build-1 README.
+# Copy the spec into the build-1 README.
+# The spec lives in tests/regression/user-service/build-spec.md so it is
+# version-controlled and not regenerated from a heredoc on every reset.
 # Complexity is left unset (—) to trigger ARCHITECT decompose mode.
-cat > "$ENTRY_README" <<'TASKEOF'
-<!-- This file is managed by the ai-builder pipeline. Do not hand-edit. -->
-# Task: build-1
-
-## Goal
-
-Build a user management HTTP service in Go with the following API:
-
-- `POST /users` — create a user (JSON body), return the created user with generated ID
-- `GET /users/{id}` — retrieve user by ID; return 404 if not found
-- `PUT /users/{id}` — update user by ID; return 404 if not found
-- `DELETE /users/{id}` — delete user by ID; return 404 if not found
-
-Port: 8080. Response format: JSON. Storage: in-memory. No authentication.
-
-## Context
-
-This is a regression test for the ai-builder decomposition pipeline.
-The pipeline must decompose this service into components, implement each
-one, and verify the assembled service passes the acceptance criteria.
-
-## Components
-
-_To be completed by the ARCHITECT._
-
-## Design
-
-_To be completed by the ARCHITECT._
-
-## Acceptance Criteria
-
-_To be completed by the ARCHITECT._
-
-## Test Command
-
-_To be completed by the ARCHITECT._
-
-## Suggested Tools
-
-_To be completed by the ARCHITECT._
-
-## Notes
-
-_None._
-TASKEOF
-
+cp "$DIR/build-spec.md" "$ENTRY_README"
 echo "    spec written to $ENTRY_README"
+
+# Backfill goal/context into task.json.
+# new-pipeline-build.sh runs before the spec is written, so task.json has
+# empty goal/context at that point. Extract them from the spec now.
+ENTRY_TASK_JSON="$(dirname "$ENTRY_README")/task.json"
+python3 - "$ENTRY_README" "$ENTRY_TASK_JSON" <<'PYEOF'
+import sys, json, re
+readme_path, task_json_path = sys.argv[1], sys.argv[2]
+readme = open(readme_path).read()
+data = json.loads(open(task_json_path).read())
+for field, label in (("goal", "Goal"), ("context", "Context")):
+    m = re.search(rf'## {label}\s*\n+(.*?)(?=\n## |\Z)', readme, re.DOTALL)
+    if m:
+        text = m.group(1).strip()
+        if text and text != "_To be written._":
+            data[field] = text
+with open(task_json_path, 'w') as f:
+    json.dump(data, f, indent=2); f.write('\n')
+PYEOF
+echo "    task.json updated with goal/context"
 
 # ---------------------------------------------------------------------------
 # 5. Point current-job.txt at the build-1 README (simulating Oracle)

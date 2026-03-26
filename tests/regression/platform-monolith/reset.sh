@@ -158,96 +158,32 @@ ENTRY_DIR="$(dirname "$ENTRY_README")"
 ENTRY_FULL_NAME="$(basename "$ENTRY_DIR")"
 echo "    entry task:  $ENTRY_FULL_NAME"
 
-# Write the platform spec into the build-1 README.
+# Copy the spec into the build-1 README.
+# The spec lives in tests/regression/platform-monolith/build-spec.md so it
+# is version-controlled and not regenerated from a heredoc on every reset.
 # Complexity is left unset (—) to trigger ARCHITECT decompose mode.
-# ARCHITECT and TM fill Components, Design, Acceptance Criteria.
-cat > "$ENTRY_DIR/README.md" <<'TASKEOF'
-<!-- This file is managed by the ai-builder pipeline. Do not hand-edit. -->
-# Task: build-1
+cp "$DIR/build-spec.md" "$ENTRY_README"
+echo "    spec written to $ENTRY_README"
 
-## Goal
-
-Build a networked monolith platform in Go. A networked monolith is a single
-process with a single binary entry point (`cmd/platform/main.go`). The single
-process starts two HTTP listeners on separate ports — one for metrics ingestion
-and one for IAM. There is exactly one `main` package and one binary.
-
-**Metrics listener (port 8081)**
-
-Records frontend user interaction events.
-
-API:
-- `POST /events` — record an event; body: `{"type": "click-mouse"|"submit-form", "userId": "<string>", "payload": {}}` → 201 with event object (includes generated `id`)
-- `GET /events`  — list all recorded events → 200 with JSON array
-
-**IAM listener (port 8082)**
-
-Identity and access management. Internally composed of two logical components:
-(a) user authentication and lifecycle, and (b) authorisation/RBAC.
-
-API:
-- User lifecycle:
-  - `POST /users`        — register user; body: `{"username": "<string>", "password": "<string>"}` → 201 with user object (includes `id`, no password in response)
-  - `GET /users/{id}`    — get user by ID → 200 or 404
-  - `DELETE /users/{id}` — delete user → 200/204 or 404
-- Authentication:
-  - `POST /auth/login`   — authenticate; body: `{"username": "<string>", "password": "<string>"}` → 200 with token object (includes `token` field)
-  - `POST /auth/logout`  — invalidate token; header: `Authorization: Bearer <token>` → 200/204
-- RBAC:
-  - `POST /roles`             — create role; body: `{"name": "<string>", "permissions": ["<string>"]}` → 201 with role object (includes `id`)
-  - `GET /roles`              — list roles → 200 with JSON array
-  - `POST /users/{id}/roles`  — assign role to user; body: `{"roleId": "<string>"}` → 200/201
-  - `GET /users/{id}/roles`   — list user's roles → 200 with JSON array
-  - `POST /authz/check`       — check permission; body: `{"userId": "<string>", "permission": "<string>"}` → 200 with `{"allowed": <bool>}`
-
-## Context
-
-This is a regression test for the ai-builder multi-level decomposition pipeline.
-The platform is a networked monolith: one process, one binary, two listeners.
-The IAM listener is itself internally composed of two components (auth-lifecycle
-and authz-rbac). The pipeline must traverse this multi-level tree, implementing
-and testing each level before walking up to integrate the next.
-
-**Language:** Go
-**Binary:** single binary — the only `main` package in the entire codebase
-must be `cmd/platform/main.go`. There must be no other `main` packages.
-Component-level implementations must not create their own `cmd/` directories
-or standalone binaries. `cmd/platform/main.go` starts both listeners.
-**Storage:** in-memory (no database required)
-**Testing requirements:**
-- Unit tests at each functional level (each atomic component must have unit tests)
-- End-to-end acceptance tests at each integrate step:
-  - INTERNAL integrate: verify the component's contract against its API;
-    do not create a standalone binary — use `net/http/httptest` or similar
-  - TOP integrate (this task): create `cmd/platform/main.go` as the sole
-    binary entry point; start both listeners and verify all endpoints pass
-
-## Components
-
-_To be completed by the ARCHITECT._
-
-## Design
-
-_To be completed by the ARCHITECT._
-
-## Acceptance Criteria
-
-_To be completed by the ARCHITECT._
-
-## Test Command
-
-_To be completed by the ARCHITECT._
-
-## Suggested Tools
-
-_To be completed by the ARCHITECT._
-
-## Notes
-
-_None._
-TASKEOF
-
-echo "    spec written to $ENTRY_DIR/README.md"
+# Backfill goal/context into task.json.
+# new-pipeline-build.sh runs before the spec is written, so task.json has
+# empty goal/context at that point. Extract them from the spec now.
+ENTRY_TASK_JSON="$(dirname "$ENTRY_README")/task.json"
+python3 - "$ENTRY_README" "$ENTRY_TASK_JSON" <<'PYEOF'
+import sys, json, re
+readme_path, task_json_path = sys.argv[1], sys.argv[2]
+readme = open(readme_path).read()
+data = json.loads(open(task_json_path).read())
+for field, label in (("goal", "Goal"), ("context", "Context")):
+    m = re.search(rf'## {label}\s*\n+(.*?)(?=\n## |\Z)', readme, re.DOTALL)
+    if m:
+        text = m.group(1).strip()
+        if text and text != "_To be written._":
+            data[field] = text
+with open(task_json_path, 'w') as f:
+    json.dump(data, f, indent=2); f.write('\n')
+PYEOF
+echo "    task.json updated with goal/context"
 
 # ---------------------------------------------------------------------------
 # 5. Point current-job.txt at the build-1 README (simulating Oracle)
