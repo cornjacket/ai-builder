@@ -308,24 +308,37 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         # (written by ARCHITECT). Inlining eliminates the file read dependency.
         # See: learning/pipeline-extract-dont-delegate.md
         # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
+        if not job_doc:
+            print("[orchestrator] ERROR: IMPLEMENTOR requires a job_doc but none is set.")
+            return
+        task_json_path = job_doc.parent / "task.json"
+        if not task_json_path.exists():
+            print(f"[orchestrator] ERROR: task.json not found at {task_json_path}. "
+                  f"Port this build to include goal/context/design in task.json (see 49352f-0000, 49352f-0006).")
+            return
+        try:
+            _tj = json.loads(task_json_path.read_text())
+        except Exception as e:
+            print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
+            return
+        if not _tj.get("goal"):
+            print(f"[orchestrator] ERROR: 'goal' field missing from task.json at {task_json_path}.")
+            return
+        if not _tj.get("design"):
+            print(f"[orchestrator] ERROR: 'design' field missing from task.json at {task_json_path}. "
+                  f"ARCHITECT must have returned ARCHITECT_DESIGN_READY before IMPLEMENTOR runs.")
+            return
         inline_sections = ""
-        if job_doc:
-            task_json_path = job_doc.parent / "task.json"
-            if task_json_path.exists():
-                try:
-                    _tj = json.loads(task_json_path.read_text())
-                    for label, key in (
-                        ("Goal", "goal"),
-                        ("Context", "context"),
-                        ("Design", "design"),
-                        ("Acceptance Criteria", "acceptance_criteria"),
-                        ("Test Command", "test_command"),
-                    ):
-                        text = _tj.get(key, "").strip()
-                        if text and text != "_To be written._":
-                            inline_sections += f"\n\n## {label}\n\n{text}"
-                except Exception as e:
-                    print(f"[orchestrator] Warning: failed to read task.json for IMPLEMENTOR prompt: {e}")
+        for label, key in (
+            ("Goal", "goal"),
+            ("Context", "context"),
+            ("Design", "design"),
+            ("Acceptance Criteria", "acceptance_criteria"),
+            ("Test Command", "test_command"),
+        ):
+            text = _tj.get(key, "").strip()
+            if text and text != "_To be written._":
+                inline_sections += f"\n\n## {label}\n\n{text}"
         job_section = (
             f"\nOutput directory (write all generated files here): {output_dir}\n"
             f"{inline_sections}\n"
@@ -335,18 +348,25 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         # Read test_command from task.json (written by ARCHITECT). Inlining
         # eliminates the file read dependency on the job doc README.
         # Prepend cd to output_dir so the command is fully self-contained.
-        test_command = ""
-        if job_doc:
-            task_json_path = job_doc.parent / "task.json"
-            if task_json_path.exists():
-                try:
-                    _tj = json.loads(task_json_path.read_text())
-                    raw_cmd = _tj.get("test_command", "").strip()
-                    if raw_cmd:
-                        full_cmd = f"cd {output_dir} && {raw_cmd}"
-                        test_command = f"\n\nTest command:\n```\n{full_cmd}\n```"
-                except Exception as e:
-                    print(f"[orchestrator] Warning: failed to read task.json for TESTER prompt: {e}")
+        if not job_doc:
+            print("[orchestrator] ERROR: TESTER requires a job_doc but none is set.")
+            return
+        task_json_path = job_doc.parent / "task.json"
+        if not task_json_path.exists():
+            print(f"[orchestrator] ERROR: task.json not found at {task_json_path}.")
+            return
+        try:
+            _tj = json.loads(task_json_path.read_text())
+        except Exception as e:
+            print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
+            return
+        raw_cmd = _tj.get("test_command", "").strip()
+        if not raw_cmd:
+            print(f"[orchestrator] ERROR: 'test_command' field missing from task.json at {task_json_path}. "
+                  f"ARCHITECT must have returned ARCHITECT_DESIGN_READY before TESTER runs.")
+            return
+        full_cmd = f"cd {output_dir} && {raw_cmd}"
+        test_command = f"\n\nTest command:\n```\n{full_cmd}\n```"
         job_section = f"{test_command}\n\nOutput directory (write all generated files here): {output_dir}\n"
     else:
         valid_outcomes = "DONE | NEED_HELP"
