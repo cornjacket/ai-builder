@@ -112,6 +112,20 @@ while true; do
     parent_name="$(basename "$parent_dir")"
     grandparent_rel="$(rel_to_folder "$grandparent_dir")"
 
+    # If grandparent is human-owned, this is the top-level pipeline node.
+    # Defer the directory rename so the orchestrator can flush in-memory state
+    # (metrics, README) while task.json paths are still valid. The orchestrator
+    # performs the rename as the very last step after all writes are done.
+    if is_human_boundary "$grandparent_dir"; then
+        "$SCRIPTS_DIR/complete-task.sh" \
+            --skip-rename \
+            --epic "$EPIC" --folder "$FOLDER" \
+            --parent "$grandparent_rel" --name "$parent_name"
+        echo "TOP_RENAME_PENDING $parent_dir"
+        echo "DONE"
+        exit 0
+    fi
+
     "$SCRIPTS_DIR/complete-task.sh" \
         --epic "$EPIC" --folder "$FOLDER" \
         --parent "$grandparent_rel" --name "$parent_name"
@@ -119,12 +133,6 @@ while true; do
     # complete-task.sh renamed parent_dir to X-<parent_name>. Update the path
     # so the next loop iteration can read the README from its new location.
     parent_dir="${grandparent_dir}/X-${parent_name}"
-
-    # If grandparent is human-owned, the pipeline tree is fully done.
-    if is_human_boundary "$grandparent_dir"; then
-        echo "DONE"
-        exit 0
-    fi
 
     # Walk up: check if the parent was also the last at its level.
     current="$parent_dir/README.md"

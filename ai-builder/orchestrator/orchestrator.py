@@ -5,13 +5,15 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from agent_wrapper import run_agent, AgentResult
 from gemini_compat import gemini_role_addendum
 import metrics as metrics_mod
-from metrics import RunData, description_from_job_path
+from metrics import RunData, InvocationRecord, description_from_job_path
+from render_readme import render_task_readme
+from build_master_index import build_master_index
 
 
 # ---------------------------------------------------------------------------
@@ -253,43 +255,23 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
     role_instructions = role_file.read_text() if role_file.exists() \
         else "Complete the work described in the job document."
     if role == "ARCHITECT":
-        # Read complexity and level from task.json (preferred) so the metadata
-        # table is not needed in the prose README.
-        task_json_path = job_doc.parent / "task.json" if job_doc else None
-        if task_json_path and task_json_path.exists():
-            try:
-                task_data = json.loads(task_json_path.read_text())
-                complexity = task_data.get("complexity", "—")
-                level = task_data.get("level", "TOP")
-            except Exception:
-                complexity, level = "—", "TOP"
-        else:
-            complexity, level = "—", "TOP"
+        # Read complexity, level, goal, context from in-memory task_state.
+        # task.json was loaded into task_state when job_doc was last set —
+        # no disk read needed here. Falls back gracefully for edge cases.
+        # See: learning/pipeline-extract-dont-delegate.md (Gemini cwd isolation)
+        complexity   = task_state.get("complexity", "—")
+        level        = task_state.get("level", "TOP")
+        goal_text    = task_state.get("goal", "")
+        context_text = task_state.get("context", "")
         if complexity == "atomic":
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
         elif complexity in ("composite", "—"):
             valid_outcomes = "ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
         else:
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_DECOMPOSITION_READY | ARCHITECT_NEED_HELP"
-        # Extract Goal and Context from task.json (JSON-native).
-        # Inlining eliminates the file read dependency entirely.
-        # Gemini's file read tool is sandboxed to the temp cwd and cannot
-        # read the job doc at its absolute path.
-        # See: learning/pipeline-extract-dont-delegate.md
-        # Bug: 024459-bug-gemini-agent-cannot-read-job-doc
-        if not task_json_path or not task_json_path.exists():
-            print(f"[orchestrator] ERROR: task.json not found at {task_json_path}. "
-                  f"ARCHITECT requires a task.json with goal/complexity fields.")
-            return
-        try:
-            _tj = json.loads(task_json_path.read_text())
-        except Exception as e:
-            print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
-            return
-        goal_text = _tj.get("goal", "")
-        context_text = _tj.get("context", "")
         if not goal_text:
-            print(f"[orchestrator] ERROR: 'goal' field missing from task.json at {task_json_path}. "
+            task_json_path = job_doc.parent / "task.json" if job_doc else None
+            print(f"[orchestrator] ERROR: 'goal' missing from task state for {task_json_path}. "
                   f"Port this build to include goal/context in task.json (see 49352f-0000).")
             return
         goal_section = f"\n\n## Goal\n\n{goal_text}" if goal_text else ""
@@ -306,21 +288,15 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         if not job_doc:
             print("[orchestrator] ERROR: IMPLEMENTOR requires a job_doc but none is set.")
             return
-        task_json_path = job_doc.parent / "task.json"
-        if not task_json_path.exists():
-            print(f"[orchestrator] ERROR: task.json not found at {task_json_path}. "
-                  f"Port this build to include goal/context/design in task.json (see 49352f-0000, 49352f-0006).")
+        # Read design fields from in-memory task_state — set when ARCHITECT
+        # returned ARCHITECT_DESIGN_READY. No disk read needed.
+        if not task_state.get("goal"):
+            task_json_path = job_doc.parent / "task.json"
+            print(f"[orchestrator] ERROR: 'goal' missing from task state for {task_json_path}.")
             return
-        try:
-            _tj = json.loads(task_json_path.read_text())
-        except Exception as e:
-            print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
-            return
-        if not _tj.get("goal"):
-            print(f"[orchestrator] ERROR: 'goal' field missing from task.json at {task_json_path}.")
-            return
-        if not _tj.get("design"):
-            print(f"[orchestrator] ERROR: 'design' field missing from task.json at {task_json_path}. "
+        if not task_state.get("design"):
+            task_json_path = job_doc.parent / "task.json"
+            print(f"[orchestrator] ERROR: 'design' missing from task state for {task_json_path}. "
                   f"ARCHITECT must have returned ARCHITECT_DESIGN_READY before IMPLEMENTOR runs.")
             return
         inline_sections = ""
@@ -331,7 +307,7 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             ("Acceptance Criteria", "acceptance_criteria"),
             ("Test Command", "test_command"),
         ):
-            text = _tj.get(key, "").strip()
+            text = task_state.get(key, "").strip()
             if text and text != "_To be written._":
                 inline_sections += f"\n\n## {label}\n\n{text}"
         job_section = (
@@ -493,10 +469,11 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
         subtask_dirs.append(subtask_dir)
 
         # Determine output directory for this component
-        if comp_name == "integrate":
-            comp_output_dir = parent_output_dir  # integrate uses parent's output dir
+        source_dir = component.get("source_dir", "").strip()
+        if comp_name == "integrate" or not source_dir or source_dir == ".":
+            comp_output_dir = parent_output_dir  # integrate writes to parent dir directly
         else:
-            comp_output_dir = parent_output_dir / comp_name
+            comp_output_dir = parent_output_dir / source_dir
             comp_output_dir.mkdir(parents=True, exist_ok=True)
             placeholder = comp_output_dir / "README.md"
             if not placeholder.exists():
@@ -706,29 +683,35 @@ def _run_lch_internal(output_dir: Path) -> AgentResult:
         return AgentResult(exit_code=1, response=f"on-task-complete.sh failed: {err}")
 
     # on-task-complete.sh may emit status lines before the terminal token.
-    # Scan each line for NEXT/DONE/STOP_AFTER rather than matching the whole blob.
+    # Scan each line for NEXT/DONE/STOP_AFTER and the optional TOP_RENAME_PENDING
+    # token (emitted when the top-level build directory rename is deferred).
     outcome = None
     token_line = ""
+    top_rename_pending = None
     for line in proc.stdout.splitlines():
         line = line.strip()
-        if line.startswith("NEXT "):
+        if line.startswith("TOP_RENAME_PENDING "):
+            # advance-pipeline.sh deferred the top-level rename so the orchestrator
+            # can flush metrics to task.json while paths are still valid. Capture
+            # the directory to rename; the orchestrator applies it after all writes.
+            top_rename_pending = line[len("TOP_RENAME_PENDING "):].strip()
+        elif line.startswith("NEXT "):
             outcome = "HANDLER_SUBTASKS_READY"
             token_line = line
-            break
         elif line == "DONE":
             outcome = "HANDLER_ALL_DONE"
             token_line = line
-            break
         elif line == "STOP_AFTER":
             outcome = "HANDLER_STOP_AFTER"
             token_line = line
-            break
 
     if outcome is None:
         print(f"[internal/LCH] unexpected output from on-task-complete.sh: {stdout!r}")
         return AgentResult(exit_code=1, response=f"Unexpected output: {stdout}")
 
     response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {token_line}"
+    if top_rename_pending:
+        response += f"\nTOP_RENAME_PENDING: {top_rename_pending}"
     return AgentResult(exit_code=0, response=response)
 
 
@@ -764,10 +747,12 @@ def _load_handoff_state(path: Path) -> tuple[list[str], list[dict]]:
 
 
 def _store_architect_design_fields(response: str, job_doc: Path) -> None:
-    """Parse design fields from ARCHITECT's JSON block and write them to task.json.
+    """Parse design fields from ARCHITECT's JSON block, update task_state, and
+    persist to task.json.
 
-    Fields stored: design, acceptance_criteria, test_command.
-    Called immediately after ARCHITECT returns ARCHITECT_DESIGN_READY.
+    Updates in-memory task_state first so downstream stages (IMPLEMENTOR,
+    TESTER) can read values without a disk round-trip. task.json write is for
+    persistence/resume only.
     """
     json_match = re.search(r'```json\s*\n(\{.*?\})\s*```\s*$', response, re.DOTALL)
     if not json_match:
@@ -777,17 +762,20 @@ def _store_architect_design_fields(response: str, job_doc: Path) -> None:
     except json.JSONDecodeError:
         return
 
+    # Update in-memory state first
+    fields = {k: data[k] for k in ("design", "acceptance_criteria", "test_command", "documents_written") if k in data}
+    _update_task_state(fields)
+
+    # Persist to task.json (resume/debug only)
     task_json_path = job_doc.parent / "task.json"
     if not task_json_path.exists():
         return
     try:
         tj = json.loads(task_json_path.read_text())
-        for field in ("design", "acceptance_criteria", "test_command", "documents_written"):
-            if field in data:
-                tj[field] = data[field]
+        tj.update(fields)
         task_json_path.write_text(json.dumps(tj, indent=2) + "\n")
     except Exception as e:
-        print(f"[orchestrator] Warning: failed to store design fields in task.json: {e}")
+        print(f"[orchestrator] Warning: failed to persist design fields to task.json: {e}")
 
 
 def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], completed_job_doc: Path | None) -> None:
@@ -961,8 +949,52 @@ def _clean_for_resume(output_dir: Path, execution_log: Path) -> None:
 
 MAX_ROLE_ITERATIONS = 3
 
+# ---------------------------------------------------------------------------
+# Loop detection
+#
+# A sliding window of (role, job_doc_path) pairs for recent invocations.
+# Any repeat within the window means a handler failed to advance the pipeline.
+# Window size of 8 is enough to catch ARCHITECT → DECOMPOSE_HANDLER → ARCHITECT
+# cycles with headroom for deeper nesting.
+# ---------------------------------------------------------------------------
+
+_LOOP_WINDOW_SIZE = 8
+_loop_window: list[tuple[str, str]] = []
+
+# ---------------------------------------------------------------------------
+# In-memory task state cache
+#
+# task.json is the persistence layer (written on every state transition so a
+# resume can restore state). During normal operation the orchestrator passes
+# state between stages from this dict — never by re-reading task.json from
+# disk. task.json is read from disk only:
+#   1. When job_doc is first set or advanced (populates the cache)
+#   2. On --resume (restores the cache after an interrupted run)
+# ---------------------------------------------------------------------------
+
+task_state: dict = {}  # fields for the current job_doc
+
+
+def _load_task_state(jd: Path | None) -> None:
+    """Load task.json for jd into task_state. No-op if jd is None or missing."""
+    global task_state
+    if jd is None:
+        return
+    tj_path = jd.parent / "task.json"
+    try:
+        task_state = json.loads(tj_path.read_text())
+    except Exception:
+        task_state = {}
+
+
+def _update_task_state(fields: dict) -> None:
+    """Merge fields into task_state (in-memory only — caller handles disk write)."""
+    task_state.update(fields)
+
+
 current_role = _start_state
 job_doc      = initial_job_doc
+_load_task_state(job_doc)
 handoff_history: list[str] = []
 # Frame stack for scope-bounded handoff history. Two frame types:
 #   {"type": "decompose", "anchor_index": N}
@@ -1018,6 +1050,70 @@ _task_name = description_from_job_path(initial_job_doc) if initial_job_doc else 
 run = RunData(task_name=_task_name, start=datetime.now())
 build_readme: Path | None = None      # Level:TOP pipeline-subtask README for live log
 top_task_json: Path | None = None     # Level:TOP task.json — target for metrics persistence
+_resume_log_seeded = False            # guard: seed prior log at most once per run
+
+
+def _seed_run_from_prior_log(task_json: Path) -> None:
+    """On resume, pre-populate run.invocations from the existing execution_log
+    in task.json, then append a RESUME sentinel so the history is auditable.
+
+    Sets run.start to the original run's start time so elapsed totals in
+    run_summary remain meaningful.
+    """
+    global _resume_log_seeded
+    if _resume_log_seeded:
+        return
+    _resume_log_seeded = True
+
+    try:
+        data = json.loads(task_json.read_text())
+    except Exception:
+        return
+
+    prior = data.get("execution_log", [])
+    if not prior:
+        return
+
+    for entry in prior:
+        try:
+            inv = InvocationRecord(
+                role=entry["role"],
+                agent=entry["agent"],
+                n=entry["n"],
+                description=entry["description"],
+                start=datetime.fromisoformat(entry["start"]),
+                end=datetime.fromisoformat(entry["end"]),
+                elapsed=timedelta(seconds=entry["elapsed_s"]),
+                tokens_in=entry["tokens_in"],
+                tokens_out=entry["tokens_out"],
+                tokens_cached=entry["tokens_cached"],
+                outcome=entry["outcome"],
+            )
+            run.invocations.append(inv)
+        except Exception:
+            continue
+
+    # Reset run start to match the original run's start time
+    if run.invocations:
+        run.start = run.invocations[0].start
+
+    # Append RESUME sentinel
+    now = datetime.now()
+    sentinel = InvocationRecord(
+        role="RESUME",
+        agent="orchestrator",
+        n=0,
+        description="pipeline resumed",
+        start=now,
+        end=now,
+        elapsed=timedelta(0),
+        tokens_in=0,
+        tokens_out=0,
+        tokens_cached=0,
+        outcome="RESUME",
+    )
+    run.invocations.append(sentinel)
+    print(f"[orchestrator] Resume: loaded {len(prior)} prior invocations from execution log.")
 
 
 def _find_level_top(readme: Path | None) -> Path | None:
@@ -1046,6 +1142,10 @@ def _find_level_top(readme: Path | None) -> Path | None:
 
 build_readme = _find_level_top(initial_job_doc)
 top_task_json = build_readme.parent / "task.json" if build_readme else None
+
+# On resume, seed run.invocations from the prior execution log (if available now)
+if args.resume and top_task_json is not None and top_task_json.exists():
+    _seed_run_from_prior_log(top_task_json)
 
 # In TM mode, ensure the TOP task's task.json has output_dir set.
 if TM_MODE and initial_job_doc:
@@ -1076,6 +1176,11 @@ print(f"    execution log: {EXECUTION_LOG}\n")
 
 last_components: list[dict] = []  # components from most recent ARCHITECT JSON response
 
+# Deferred top-level rename: set when advance-pipeline.sh emits TOP_RENAME_PENDING.
+# The orchestrator renames build-N → X-build-N only AFTER all metrics/README writes
+# complete, keeping task.json paths valid for the entire post-loop flush sequence.
+_pending_top_rename: Path | None = None
+
 # Register handoff state save on every exit (clean, sys.exit, KeyboardInterrupt).
 atexit.register(lambda: _save_handoff_state(OUTPUT_DIR, handoff_history, frame_stack))
 
@@ -1085,46 +1190,44 @@ while current_role is not None:
         print(f"[orchestrator] No agent configured for role {current_role}. Halting.")
         sys.exit(1)
 
-    # Derive per-task output dir from task.json (falls back to OUTPUT_DIR)
+    # Derive per-task output dir from in-memory task_state (falls back to OUTPUT_DIR)
     task_output_dir = OUTPUT_DIR
     if job_doc and TM_MODE:
-        _tj = job_doc.parent / "task.json"
-        if _tj.exists():
-            try:
-                _tjd = json.loads(_tj.read_text())
-                if "output_dir" in _tjd:
-                    task_output_dir = Path(_tjd["output_dir"])
-            except Exception:
-                pass
+        if "output_dir" in task_state:
+            task_output_dir = Path(task_state["output_dir"])
 
     print(f"\n>>> [{current_role} / {agent}]")
 
     # Push component frame just before ARCHITECT runs in atomic/design mode.
     # This frame is popped by LCH after each TESTER pass.
     if current_role == "ARCHITECT" and TM_MODE and job_doc:
-        _tj = job_doc.parent / "task.json"
-        if _tj.exists():
-            try:
-                _tjd = json.loads(_tj.read_text())
-                if _tjd.get("complexity") == "atomic":
-                    frame_stack.append({
-                        "type": "component",
-                        "anchor_index": len(handoff_history) - 1,
-                        "component_name": _tjd.get("name", job_doc.parent.name),
-                    })
-            except Exception:
-                pass
+        if task_state.get("complexity") == "atomic":
+            frame_stack.append({
+                "type": "component",
+                "anchor_index": len(handoff_history) - 1,
+                "component_name": task_state.get("name", job_doc.parent.name),
+            })
 
     # If DECOMPOSE_HANDLER is starting without components (e.g. --start-state resume),
-    # load them from task.json where ARCHITECT stored them.
+    # load them from task_state (already populated from task.json at job_doc advance).
     if current_role == "DECOMPOSE_HANDLER" and not last_components and job_doc:
-        _tj_path = job_doc.parent / "task.json"
-        if _tj_path.exists():
-            try:
-                _tj = json.loads(_tj_path.read_text())
-                last_components = _tj.get("components", [])
-            except Exception:
-                pass
+        last_components = task_state.get("components", [])
+
+    # Loop detection: same (role, job_doc) within the sliding window means a
+    # handler failed to advance current-job.txt. Halt before wasting an invocation.
+    _loop_key = (current_role, str(job_doc) if job_doc else "")
+    if _loop_key in _loop_window:
+        _cycle_len = len(_loop_window) - _loop_window.index(_loop_key)
+        _desc = description_from_job_path(job_doc)
+        print(f"\n[orchestrator] ERROR: pipeline loop detected — "
+              f"{current_role}/{_desc} already ran {_cycle_len} iteration(s) ago. "
+              f"A handler did not advance current-job.txt. Halting.")
+        if job_doc:
+            print(f"    Job document: {job_doc}")
+        sys.exit(1)
+    _loop_window.append(_loop_key)
+    if len(_loop_window) > _LOOP_WINDOW_SIZE:
+        _loop_window.pop(0)
 
     inv_start = datetime.now()
     if agent == "internal":
@@ -1151,8 +1254,9 @@ while current_role is not None:
     if outcome == "ARCHITECT_DESIGN_READY" and job_doc:
         _store_architect_design_fields(result.response, job_doc)
 
-    # Store components to task.json so DECOMPOSE_HANDLER can load them on resume.
+    # Store components in task_state and persist to task.json for resume.
     if outcome == "ARCHITECT_DECOMPOSITION_READY" and last_components and job_doc:
+        _update_task_state({"components": last_components})
         _tj_path = job_doc.parent / "task.json"
         if _tj_path.exists():
             try:
@@ -1160,7 +1264,7 @@ while current_role is not None:
                 _tj["components"] = last_components
                 _tj_path.write_text(json.dumps(_tj, indent=2) + "\n")
             except Exception as e:
-                print(f"[orchestrator] Warning: failed to store components in task.json: {e}")
+                print(f"[orchestrator] Warning: failed to persist components to task.json: {e}")
 
     print(f"\n<<< [{current_role}] outcome={outcome}")
 
@@ -1185,7 +1289,20 @@ while current_role is not None:
         _top = _find_level_top(job_doc)
         if _top is not None:
             top_task_json = _top.parent / "task.json"
+            # Lazy resume seed: top_task_json just resolved for the first time
+            if args.resume:
+                _seed_run_from_prior_log(top_task_json)
     metrics_mod.write_metrics_to_task_json(top_task_json, run)
+
+    # Re-render the TOP-level README after every invocation (live progress)
+    if top_task_json is not None:
+        render_task_readme(top_task_json)
+
+    # Re-render the active task README if it differs from the TOP-level one
+    if job_doc is not None:
+        active_task_json = job_doc.parent / "task.json"
+        if active_task_json != top_task_json and active_task_json.exists():
+            render_task_readme(active_task_json)
 
     # Update live execution log in the Level:TOP README
     if build_readme is None:
@@ -1227,11 +1344,14 @@ while current_role is not None:
             })
 
         old_job_doc = job_doc
+        # Read current-job.txt once — written by the handler subprocess as its
+        # output mechanism. Persistence/resume only; not a re-read of known state.
         job_doc = Path(CURRENT_JOB_FILE.read_text().strip())
         if not job_doc.exists():
             print(f"\n[orchestrator] Job document not found: {job_doc}. Halting.")
             sys.exit(1)
         print(f"    current job:   {job_doc}")
+        _load_task_state(job_doc)  # populate in-memory state for the new job
         LAST_JOB_FILE.write_text(json.dumps({"active_task": str(job_doc.parent / "task.json")}, indent=2) + "\n")
         if build_readme is None:
             build_readme = _find_level_top(job_doc)
@@ -1242,6 +1362,11 @@ while current_role is not None:
     # Pipeline fully done: still need the two-phase pop for the last component.
     if current_role == "LEAF_COMPLETE_HANDLER" and outcome == "HANDLER_ALL_DONE":
         _lch_two_phase_pop(frame_stack, handoff_history, job_doc)
+        # Capture any deferred top-level rename from advance-pipeline.sh.
+        # The rename will be applied AFTER all post-loop metrics/README writes.
+        _m = re.search(r'^TOP_RENAME_PENDING: (.+)$', result.response, re.MULTILINE)
+        if _m:
+            _pending_top_rename = Path(_m.group(1).strip())
 
     next_role = ROUTES.get((current_role, outcome))
 
@@ -1260,7 +1385,27 @@ while current_role is not None:
     current_role = next_role
 
 run.end = datetime.now()
+
+# 1. Metrics — write run_summary + execution_log to TOP-level task.json
+# NOTE: top_task_json is still valid here because advance-pipeline.sh deferred
+# the build-N → X-build-N rename (via TOP_RENAME_PENDING protocol). The rename
+# happens below, as the very last step, so all writes below use valid paths.
 metrics_mod.write_metrics_to_task_json(top_task_json, run, final=True)
 metrics_mod.write_summary_to_readme(build_readme, run)
+
+# 2. README render — final render with complete run_summary now in task.json
+if top_task_json is not None:
+    render_task_readme(top_task_json)
+
+# 3. Master index — rebuild combined doc index across the output tree
+build_master_index(OUTPUT_DIR)
+
+# 4. Apply deferred top-level rename (build-N → X-build-N).
+# This is the last step so that all in-memory paths remain valid for the
+# writes above. advance-pipeline.sh deferred the rename via TOP_RENAME_PENDING.
+if _pending_top_rename is not None and _pending_top_rename.exists():
+    _renamed_dir = _pending_top_rename.parent / ("X-" + _pending_top_rename.name)
+    _pending_top_rename.rename(_renamed_dir)
+    print(f"    renamed:       {_pending_top_rename.name} → {_renamed_dir.name}")
 
 print("\n=== Orchestrator: pipeline complete ===")

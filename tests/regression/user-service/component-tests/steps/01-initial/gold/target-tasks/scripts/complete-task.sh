@@ -45,14 +45,16 @@ FOLDER=""
 PARENT=""
 NAME=""
 UNDO=false
+SKIP_RENAME=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --epic)   EPIC="$2";   shift 2 ;;
-        --folder) FOLDER="$2"; shift 2 ;;
-        --parent) PARENT="$2"; shift 2 ;;
-        --name)   NAME="$2";   shift 2 ;;
-        --undo)   UNDO=true;   shift ;;
+        --epic)        EPIC="$2";   shift 2 ;;
+        --folder)      FOLDER="$2"; shift 2 ;;
+        --parent)      PARENT="$2"; shift 2 ;;
+        --name)        NAME="$2";   shift 2 ;;
+        --undo)        UNDO=true;   shift ;;
+        --skip-rename) SKIP_RENAME=true; shift ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
@@ -114,15 +116,26 @@ EOF
                 echo "Subtask not found or already renamed: project/tasks/$EPIC/$FOLDER/$PARENT/$NAME"
                 exit 1
             fi
-            # Rename directory: NAME → X-NAME
-            mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
-            # Update subtask entry in parent task.json
-            json_complete_subtask "$PARENT_JSON" "$NAME"
-            # Update status in child task.json
-            if [[ -f "$XSUBTASK_DIR/task.json" ]]; then
-                json_set_str "$XSUBTASK_DIR/task.json" "status" "complete"
+            if [[ "$SKIP_RENAME" == true ]]; then
+                # JSON updates only — caller will rename the directory after flushing
+                # in-memory state (e.g. orchestrator metrics). The rename must be
+                # the last step so that in-memory paths remain valid for writes.
+                json_complete_subtask "$PARENT_JSON" "$NAME"
+                if [[ -f "$SUBTASK_DIR/task.json" ]]; then
+                    json_set_str "$SUBTASK_DIR/task.json" "status" "complete"
+                fi
+                echo "Marked complete (rename deferred): $NAME"
+            else
+                # Rename directory: NAME → X-NAME
+                mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
+                # Update subtask entry in parent task.json
+                json_complete_subtask "$PARENT_JSON" "$NAME"
+                # Update status in child task.json
+                if [[ -f "$XSUBTASK_DIR/task.json" ]]; then
+                    json_set_str "$XSUBTASK_DIR/task.json" "status" "complete"
+                fi
+                echo "Marked complete: $NAME"
             fi
-            echo "Marked complete: $NAME"
         fi
         exit 0
     fi

@@ -23,37 +23,105 @@ PARENT_TASK_NAME="user-service"
 ENTRY_TASK_NAME="build-1"
 
 # ---------------------------------------------------------------------------
-# Save previous run (if any) to last_run/ before wiping.
-# Captures execution.log, run-metrics.json, run-summary.md, and the
-# Level:TOP pipeline README from the target repo (has the execution log table).
+# Archive previous run (if any) to runs/YYYY-MM-DD-HH-MM-SS/ before wiping.
+# Saves execution.log, task.json (with execution_log + run_summary), and
+# README.md from the Level:TOP pipeline task. Updates last_run symlink.
+# Appends a summary row to runs/run-history.md.
 # ---------------------------------------------------------------------------
 
 _save_last_run() {
     if [[ ! -f "$OUTPUT_DIR/execution.log" ]]; then
         return 0
     fi
-    rm -rf "$DIR/last_run"
-    mkdir -p "$DIR/last_run"
-    mv "$OUTPUT_DIR/execution.log" "$DIR/last_run/"
-    [[ -f "$OUTPUT_DIR/run-metrics.json" ]] && mv "$OUTPUT_DIR/run-metrics.json" "$DIR/last_run/"
-    [[ -f "$OUTPUT_DIR/run-summary.md"  ]] && mv "$OUTPUT_DIR/run-summary.md"   "$DIR/last_run/"
-    # Find and copy the Level:TOP pipeline README (contains the execution log table).
-    if [[ -f "$OUTPUT_DIR/current-job.txt" ]]; then
-        local current_job search_dir level
-        current_job=$(cat "$OUTPUT_DIR/current-job.txt")
-        search_dir="$(dirname "$current_job")"
-        while [[ "$search_dir" != "/" && "$search_dir" != "$TARGET_REPO" ]]; do
-            if [[ -f "$search_dir/task.json" ]]; then
-                level=$(python3 -c "import json; d=json.load(open('$search_dir/task.json')); print(d.get('level',''))" 2>/dev/null || echo "")
-                if [[ "$level" == "TOP" ]]; then
-                    [[ -f "$search_dir/README.md" ]] && cp "$search_dir/README.md" "$DIR/last_run/build-README.md"
-                    break
-                fi
-            fi
-            search_dir="$(dirname "$search_dir")"
-        done
+
+    local ts run_dir
+    ts=$(date "+%Y-%m-%d-%H-%M-%S")
+    run_dir="$DIR/runs/$ts"
+    mkdir -p "$run_dir"
+
+    cp "$OUTPUT_DIR/execution.log" "$run_dir/"
+
+    # Find the Level:TOP task.json by searching the target repo directly.
+    # This handles the X- rename that happens at pipeline completion.
+    local top_json
+    top_json=$(python3 - "$TARGET_REPO/project/tasks" <<'PYEOF'
+import json, os, sys
+for root, dirs, files in os.walk(sys.argv[1]):
+    for f in files:
+        if f == "task.json":
+            try:
+                d = json.load(open(os.path.join(root, f)))
+                if d.get("level") == "TOP":
+                    print(os.path.join(root, f))
+                    import sys as _s; _s.exit(0)
+            except Exception:
+                pass
+PYEOF
+    ) || true
+
+    if [[ -n "$top_json" ]]; then
+        cp "$top_json" "$run_dir/task.json"
+        local task_readme
+        task_readme="$(dirname "$top_json")/README.md"
+        [[ -f "$task_readme" ]] && cp "$task_readme" "$run_dir/README.md"
+
+        # Append a row to runs/run-history.md
+        python3 - "$run_dir/task.json" "$DIR/runs/run-history.md" <<'PYEOF'
+import json, os, sys
+from collections import defaultdict
+
+task_json_path, history_path = sys.argv[1], sys.argv[2]
+data = json.loads(open(task_json_path).read())
+rs   = data.get("run_summary") or {}
+log  = data.get("execution_log", [])
+
+# Determine run number from existing data rows
+run_num = 1
+if os.path.exists(history_path):
+    with open(history_path) as f:
+        for line in f:
+            s = line.strip()
+            if s.startswith("|") and not s.startswith("| Run") and not s.startswith("|---"):
+                run_num += 1
+
+# Aggregate tokens per role
+roles = defaultdict(lambda: {"in": 0, "out": 0, "cached": 0})
+for inv in log:
+    r = inv.get("role", "")
+    roles[r]["in"]     += inv.get("tokens_in", 0)
+    roles[r]["out"]    += inv.get("tokens_out", 0)
+    roles[r]["cached"] += inv.get("tokens_cached", 0)
+
+def col(r):
+    t = roles[r]
+    return f"{t['in']:,} / {t['out']:,} / {t['cached']:,}"
+
+elapsed_s = int(rs.get("elapsed_s", 0))
+m, s = divmod(elapsed_s, 60)
+elapsed = f"{m}m {s:02d}s" if m else f"{s}s"
+date = (rs.get("start") or "—")[:10]
+
+row = f"| {run_num} | {date} | {elapsed} | {col('ARCHITECT')} | {col('IMPLEMENTOR')} | {col('TESTER')} | | |\n"
+
+if not os.path.exists(history_path):
+    with open(history_path, "w") as f:
+        f.write("# Run History\n\n")
+        f.write("| Run | Date | Elapsed | ARCHITECT (in/out/cached) | IMPLEMENTOR (in/out/cached) | TESTER (in/out/cached) | Gold | Notes |\n")
+        f.write("|-----|------|---------|--------------------------|----------------------------|------------------------|------|-------|\n")
+        f.write(row)
+else:
+    with open(history_path, "a") as f:
+        f.write(row)
+
+print(f"    appended run {run_num} to run-history.md")
+PYEOF
     fi
-    echo "    saved previous run to last_run/"
+
+    # Update last_run symlink to the new run directory
+    rm -f "$DIR/last_run"
+    (cd "$DIR" && ln -sf "runs/$ts" last_run)
+
+    echo "    archived run to runs/$ts"
 }
 
 echo "=== Resetting user-service regression test ==="

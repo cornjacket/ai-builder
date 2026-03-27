@@ -38,15 +38,26 @@ Your job:
   "outcome": "ARCHITECT_DECOMPOSITION_READY",
   "handoff": "one paragraph summarising the decomposition and what the next agent needs to know",
   "components": [
-    {"name": "store",    "complexity": "atomic",    "description": "<full contract — see requirements below>"},
-    {"name": "handlers", "complexity": "composite", "description": "<one-line responsibility>"},
-    {"name": "integrate","complexity": "atomic",    "description": "Wire all components into a cohesive unit and verify this level's acceptance criteria"}
+    {"name": "store",    "complexity": "atomic",    "source_dir": "internal/myservice/store",    "description": "<full contract — see requirements below>"},
+    {"name": "handlers", "complexity": "composite", "source_dir": "internal/myservice/handlers", "description": "<one-line responsibility>"},
+    {"name": "integrate","complexity": "atomic",    "source_dir": ".",                           "description": "Wire all components into a cohesive unit and verify this level's acceptance criteria"}
   ]
 }
 ```
 
    **The JSON block must be the final content of your response — nothing after the closing fence.**
    Before emitting, mentally parse your JSON to verify it is valid.
+
+   **`source_dir` field requirements:**
+
+   `source_dir` is the relative path within the output directory where this
+   component's source files will live. It must match the actual package path in
+   the target repository (e.g. `internal/iam/lifecycle`). The TM uses this to
+   place the component's output directory so that README.md and source code
+   land in the same location.
+
+   - For regular components: set `source_dir` to the real package path (e.g. `internal/iam/lifecycle`).
+   - For `integrate`: set `source_dir` to `"."` — integrate writes to the parent output directory directly.
 
    **Description field requirements:**
 
@@ -134,9 +145,9 @@ Your job:
 **README.md is mandatory.** Write a `README.md` to the output directory for
 every component you design. Every output directory must have one. It must include:
 
-1. **Purpose** — 1-2 sentences: what this package does and why it exists.
-   Follow the format in `roles/doc-format.md` (Purpose:/Tags: header block).
-   Use `Tags: architecture, design`.
+1. **Purpose/Tags header** — `# component-name` heading, then immediately the
+   `Purpose:` / `Tags:` block (no content between heading and Purpose:).
+   Follow `roles/doc-format.md`. Use `Tags: architecture, design`.
 2. **File index** — table of files IMPLEMENTOR will create, with one-line descriptions.
 3. **Overview** — key design decisions, data flow, non-obvious constraints.
 

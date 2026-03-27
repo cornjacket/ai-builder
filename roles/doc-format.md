@@ -1,9 +1,14 @@
 # Documentation Format Convention
 
 All `.md` files written to the output directory by ARCHITECT or IMPLEMENTOR
-must begin with the following header block:
+must include the following header block near the top. For `README.md` files,
+a single `# heading` line may appear before the block; the block must then
+follow immediately (no other content between the heading and `Purpose:`).
+For named docs (e.g. `data-flow.md`), the block must be the very first content.
 
 ```
+# optional-heading-for-README
+
 Purpose: First sentence — a standalone, complete description of what this file covers.
 Additional context sentence(s) if needed. Two to three sentences total maximum.
 

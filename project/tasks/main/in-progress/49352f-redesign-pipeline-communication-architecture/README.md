@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0025 |
+| Next-subtask-id | 0033 |
 
 ## Goal
 
@@ -80,13 +80,21 @@ type being detected).
 - [x] [X-49352f-0015-implementor-inline-content-companion-md](X-49352f-0015-implementor-inline-content-companion-md/)
 - [x] [X-49352f-0016-tester-internal-handler](X-49352f-0016-tester-internal-handler/)
 - [x] [X-49352f-0017-post-run-metrics-in-task-json](X-49352f-0017-post-run-metrics-in-task-json/)
-- [ ] [49352f-0018-architect-source-dir-in-decompose-json](49352f-0018-architect-source-dir-in-decompose-json/)
-- [ ] [49352f-0019-readme-render-script](49352f-0019-readme-render-script/)
-- [ ] [49352f-0020-master-index-rebuild-script](49352f-0020-master-index-rebuild-script/)
-- [ ] [49352f-0021-post-completion-flow](49352f-0021-post-completion-flow/)
-- [ ] [49352f-0022-pipeline-theory-of-operation-doc](49352f-0022-pipeline-theory-of-operation-doc/)
-- [ ] [49352f-0023-orchestrator-in-memory-state-passthrough](49352f-0023-orchestrator-in-memory-state-passthrough/)
-- [ ] [49352f-0024-pipeline-loop-detection](49352f-0024-pipeline-loop-detection/)
+- [x] [X-49352f-0018-architect-source-dir-in-decompose-json](X-49352f-0018-architect-source-dir-in-decompose-json/)
+- [x] [X-49352f-0019-readme-render-script](X-49352f-0019-readme-render-script/)
+- [x] [X-49352f-0020-master-index-rebuild-script](X-49352f-0020-master-index-rebuild-script/)
+- [x] [X-49352f-0021-post-completion-flow](X-49352f-0021-post-completion-flow/)
+- [x] [X-49352f-0022-resume-execution-log-continuity](X-49352f-0022-resume-execution-log-continuity/)
+- [x] [X-49352f-0023-orchestrator-in-memory-state-passthrough](X-49352f-0023-orchestrator-in-memory-state-passthrough/)
+- [x] [X-49352f-0024-pipeline-loop-detection](X-49352f-0024-pipeline-loop-detection/)
+- [x] [X-49352f-0025-verify-output-doc-headers](X-49352f-0025-verify-output-doc-headers/)
+- [x] [X-49352f-0026-final-invocation-not-recorded](X-49352f-0026-final-invocation-not-recorded/)
+- [x] [X-49352f-0027-preserve-run-history](X-49352f-0027-preserve-run-history/)
+- [ ] [49352f-0028-per-run-output-directory](49352f-0028-per-run-output-directory/)
+- [ ] [49352f-0029-xml-structured-output-format](49352f-0029-xml-structured-output-format/)
+- [ ] [49352f-0030-audit-agent-prompts-for-stale-instructions](49352f-0030-audit-agent-prompts-for-stale-instructions/)
+- [ ] [49352f-0031-investigate-output-documentation-quality](49352f-0031-investigate-output-documentation-quality/)
+- [ ] [49352f-0032-pipeline-theory-of-operation-doc](49352f-0032-pipeline-theory-of-operation-doc/)
 <!-- subtask-list-end -->
 
 ## Notes

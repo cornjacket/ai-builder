@@ -14,19 +14,27 @@ OUTPUT_DIR="$REPO_ROOT/sandbox/fibonacci-output"
 JOB_DOC="$DIR/JOB-fibonacci-demo.md"
 
 # ---------------------------------------------------------------------------
-# Save previous run (if any) to last_run/ before clearing.
+# Archive previous run (if any) to runs/YYYY-MM-DD-HH-MM-SS/ before clearing.
+# Updates last_run symlink to the new run directory.
 # ---------------------------------------------------------------------------
 
 _save_last_run() {
     if [[ ! -f "$OUTPUT_DIR/execution.log" ]]; then
         return 0
     fi
-    rm -rf "$DIR/last_run"
-    mkdir -p "$DIR/last_run"
-    mv "$OUTPUT_DIR/execution.log" "$DIR/last_run/"
-    [[ -f "$OUTPUT_DIR/run-metrics.json" ]] && mv "$OUTPUT_DIR/run-metrics.json" "$DIR/last_run/"
-    [[ -f "$OUTPUT_DIR/run-summary.md"  ]] && mv "$OUTPUT_DIR/run-summary.md"   "$DIR/last_run/"
-    echo "    saved previous run to last_run/"
+
+    local ts run_dir
+    ts=$(date "+%Y-%m-%d-%H-%M-%S")
+    run_dir="$DIR/runs/$ts"
+    mkdir -p "$run_dir"
+
+    cp "$OUTPUT_DIR/execution.log" "$run_dir/"
+
+    # Update last_run symlink to the new run directory
+    rm -f "$DIR/last_run"
+    (cd "$DIR" && ln -sf "runs/$ts" last_run)
+
+    echo "    archived run to runs/$ts"
 }
 
 echo "=== Resetting fibonacci regression test ==="
