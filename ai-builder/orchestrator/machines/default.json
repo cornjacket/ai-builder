@@ -3,7 +3,7 @@
   "roles": {
     "ARCHITECT":                  { "agent": "claude",   "prompt": "roles/ARCHITECT.md",   "no_history": false },
     "IMPLEMENTOR":                { "agent": "claude",   "prompt": "roles/IMPLEMENTOR.md", "no_history": false },
-    "TESTER":                     { "agent": "claude",   "prompt": "roles/TESTER.md",      "no_history": true  },
+    "TESTER":                     { "agent": "internal", "prompt": null                                        },
     "DECOMPOSE_HANDLER":          { "agent": "internal", "prompt": null                                        },
     "LEAF_COMPLETE_HANDLER":      { "agent": "internal", "prompt": null                                        },
     "DOCUMENTER_POST_ARCHITECT":  { "agent": "internal", "prompt": null                                        },

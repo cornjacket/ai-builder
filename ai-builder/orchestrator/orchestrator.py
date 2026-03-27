@@ -338,28 +338,6 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             f"\nOutput directory (write all generated files here): {output_dir}\n"
             f"{inline_sections}\n"
         )
-    elif role == "TESTER":
-        valid_outcomes = "TESTER_TESTS_PASS | TESTER_TESTS_FAIL | TESTER_NEED_HELP"
-        if not job_doc:
-            print("[orchestrator] ERROR: TESTER requires a job_doc but none is set.")
-            return
-        task_json_path = job_doc.parent / "task.json"
-        if not task_json_path.exists():
-            print(f"[orchestrator] ERROR: task.json not found at {task_json_path}.")
-            return
-        try:
-            _tj = json.loads(task_json_path.read_text())
-        except Exception as e:
-            print(f"[orchestrator] ERROR: failed to read task.json at {task_json_path}: {e}")
-            return
-        raw_cmd = _tj.get("test_command", "").strip()
-        if not raw_cmd:
-            print(f"[orchestrator] ERROR: 'test_command' field missing from task.json at {task_json_path}. "
-                  f"ARCHITECT must have returned ARCHITECT_DESIGN_READY before TESTER runs.")
-            return
-        full_cmd = f"cd {output_dir} && {raw_cmd}"
-        test_command = f"\n\nTest command:\n```\n{full_cmd}\n```"
-        job_section = f"{test_command}\n\nOutput directory (write all generated files here): {output_dir}\n"
     else:
         valid_outcomes = "DONE | NEED_HELP"
         job_section = f"\nThe shared job document is at: {job_doc}\n\nOutput directory (write all generated files here): {output_dir}\n"
@@ -408,7 +386,9 @@ def parse_response(response: str) -> tuple[str, str, list[dict]]:
             components = data.get("components", [])
             return outcome, handoff, components
         except json.JSONDecodeError as e:
-            print(f"[orchestrator] WARNING: JSON block parse failed ({e}); falling back to regex")
+            print(f"[orchestrator] ERROR: terminal JSON block found but failed to parse: {e}")
+            print(f"[orchestrator] Raw JSON block:\n{json_match.group(1)}")
+            raise SystemExit(1)
 
     # Fallback: plain OUTCOME:/HANDOFF: lines (internal agents)
     outcome_match = re.search(r'^OUTCOME:\s*(\S+)', response, re.MULTILINE)
@@ -589,6 +569,36 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
         f"HANDOFF: decomposed into {len(components)} components "
         f"(level={parent_level}), first: {subtask_dirs[0].name}"
     )
+    return AgentResult(exit_code=0, response=response)
+
+
+def _run_tester_internal(job_doc: Path) -> AgentResult:
+    """Run the test command from task.json and return pass/fail as a structured result."""
+    task_json_path = job_doc.parent / "task.json"
+    if not task_json_path.exists():
+        return AgentResult(exit_code=1, response="OUTCOME: TESTER_NEED_HELP\nHANDOFF: task.json not found; cannot determine test command.")
+    try:
+        tj = json.loads(task_json_path.read_text())
+    except Exception as e:
+        return AgentResult(exit_code=1, response=f"OUTCOME: TESTER_NEED_HELP\nHANDOFF: Failed to read task.json: {e}")
+
+    test_command = tj.get("test_command", "").strip()
+    if not test_command:
+        return AgentResult(exit_code=1, response="OUTCOME: TESTER_NEED_HELP\nHANDOFF: test_command field missing from task.json.")
+
+    try:
+        proc = subprocess.run(test_command, shell=True, capture_output=True, text=True)
+    except Exception as e:
+        return AgentResult(exit_code=1, response=f"OUTCOME: TESTER_NEED_HELP\nHANDOFF: subprocess.run() raised an exception: {e}")
+
+    if proc.returncode == 0:
+        response = "OUTCOME: TESTER_TESTS_PASS\nHANDOFF: All tests passed."
+    else:
+        response = (
+            f"OUTCOME: TESTER_TESTS_FAIL\n"
+            f"HANDOFF: Tests failed (exit code {proc.returncode}).\n"
+            f"{proc.stdout}\n{proc.stderr}"
+        ).rstrip()
     return AgentResult(exit_code=0, response=response)
 
 
@@ -836,6 +846,10 @@ def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, compon
         if job_doc is None:
             return AgentResult(exit_code=1, response=f"{role} requires a job_doc")
         return _run_documenter_internal(job_doc, output_dir)
+    if role == "TESTER":
+        if job_doc is None:
+            return AgentResult(exit_code=1, response="TESTER requires a job_doc")
+        return _run_tester_internal(job_doc)
     return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
 
 

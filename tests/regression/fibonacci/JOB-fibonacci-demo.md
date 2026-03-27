@@ -17,11 +17,11 @@ Build a correct, importable Golang package that computes Fibonacci numbers.
 
 | # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
 |---|------|-------|-------------|-------|---------|-----------|------------|---------------|
-| 1 | ARCHITECT | claude | fibonacci | 22:40:12 | 29s | 3 | 1,250 | 28,876 |
-| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 22:40:12 | 0s | 0 | 0 | 0 |
-| 3 | IMPLEMENTOR | claude | fibonacci | 22:40:35 | 22s | 6 | 1,194 | 80,643 |
-| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 22:40:35 | 0s | 0 | 0 | 0 |
-| 5 | TESTER | claude | fibonacci | 22:40:48 | 13s | 3 | 215 | 27,673 |
+| 1 | ARCHITECT | claude | fibonacci | 23:01:44 | 54s | 5 | 2,041 | 72,911 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 23:01:44 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 23:02:30 | 46s | 7 | 1,305 | 98,365 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 23:02:30 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | internal | fibonacci | 23:02:34 | 3s | 0 | 0 | 0 |
 
 ## Design
 
@@ -227,3 +227,55 @@ go test ./fibonacci/
 |-------|-------|
 | claude | 3 |
 | internal | 2 |
+
+## Run Summary
+
+| Field          | Value |
+|----------------|-------|
+| Task           | fibonacci |
+| Start          | 2026-03-26 23:00:50 |
+| End            | 2026-03-26 23:02:34 |
+| Total time     | 1m 43s |
+| Invocations    | 5 |
+| Tokens in      | 12 |
+| Tokens out     | 3,346 |
+| Tokens cached  | 171,276 |
+| Tokens total   | 174,634 |
+
+### Invocations
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | fibonacci | 23:01:44 | 54s | 5 | 2,041 | 72,911 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 23:01:44 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 23:02:30 | 46s | 7 | 1,305 | 98,365 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 23:02:30 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | internal | fibonacci | 23:02:34 | 3s | 0 | 0 | 0 |
+
+### Per-Role Totals
+
+| Role | Count | Total Time | Avg/Invocation |
+|------|-------|------------|----------------|
+| ARCHITECT | 1 | 54s | 54s |
+| DOCUMENTER_POST_ARCHITECT | 1 | 0s | 0s |
+| IMPLEMENTOR | 1 | 46s | 46s |
+| DOCUMENTER_POST_IMPLEMENTOR | 1 | 0s | 0s |
+| TESTER | 1 | 3s | 3s |
+
+### Token Usage by Role
+
+| Role | Tokens In | Tokens Out | Tokens Cached | Total |
+|------|-----------|------------|---------------|-------|
+| ARCHITECT | 5 | 2,041 | 72,911 | 74,957 |
+| DOCUMENTER_POST_ARCHITECT | 0 | 0 | 0 | 0 |
+| IMPLEMENTOR | 7 | 1,305 | 98,365 | 99,677 |
+| DOCUMENTER_POST_IMPLEMENTOR | 0 | 0 | 0 | 0 |
+| TESTER | 0 | 0 | 0 | 0 |
+| **Total** | **12** | **3,346** | **171,276** | **174,634** |
+
+### Invocations by Agent
+
+| Agent | Count |
+|-------|-------|
+| claude | 2 |
+| internal | 3 |

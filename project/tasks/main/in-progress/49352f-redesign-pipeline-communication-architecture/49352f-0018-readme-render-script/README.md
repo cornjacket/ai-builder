@@ -71,4 +71,6 @@ function.
 
 ## Notes
 
-_None._
+See brainstorm for broader documentation generation design decisions that affect
+this subtask and 0019–0021:
+`sandbox/brainstorm-pipeline-documentation-generation.md`

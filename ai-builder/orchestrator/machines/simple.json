@@ -3,7 +3,7 @@
   "roles": {
     "ARCHITECT":                  { "agent": "claude",   "prompt": "roles/ARCHITECT.md",   "no_history": false },
     "IMPLEMENTOR":                { "agent": "claude",   "prompt": "roles/IMPLEMENTOR.md", "no_history": false },
-    "TESTER":                     { "agent": "claude",   "prompt": "roles/TESTER.md",      "no_history": false },
+    "TESTER":                     { "agent": "internal", "prompt": null                                        },
     "DOCUMENTER_POST_ARCHITECT":  { "agent": "internal", "prompt": null                                        },
     "DOCUMENTER_POST_IMPLEMENTOR":{ "agent": "internal", "prompt": null                                        }
   },

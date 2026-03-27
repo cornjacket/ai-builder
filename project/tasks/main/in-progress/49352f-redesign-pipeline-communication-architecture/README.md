@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
-| Next-subtask-id | 0022 |
+| Next-subtask-id | 0023 |
 
 ## Goal
 
@@ -77,13 +77,14 @@ type being detected).
 - [x] [X-49352f-0012-run-regression-bootstrap-component-tests](X-49352f-0012-run-regression-bootstrap-component-tests/)
 - [x] [X-49352f-0013-documenter-scan-and-index](X-49352f-0013-documenter-scan-and-index/)
 - [x] [X-49352f-0014-architect-doc-format-convention](X-49352f-0014-architect-doc-format-convention/)
-- [ ] [49352f-0015-implementor-inline-content-companion-md](49352f-0015-implementor-inline-content-companion-md/)
-- [ ] [49352f-0016-tester-internal-handler](49352f-0016-tester-internal-handler/)
+- [x] [X-49352f-0015-implementor-inline-content-companion-md](X-49352f-0015-implementor-inline-content-companion-md/)
+- [x] [X-49352f-0016-tester-internal-handler](X-49352f-0016-tester-internal-handler/)
 - [ ] [49352f-0017-post-run-metrics-in-task-json](49352f-0017-post-run-metrics-in-task-json/)
 - [ ] [49352f-0018-readme-render-script](49352f-0018-readme-render-script/)
 - [ ] [49352f-0019-master-index-rebuild-script](49352f-0019-master-index-rebuild-script/)
 - [ ] [49352f-0020-post-completion-flow](49352f-0020-post-completion-flow/)
 - [ ] [49352f-0021-pipeline-theory-of-operation-doc](49352f-0021-pipeline-theory-of-operation-doc/)
+- [ ] [49352f-0022-orchestrator-in-memory-state-passthrough](49352f-0022-orchestrator-in-memory-state-passthrough/)
 <!-- subtask-list-end -->
 
 ## Notes
