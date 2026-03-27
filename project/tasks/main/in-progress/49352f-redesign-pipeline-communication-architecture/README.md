@@ -79,7 +79,7 @@ type being detected).
 - [x] [X-49352f-0014-architect-doc-format-convention](X-49352f-0014-architect-doc-format-convention/)
 - [x] [X-49352f-0015-implementor-inline-content-companion-md](X-49352f-0015-implementor-inline-content-companion-md/)
 - [x] [X-49352f-0016-tester-internal-handler](X-49352f-0016-tester-internal-handler/)
-- [ ] [49352f-0017-post-run-metrics-in-task-json](49352f-0017-post-run-metrics-in-task-json/)
+- [x] [X-49352f-0017-post-run-metrics-in-task-json](X-49352f-0017-post-run-metrics-in-task-json/)
 - [ ] [49352f-0018-readme-render-script](49352f-0018-readme-render-script/)
 - [ ] [49352f-0019-master-index-rebuild-script](49352f-0019-master-index-rebuild-script/)
 - [ ] [49352f-0020-post-completion-flow](49352f-0020-post-completion-flow/)

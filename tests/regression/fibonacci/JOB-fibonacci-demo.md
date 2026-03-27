@@ -17,11 +17,11 @@ Build a correct, importable Golang package that computes Fibonacci numbers.
 
 | # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
 |---|------|-------|-------------|-------|---------|-----------|------------|---------------|
-| 1 | ARCHITECT | claude | fibonacci | 23:01:44 | 54s | 5 | 2,041 | 72,911 |
-| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 23:01:44 | 0s | 0 | 0 | 0 |
-| 3 | IMPLEMENTOR | claude | fibonacci | 23:02:30 | 46s | 7 | 1,305 | 98,365 |
-| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 23:02:30 | 0s | 0 | 0 | 0 |
-| 5 | TESTER | internal | fibonacci | 23:02:34 | 3s | 0 | 0 | 0 |
+| 1 | ARCHITECT | claude | fibonacci | 23:16:01 | 46s | 5 | 1,907 | 81,168 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 23:16:02 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 23:16:29 | 27s | 6 | 1,202 | 80,736 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 23:16:29 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | internal | fibonacci | 23:16:32 | 2s | 0 | 0 | 0 |
 
 ## Design
 
@@ -272,6 +272,58 @@ go test ./fibonacci/
 | DOCUMENTER_POST_IMPLEMENTOR | 0 | 0 | 0 | 0 |
 | TESTER | 0 | 0 | 0 | 0 |
 | **Total** | **12** | **3,346** | **171,276** | **174,634** |
+
+### Invocations by Agent
+
+| Agent | Count |
+|-------|-------|
+| claude | 2 |
+| internal | 3 |
+
+## Run Summary
+
+| Field          | Value |
+|----------------|-------|
+| Task           | fibonacci |
+| Start          | 2026-03-26 23:15:15 |
+| End            | 2026-03-26 23:16:32 |
+| Total time     | 1m 16s |
+| Invocations    | 5 |
+| Tokens in      | 11 |
+| Tokens out     | 3,109 |
+| Tokens cached  | 161,904 |
+| Tokens total   | 165,024 |
+
+### Invocations
+
+| # | Role | Agent | Description | Ended | Elapsed | Tokens In | Tokens Out | Tokens Cached |
+|---|------|-------|-------------|-------|---------|-----------|------------|---------------|
+| 1 | ARCHITECT | claude | fibonacci | 23:16:01 | 46s | 5 | 1,907 | 81,168 |
+| 2 | DOCUMENTER_POST_ARCHITECT | internal | fibonacci | 23:16:02 | 0s | 0 | 0 | 0 |
+| 3 | IMPLEMENTOR | claude | fibonacci | 23:16:29 | 27s | 6 | 1,202 | 80,736 |
+| 4 | DOCUMENTER_POST_IMPLEMENTOR | internal | fibonacci | 23:16:29 | 0s | 0 | 0 | 0 |
+| 5 | TESTER | internal | fibonacci | 23:16:32 | 2s | 0 | 0 | 0 |
+
+### Per-Role Totals
+
+| Role | Count | Total Time | Avg/Invocation |
+|------|-------|------------|----------------|
+| ARCHITECT | 1 | 46s | 46s |
+| DOCUMENTER_POST_ARCHITECT | 1 | 0s | 0s |
+| IMPLEMENTOR | 1 | 27s | 27s |
+| DOCUMENTER_POST_IMPLEMENTOR | 1 | 0s | 0s |
+| TESTER | 1 | 2s | 2s |
+
+### Token Usage by Role
+
+| Role | Tokens In | Tokens Out | Tokens Cached | Total |
+|------|-----------|------------|---------------|-------|
+| ARCHITECT | 5 | 1,907 | 81,168 | 83,080 |
+| DOCUMENTER_POST_ARCHITECT | 0 | 0 | 0 | 0 |
+| IMPLEMENTOR | 6 | 1,202 | 80,736 | 81,944 |
+| DOCUMENTER_POST_IMPLEMENTOR | 0 | 0 | 0 | 0 |
+| TESTER | 0 | 0 | 0 | 0 |
+| **Total** | **11** | **3,109** | **161,904** | **165,024** |
 
 ### Invocations by Agent
 

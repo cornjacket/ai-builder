@@ -871,7 +871,6 @@ def log_run(role: str, agent: str, outcome: str, handoff: str) -> None:
 
 _CLEAN_RESUME_PROTECTED = frozenset({
     "runs", "current-job.txt", "last-job.json", "execution.log",
-    "run-metrics.json", "run-summary.md",
 })
 
 _LOG_RUN_LINE = re.compile(r'^\[([^\]]+)\] ([A-Z_]+)/')
@@ -1015,7 +1014,8 @@ role_counters: dict[str, int] = {}
 # Metrics state
 _task_name = description_from_job_path(initial_job_doc) if initial_job_doc else "pipeline"
 run = RunData(task_name=_task_name, start=datetime.now())
-build_readme: Path | None = None  # Level:TOP pipeline-subtask README for live log
+build_readme: Path | None = None      # Level:TOP pipeline-subtask README for live log
+top_task_json: Path | None = None     # Level:TOP task.json — target for metrics persistence
 
 
 def _find_level_top(readme: Path | None) -> Path | None:
@@ -1043,6 +1043,7 @@ def _find_level_top(readme: Path | None) -> Path | None:
     return None
 
 build_readme = _find_level_top(initial_job_doc)
+top_task_json = build_readme.parent / "task.json" if build_readme else None
 
 # In TM mode, ensure the TOP task's task.json has output_dir set.
 if TM_MODE and initial_job_doc:
@@ -1177,6 +1178,13 @@ while current_role is not None:
         outcome=outcome,
     )
 
+    # Persist execution_log to TOP-level task.json after every invocation
+    if top_task_json is None and job_doc is not None:
+        _top = _find_level_top(job_doc)
+        if _top is not None:
+            top_task_json = _top.parent / "task.json"
+    metrics_mod.write_metrics_to_task_json(top_task_json, run)
+
     # Update live execution log in the Level:TOP README
     if build_readme is None:
         build_readme = _find_level_top(job_doc)
@@ -1250,8 +1258,7 @@ while current_role is not None:
     current_role = next_role
 
 run.end = datetime.now()
-metrics_mod.write_run_summary(OUTPUT_DIR, run)
-metrics_mod.write_run_metrics_json(OUTPUT_DIR, run)
+metrics_mod.write_metrics_to_task_json(top_task_json, run, final=True)
 metrics_mod.write_summary_to_readme(build_readme, run)
 
 print("\n=== Orchestrator: pipeline complete ===")

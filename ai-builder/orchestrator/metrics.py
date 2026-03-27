@@ -147,10 +147,38 @@ def update_task_doc(build_readme: Path, run: RunData) -> None:
     build_readme.write_text(new_content)
 
 
-def write_run_summary(output_dir: Path, run: RunData) -> None:
-    """Write run-summary.md to output_dir on pipeline completion."""
-    lines = [f"# Run Summary — {run.task_name}", ""] + _build_summary_lines(run)
-    (output_dir / "run-summary.md").write_text("\n".join(lines))
+def write_metrics_to_task_json(task_json_path: Path | None, run: RunData, final: bool = False) -> None:
+    """Write execution_log (and run_summary if final) to task.json.
+
+    Called after each invocation to accumulate the execution log, and once
+    more at pipeline completion with final=True to write the run_summary totals.
+    """
+    if task_json_path is None or not task_json_path.exists():
+        return
+    try:
+        tj = json.loads(task_json_path.read_text())
+    except Exception:
+        return
+
+    tj["execution_log"] = [_inv_dict(inv) for inv in run.invocations]
+
+    if final:
+        end = run.end or datetime.now()
+        tj["run_summary"] = {
+            "start":               run.start.isoformat(),
+            "end":                 end.isoformat(),
+            "elapsed_s":           (end - run.start).total_seconds(),
+            "total_tokens_in":     sum(inv.tokens_in     for inv in run.invocations),
+            "total_tokens_out":    sum(inv.tokens_out    for inv in run.invocations),
+            "total_tokens_cached": sum(inv.tokens_cached for inv in run.invocations),
+            "invocation_count":    len(run.invocations),
+        }
+
+    try:
+        task_json_path.write_text(json.dumps(tj, indent=2) + "\n")
+    except Exception:
+        pass
+
 
 
 def write_summary_to_readme(build_readme: Path | None, run: RunData) -> None:
@@ -254,41 +282,27 @@ def _build_summary_lines(run: RunData) -> list[str]:
     return lines
 
 
-def write_run_metrics_json(output_dir: Path, run: RunData) -> None:
-    """Write run-metrics.json to output_dir on pipeline completion."""
-    end = run.end or datetime.now()
-
-    def _inv_dict(inv: InvocationRecord) -> dict:
-        return {
-            "role":           inv.role,
-            "agent":          inv.agent,
-            "n":              inv.n,
-            "description":    inv.description,
-            "start":          inv.start.isoformat(),
-            "end":            inv.end.isoformat(),
-            "elapsed_s":      inv.elapsed.total_seconds(),
-            "tokens_in":      inv.tokens_in,
-            "tokens_out":     inv.tokens_out,
-            "tokens_cached":  inv.tokens_cached,
-            "outcome":        inv.outcome,
-        }
-
-    data = {
-        "task_name":    run.task_name,
-        "start":        run.start.isoformat(),
-        "end":          end.isoformat(),
-        "elapsed_s":    (end - run.start).total_seconds(),
-        "invocations":  [_inv_dict(inv) for inv in run.invocations],
-    }
-
-    (output_dir / "run-metrics.json").write_text(
-        json.dumps(data, indent=2)
-    )
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _inv_dict(inv: InvocationRecord) -> dict:
+    return {
+        "role":          inv.role,
+        "agent":         inv.agent,
+        "n":             inv.n,
+        "description":   inv.description,
+        "start":         inv.start.isoformat(),
+        "end":           inv.end.isoformat(),
+        "elapsed_s":     inv.elapsed.total_seconds(),
+        "tokens_in":     inv.tokens_in,
+        "tokens_out":    inv.tokens_out,
+        "tokens_cached": inv.tokens_cached,
+        "outcome":       inv.outcome,
+    }
+
 
 def _fmt_elapsed(td: timedelta) -> str:
     total = int(td.total_seconds())
