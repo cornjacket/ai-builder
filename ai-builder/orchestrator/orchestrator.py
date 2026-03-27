@@ -538,11 +538,13 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
     if not subtask_dirs:
         return AgentResult(exit_code=1, response="No subtasks created")
 
-    # Point pipeline at first subtask
+    # Point pipeline at first subtask.
+    # Always write to the root OUTPUT_DIR — that is where the orchestrator
+    # reads current-job.txt from, regardless of nesting depth.
     first_readme = subtask_dirs[0] / "README.md"
     cmd = [
         str(PM_SCRIPTS_DIR / "set-current-job.sh"),
-        "--output-dir", str(parent_output_dir),
+        "--output-dir", str(OUTPUT_DIR),
         str(first_readme),
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)

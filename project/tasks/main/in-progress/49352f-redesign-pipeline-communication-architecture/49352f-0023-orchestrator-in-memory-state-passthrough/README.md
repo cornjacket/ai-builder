@@ -52,6 +52,12 @@ re-reads from task.json what the orchestrator already has in memory.
 Note: subtask 0016 (TESTER internal handler) follows this principle for
 TESTER. This subtask extends it to the rest of the orchestrator.
 
+**Applies to current-job.txt too:** DECOMPOSE_HANDLER and LCH write
+`current-job.txt` for persistence/resume, but the orchestrator should advance
+`job_doc` in memory directly rather than re-reading the file after each handler.
+`current-job.txt` is only read on `--resume` to restore the cursor after an
+interrupted run.
+
 ## Subtasks
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
