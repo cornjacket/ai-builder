@@ -1,5 +1,6 @@
 """Unit tests for ai-builder/orchestrator/metrics.py."""
 
+import json
 import sys
 import unittest
 from datetime import datetime, timedelta
@@ -16,8 +17,7 @@ from metrics import (
     description_from_job_path,
     record_invocation,
     update_task_doc,
-    write_run_summary,
-    write_run_metrics_json,
+    write_metrics_to_task_json,
     write_summary_to_readme,
 )
 
@@ -258,50 +258,71 @@ class TestUpdateTaskDoc(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# write_run_summary / write_run_metrics_json
+# write_metrics_to_task_json
 # ---------------------------------------------------------------------------
 
-class TestWriteRunSummary(unittest.TestCase):
-    def test_writes_file(self):
+class TestWriteMetricsToTaskJson(unittest.TestCase):
+    def _make_task_json(self, tmp_path: Path) -> Path:
+        p = tmp_path / "task.json"
+        p.write_text(json.dumps({"task-type": "PIPELINE-SUBTASK", "level": "TOP"}, indent=2))
+        return p
+
+    def test_writes_execution_log(self):
         import tempfile
         with tempfile.TemporaryDirectory() as d:
-            run = _make_run(_make_inv())
-            write_run_summary(Path(d), run)
-            path = Path(d) / "run-summary.md"
-            self.assertTrue(path.exists())
-            content = path.read_text()
-            self.assertIn("# Run Summary", content)
-            self.assertIn("build-1", content)
-
-    def test_overwrites_on_second_call(self):
-        import tempfile
-        with tempfile.TemporaryDirectory() as d:
-            run1 = _make_run(_make_inv(role="ARCHITECT"))
-            write_run_summary(Path(d), run1)
-            run2 = _make_run(_make_inv(role="TESTER"))
-            write_run_summary(Path(d), run2)
-            content = (Path(d) / "run-summary.md").read_text()
-            self.assertIn("TESTER", content)
-
-
-class TestWriteRunMetricsJson(unittest.TestCase):
-    def test_writes_valid_json(self):
-        import json, tempfile
-        with tempfile.TemporaryDirectory() as d:
+            p = self._make_task_json(Path(d))
             run = _make_run(_make_inv(tokens_in=42, tokens_out=7, tokens_cached=3))
-            write_run_metrics_json(Path(d), run)
-            path = Path(d) / "run-metrics.json"
-            self.assertTrue(path.exists())
-            data = json.loads(path.read_text())
-            self.assertEqual(data["task_name"], "build-1")
-            self.assertEqual(len(data["invocations"]), 1)
-            inv = data["invocations"][0]
+            write_metrics_to_task_json(p, run)
+            data = json.loads(p.read_text())
+            self.assertIn("execution_log", data)
+            self.assertEqual(len(data["execution_log"]), 1)
+            inv = data["execution_log"][0]
             self.assertEqual(inv["tokens_in"], 42)
             self.assertEqual(inv["tokens_out"], 7)
             self.assertEqual(inv["tokens_cached"], 3)
             self.assertIn("elapsed_s", inv)
             self.assertIn("start", inv)
             self.assertIn("end", inv)
+
+    def test_no_run_summary_unless_final(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            p = self._make_task_json(Path(d))
+            run = _make_run(_make_inv())
+            write_metrics_to_task_json(p, run, final=False)
+            data = json.loads(p.read_text())
+            self.assertNotIn("run_summary", data)
+
+    def test_run_summary_written_when_final(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            p = self._make_task_json(Path(d))
+            run = _make_run(_make_inv(tokens_in=100, tokens_out=50, tokens_cached=10))
+            write_metrics_to_task_json(p, run, final=True)
+            data = json.loads(p.read_text())
+            self.assertIn("run_summary", data)
+            rs = data["run_summary"]
+            self.assertEqual(rs["total_tokens_in"], 100)
+            self.assertEqual(rs["total_tokens_out"], 50)
+            self.assertEqual(rs["total_tokens_cached"], 10)
+            self.assertEqual(rs["invocation_count"], 1)
+            self.assertIn("elapsed_s", rs)
+            self.assertIn("start", rs)
+            self.assertIn("end", rs)
+
+    def test_noop_if_file_missing(self):
+        # Should not raise
+        write_metrics_to_task_json(Path("/nonexistent/task.json"), _make_run(_make_inv()))
+
+    def test_preserves_existing_fields(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            p = self._make_task_json(Path(d))
+            run = _make_run(_make_inv())
+            write_metrics_to_task_json(p, run)
+            data = json.loads(p.read_text())
+            self.assertEqual(data["task-type"], "PIPELINE-SUBTASK")
+            self.assertEqual(data["level"], "TOP")
 
 
 # ---------------------------------------------------------------------------
