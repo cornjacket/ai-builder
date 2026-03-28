@@ -25,4 +25,5 @@
 - [b9529c-doc-pipeline](b9529c-doc-pipeline/)
 - [fe6b43-review-pipeline](fe6b43-review-pipeline/)
 - [b7249c-update-pipeline](b7249c-update-pipeline/)
+- [705550-reorganise-component-tests-into-stage-tests](705550-reorganise-component-tests-into-stage-tests/)
 <!-- task-list-end -->
