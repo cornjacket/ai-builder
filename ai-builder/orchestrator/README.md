@@ -12,6 +12,9 @@ document from input to tested implementation through specialist agents.
 | `orchestrator.py` | Main pipeline loop: routes between roles, manages state, parses outcomes |
 | `agent_wrapper.py` | Spawns agent CLI subprocesses, streams output, returns results |
 | `metrics.py` | Captures per-invocation timing and token usage; writes run-summary.md and run-metrics.json |
+| `build_master_index.py` | Scans output dir for `.md` files with Purpose:/Tags: headers; writes `master-index.md` |
+| `render_readme.py` | Renders `README.md` from `task.json` (TOP-level: run summary + log; non-TOP: title + subtasks) |
+| `agent-roles.md` | Canonical reference: every pipeline agent — type, inputs, outputs, valid outcomes |
 | `orchestrator.md` | Code companion: inputs, outputs, internals for orchestrator.py |
 | `agent_wrapper.md` | Code companion: inputs, outputs, internals for agent_wrapper.py |
 | `metrics.md` | Code companion: data model, public API, and outputs for metrics.py |
@@ -45,11 +48,15 @@ routes between agents based on that outcome.
 
 | Role | Agent | Responsibility |
 |------|-------|----------------|
-| ARCHITECT | claude | Designs the solution; fills Design + Acceptance Criteria |
-| IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed |
-| TESTER | claude | Verifies implementation against Acceptance Criteria |
-| DECOMPOSE_HANDLER     | internal | Parses ARCHITECT's component table; creates subtask directories; advances pipeline to first subtask |
+| ARCHITECT | claude | Designs the solution (decompose or design mode); emits XML response with structured fields |
+| IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed; emits XML response |
+| TESTER | internal | Runs `test_command` from `task.json`; returns pass/fail |
+| DECOMPOSE_HANDLER | internal | Creates pipeline subtask directories from ARCHITECT's components array; advances to first subtask |
 | LEAF_COMPLETE_HANDLER | internal | Marks task complete; walks up the tree; advances to next sibling or signals DONE |
+| DOCUMENTER_POST_ARCHITECT | internal | Scans output dir for `.md` files; rebuilds README index (runs after ARCHITECT design mode) |
+| DOCUMENTER_POST_IMPLEMENTOR | internal | Scans output dir for `.md` files; rebuilds README index (runs after IMPLEMENTOR) |
+
+See [`agent-roles.md`](agent-roles.md) for full details on each agent.
 
 ---
 

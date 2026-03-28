@@ -70,9 +70,10 @@ behaviour* — inputs, outputs, side effects, design assumptions, or
 non-obvious behaviour. Internal refactors that preserve the external contract
 do not require a doc update.
 
-The IMPLEMENTOR signals this via the `DOCS:` field. If `DOCS:` references a
-source file change (e.g. "updated `run_agent()` signature"), the DOCUMENTER
-updates the companion. If `DOCS: none`, the companion is left as-is.
+The IMPLEMENTOR signals this via the `documents_written` field in its
+`<response>` XML block. If `documents_written` is `true`, the DOCUMENTER
+scans the output directory for new `.md` files. If `false`, the scan is
+skipped.
 
 ---
 
@@ -166,21 +167,20 @@ DOCUMENTER_TRIGGERS = {"ARCHITECT", "IMPLEMENTOR", "TESTER"}
 DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER are excluded — they update task
 metadata only and produce no documentation artifacts.
 
-DOCUMENTER runs only when the triggering role emits a `DOCS:` field in its
-output. If `DOCS:` is absent or `none`, the hook is skipped.
+DOCUMENTER runs only when the triggering role sets `documents_written: true`.
+If absent or false, the hook is a no-op.
 
 ---
 
 ## What DOCUMENTER Receives
 
-The orchestrator passes:
-- Which role just finished
-- The job document path
-- The output directory path
-- The previous role's `HANDOFF:` text
-- The previous role's `DOCS:` field (documentation instructions from the
-  role that just ran — the content producer is the authority on what needs
-  documenting and where)
+> **Note:** DOCUMENTER_POST_ARCHITECT and DOCUMENTER_POST_IMPLEMENTOR are
+> internal agents. They receive the job document path and output directory
+> path directly; they do not receive a text prompt.
+
+The internal agent is passed:
+- The job document path (to find `task.json` and read `documents_written`)
+- The output directory path (to scan for `.md` files)
 
 DOCUMENTER reads artifact files from the output directory directly.
 

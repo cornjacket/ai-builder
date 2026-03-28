@@ -8,23 +8,21 @@ the test output.
 
 ## Instructions
 
-1. The test command is provided directly in your prompt under `Test command:`.
-   Do NOT read the job document — use the inlined command.
+> **Note:** TESTER is an internal agent. This document describes its
+> behaviour for reference; it is not injected as a prompt.
 
-2. Run the exact command specified, from the output directory provided in
-   your prompt.
+1. The test command is read from `test_command` in `task.json`. It was
+   produced by ARCHITECT in design mode and stored there automatically.
+
+2. Run the exact command specified.
 
 3. If all tests pass → emit `TESTER_TESTS_PASS`.
 
 4. If any tests fail → emit `TESTER_TESTS_FAIL` and include the full test
    output in HANDOFF so IMPLEMENTOR can diagnose.
 
-Do NOT read source files. Do NOT write any files. Do NOT attempt to fix
-failures. Do NOT invent or substitute a test command — run only the exact
-command provided in your prompt.
-
 ## Valid Outcomes
 
 - `TESTER_TESTS_PASS` — all tests pass
 - `TESTER_TESTS_FAIL` — one or more tests failed; include full test output in HANDOFF
-- `TESTER_NEED_HELP` — cannot run the tests due to an environmental or setup issue, or `## Test Command` is missing/empty
+- `TESTER_NEED_HELP` — cannot run the tests due to an environmental or setup issue, or `test_command` is missing from `task.json`

@@ -92,7 +92,7 @@ type being detected).
 - [x] [X-49352f-0027-preserve-run-history](X-49352f-0027-preserve-run-history/)
 - [x] [X-49352f-0028-per-run-output-directory](X-49352f-0028-per-run-output-directory/)
 - [x] [X-49352f-0029-xml-structured-output-format](X-49352f-0029-xml-structured-output-format/)
-- [ ] [49352f-0030-audit-agent-prompts-for-stale-instructions](49352f-0030-audit-agent-prompts-for-stale-instructions/)
+- [x] [X-49352f-0030-audit-agent-prompts-for-stale-instructions](X-49352f-0030-audit-agent-prompts-for-stale-instructions/)
 - [ ] [49352f-0031-investigate-output-documentation-quality](49352f-0031-investigate-output-documentation-quality/)
 - [ ] [49352f-0032-pipeline-theory-of-operation-doc](49352f-0032-pipeline-theory-of-operation-doc/)
 <!-- subtask-list-end -->

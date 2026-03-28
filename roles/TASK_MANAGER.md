@@ -23,7 +23,7 @@ Given a high-level feature or project description:
 - For each task, identify its subtasks — the discrete implementation steps the
   IMPLEMENTOR will execute
 - Write clear, unambiguous descriptions in each task README
-- Create all tasks using `new-task.sh` before any pipeline work begins
+- Create all tasks using `new-user-task.sh` before any pipeline work begins
 
 **Task granularity rules:**
 - A top-level task should be completable in a single ARCHITECT→IMPLEMENTOR→TESTER
@@ -100,7 +100,7 @@ code, run tests, or modify files outside `project/tasks/`.
 
 ```bash
 # Core workflow
-project/tasks/scripts/new-task.sh       --epic main --folder draft --name <task>
+project/tasks/scripts/new-user-task.sh  --epic main --folder draft --name <task>
 project/tasks/scripts/move-task.sh      --epic main --name <task> --from draft --to backlog
 project/tasks/scripts/move-task.sh      --epic main --name <task> --from backlog --to in-progress
 project/tasks/scripts/complete-task.sh  --epic main --folder in-progress --name <task>
