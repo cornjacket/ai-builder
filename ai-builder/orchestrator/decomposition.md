@@ -92,39 +92,71 @@ DECOMPOSE_HANDLER creates one subtask per component
 
 ## ARCHITECT Component List Format
 
-For DECOMPOSE_HANDLER to create subtasks mechanically, the ARCHITECT must write
-its component list in a defined format:
+For DECOMPOSE_HANDLER to create subtasks mechanically, the ARCHITECT emits a
+`<components>` block inside its XML `<response>`. Each `<component>` entry
+has `name`, `complexity`, `source_dir`, and `description`:
 
-```markdown
-## Components
-
-| Name | Complexity | Description |
-|------|------------|-------------|
-| auth-handler | atomic | JWT validation, token issuance, single endpoint |
-| user-store   | atomic | CRUD operations on users table, PostgreSQL |
-| api-layer    | composite | HTTP routing, middleware — needs further decomposition |
+```xml
+<response>
+  <outcome>ARCHITECT_DECOMPOSITION_READY</outcome>
+  <handoff>...</handoff>
+  <components>
+    <component>
+      <name>auth-handler</name>
+      <complexity>atomic</complexity>
+      <source_dir>internal/auth/handler</source_dir>
+      <description>JWT validation, token issuance, POST /auth/login and POST /auth/logout</description>
+    </component>
+    <component>
+      <name>user-store</name>
+      <complexity>atomic</complexity>
+      <source_dir>internal/auth/store</source_dir>
+      <description>CRUD operations on users — in-memory map[string]User guarded by sync.RWMutex</description>
+    </component>
+    <component>
+      <name>integrate</name>
+      <complexity>atomic</complexity>
+      <source_dir>.</source_dir>
+      <description>Wire auth-handler and user-store; return http.Handler for the caller</description>
+    </component>
+  </components>
+</response>
 ```
 
-DECOMPOSE_HANDLER reads this table and creates one subtask per row using
-`new-task.sh`. `Complexity: composite` triggers another decomposition pass.
-`Complexity: atomic` proceeds to a design pass (ARCHITECT fills Design +
-Acceptance Criteria).
+DECOMPOSE_HANDLER parses this array and creates one subtask per entry.
+`Complexity: composite` triggers another decomposition pass on that subtask.
+`Complexity: atomic` proceeds to a design pass. The final entry must always
+be `integrate` — it wires the sibling components together.
+
+The `source_dir` field drives output directory placement. The description is
+copied verbatim into the component subtask's `goal` field in `task.json` — it
+is the only input the design-mode ARCHITECT sees, so it must be a complete contract.
 
 ---
 
-## Job Document Per Phase
+## Task State Per Phase
 
-The job document at every level is the task README, pointed to by
-`current-job.txt`. ARCHITECT mode is determined by the `Complexity` field
-in the task metadata and the sections present:
+The orchestrator injects fields from `task.json` inline into every agent
+prompt. ARCHITECT mode is determined by the `complexity` field:
 
-| Complexity field | ARCHITECT mode | Sections filled |
-|-----------------|----------------|-----------------|
-| `—` or `composite` | Decompose | `## Components`, `## Suggested Tools` |
-| `atomic` | Design | `## Design`, `## Acceptance Criteria`, `## Suggested Tools` |
+| `complexity` value | ARCHITECT mode | Produces |
+|--------------------|----------------|----------|
+| `—` or `composite` | Decompose | XML `<components>` array in `<response>` block |
+| `atomic` | Design | XML `<response>` with `design`, `acceptance_criteria`, `test_command`; README.md in output dir |
 
-DECOMPOSE_HANDLER fills `Complexity`, `Goal`, and `Context` when creating component subtasks.
-ARCHITECT fills the remaining sections in place.
+`task.json` fields written and consumed across phases:
+
+| Field | Written by | Consumed by |
+|-------|-----------|-------------|
+| `goal` | Oracle / DECOMPOSE_HANDLER | ARCHITECT, IMPLEMENTOR |
+| `context` | Oracle / DECOMPOSE_HANDLER | ARCHITECT, IMPLEMENTOR |
+| `complexity` | DECOMPOSE_HANDLER | Orchestrator (mode selection) |
+| `level` | DECOMPOSE_HANDLER | Orchestrator (scope of integrate step) |
+| `output_dir` | DECOMPOSE_HANDLER | Orchestrator (where to write files) |
+| `design` | ARCHITECT (stored by orchestrator) | IMPLEMENTOR |
+| `acceptance_criteria` | ARCHITECT (stored by orchestrator) | IMPLEMENTOR |
+| `test_command` | ARCHITECT (stored by orchestrator) | TESTER |
+| `documents_written` | ARCHITECT / IMPLEMENTOR via `<response>` | DOCUMENTER (skip check) |
 
 ---
 
@@ -156,14 +188,14 @@ The two handlers navigate the task tree:
 
 **Deterministic (scriptable):**
 - Task directory and file structure
-- Handler script invocations (new-task.sh, complete-task.sh, set-current-job.sh)
+- Handler script invocations (`new-pipeline-subtask.sh`, `complete-task.sh`, `set-current-job.sh`)
 - Routing table lookup
-- Loop termination (all subtasks in complete/ → `HANDLER_ALL_DONE`)
-- Template selection (DECOMPOSE_HANDLER reads Complexity field)
+- Loop termination (all subtasks complete → `HANDLER_ALL_DONE`)
+- Template selection (orchestrator reads `complexity` from `task.json`)
 
 **Must be structured for determinism** (AI produces, format is fixed):
-- ARCHITECT component list — defined table format so DECOMPOSE_HANDLER can parse mechanically
-- `Complexity` field — explicit `atomic` or `composite`, not prose
+- ARCHITECT component list — XML `<components>` block parsed by orchestrator; passed as array to DECOMPOSE_HANDLER
+- `complexity` field in XML response — must be exactly `atomic` or `composite`, not prose
 
 **Genuinely non-deterministic** (accept and design around):
 - Component boundary decisions
@@ -172,66 +204,47 @@ The two handlers navigate the task tree:
 
 ---
 
-## README Content by Level
+## Output Directory Structure
 
-The README hierarchy mirrors the decomposition tree exactly. Each level of
-decomposition produces a README for that directory — the ARCHITECT is the
-content producer, DOCUMENTER formats and owns the file.
+The output directory tree mirrors the decomposition tree. ARCHITECT writes
+documentation directly to the output directory; DECOMPOSE_HANDLER creates
+subdirectories keyed by `source_dir`.
 
-**Non-leaf README** (produced by ARCHITECT decompose pass):
+**Non-leaf output directory** (ARCHITECT decompose pass writes README.md):
 
 ```
-## <service-name>
+# iam
 
-One sentence: what does this part of the system do?
+Purpose: Identity and access management service.
+Tags: architecture, design
 
-## Data Flow
+## File Index
+...
 
-    client → [api-layer] → [auth-handler] → [user-store]
-                  |               |
-                  v               v
-             rate-limit      JWT issue/validate
-
-## Components
-
-| Component    | Responsibility                        |
-|--------------|---------------------------------------|
-| api-layer    | HTTP routing, middleware, rate-limit  |
-| auth-handler | JWT validation and token issuance     |
-| user-store   | User CRUD, PostgreSQL                 |
+## Overview
+...component wiring, route summary...
 ```
 
-Bounded by design — only describes this level's scope. No implementation
-detail. Links down to child READMEs.
+**Leaf output directory** (ARCHITECT design pass writes README.md +
+optional named detail files; IMPLEMENTOR writes source files + companion docs):
 
-**Leaf README** (skeleton by ARCHITECT design pass, completed by IMPLEMENTOR):
-- Purpose and interface contracts (inputs, outputs, error conditions)
-- Data structures and types
-- Dependencies (what this component calls, what calls it)
-- Usage examples
-- Implementation notes (non-obvious decisions, known limitations)
-
-Bulk of technical detail lives here. Non-leaf documents link down to it.
+```
+internal/iam/lifecycle/
+  README.md         ← ARCHITECT: Purpose/Tags, file index, overview, API contract
+  api.md            ← ARCHITECT: full endpoint spec (if >3 endpoints)
+  lifecycle.go      ← IMPLEMENTOR: source with Purpose:/Tags: package comment
+  lifecycle_test.go ← IMPLEMENTOR: tests
+  lifecycle.md      ← IMPLEMENTOR: companion doc for non-trivial logic
+```
 
 ---
 
-## Pipeline Documentation Responsibilities
-
-Content producers write *what* the system does. DOCUMENTER writes *the document*.
+## Documentation Responsibilities
 
 | Role | Produces |
 |------|----------|
-| ARCHITECT (decompose pass) | Data flow description, component table with responsibilities |
-| ARCHITECT (design pass) | Interface contracts, data structures, dependencies |
-| IMPLEMENTOR | Implementation notes, usage examples, known limitations |
-| TESTER | Acceptance test cases, documented alongside test files |
-| **DOCUMENTER** | **All README files — formats, organises, and maintains** |
-
-Content required per role per phase:
-
-| Role | Phase | Content required |
-|------|-------|-----------------|
-| ARCHITECT | Decompose | Data flow description + component table (`## Components`) |
-| ARCHITECT | Design | Interface contracts + data structures + dependencies (`## Design`, `## Acceptance Criteria`) |
-| IMPLEMENTOR | — | Implementation of the Design section |
-| TESTER | — | Acceptance test cases verified against `## Acceptance Criteria` |
+| ARCHITECT (decompose pass) | `README.md` in the composite output dir — overview, file index, data flow |
+| ARCHITECT (design pass) | `README.md` + optional named detail files (`api.md`, `models.md`, etc.) in the leaf output dir |
+| IMPLEMENTOR | Source files + companion `.md` files; mandatory `Purpose:`/`Tags:` package comment in each source file |
+| TESTER | Internal — runs test command from `task.json`; no documentation output |
+| DOCUMENTER_POST_ARCHITECT / _IMPLEMENTOR | Internal — scans output dir for `.md` files with Purpose:/Tags: headers; rebuilds README index and `master-index.md` |

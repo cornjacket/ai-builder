@@ -3,12 +3,12 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 49352f-redesign-pipeline-communication-architecture             |
 | Priority    | —           |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0003 |
 
 ## Goal
 
@@ -83,6 +83,9 @@ AI sessions a complete mental model without needing to read every source file.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [x] [X-49352f-0000-fix-stale-orchestrator-docs](X-49352f-0000-fix-stale-orchestrator-docs/)
+- [x] [X-49352f-0001-create-regression-test-index](X-49352f-0001-create-regression-test-index/)
+- [x] [X-49352f-0002-write-theory-of-operation](X-49352f-0002-write-theory-of-operation/)
 <!-- subtask-list-end -->
 
 ## Notes

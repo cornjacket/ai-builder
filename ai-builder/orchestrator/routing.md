@@ -8,41 +8,51 @@ or `None` (halt).
 
 ## ROUTES Table
 
-### TM Mode
+The state machine is defined in `machines/default.json` (TM mode) and
+`machines/simple.json` (non-TM / single-step mode). The tables below reflect
+the current `default.json` and `simple.json` configurations.
+
+### TM Mode (`machines/default.json`)
 
 | From | Outcome | To |
 |------|---------|----|
-| ARCHITECT | `ARCHITECT_DESIGN_READY` | IMPLEMENTOR |
+| ARCHITECT | `ARCHITECT_DESIGN_READY` | DOCUMENTER_POST_ARCHITECT |
 | ARCHITECT | `ARCHITECT_DECOMPOSITION_READY` | DECOMPOSE_HANDLER |
-| ARCHITECT | `ARCHITECT_NEEDS_REVISION` | ARCHITECT *(self-loop — iteration limit applies)* |
+| ARCHITECT | `ARCHITECT_NEEDS_REVISION` | ARCHITECT *(self-loop)* |
 | ARCHITECT | `ARCHITECT_NEED_HELP` | halt |
-| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | TESTER |
+| DOCUMENTER_POST_ARCHITECT | `DOCUMENTER_DONE` | IMPLEMENTOR |
+| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | DOCUMENTER_POST_IMPLEMENTOR |
 | IMPLEMENTOR | `IMPLEMENTOR_NEEDS_ARCHITECT` | ARCHITECT |
 | IMPLEMENTOR | `IMPLEMENTOR_NEED_HELP` | halt |
+| DOCUMENTER_POST_IMPLEMENTOR | `DOCUMENTER_DONE` | TESTER |
 | TESTER | `TESTER_TESTS_PASS` | LEAF_COMPLETE_HANDLER |
 | TESTER | `TESTER_TESTS_FAIL` | IMPLEMENTOR |
 | TESTER | `TESTER_NEED_HELP` | halt |
 | DECOMPOSE_HANDLER | `HANDLER_SUBTASKS_READY` | ARCHITECT |
+| DECOMPOSE_HANDLER | `HANDLER_STOP_AFTER` | halt |
 | DECOMPOSE_HANDLER | `HANDLER_NEED_HELP` | halt |
 | LEAF_COMPLETE_HANDLER | `HANDLER_SUBTASKS_READY` | ARCHITECT |
-| LEAF_COMPLETE_HANDLER | `HANDLER_ALL_DONE` | halt |
+| LEAF_COMPLETE_HANDLER | `HANDLER_ALL_DONE` | halt *(post-completion flow runs first)* |
 | LEAF_COMPLETE_HANDLER | `HANDLER_STOP_AFTER` | halt *(Oracle intervention required)* |
 | LEAF_COMPLETE_HANDLER | `HANDLER_NEED_HELP` | halt |
 
-### Non-TM Mode
+### Non-TM / Single-Step Mode (`machines/simple.json`)
 
 | From | Outcome | To |
 |------|---------|----|
-| ARCHITECT | `ARCHITECT_DESIGN_READY` | IMPLEMENTOR |
+| ARCHITECT | `ARCHITECT_DESIGN_READY` | DOCUMENTER_POST_ARCHITECT |
 | ARCHITECT | `ARCHITECT_NEED_HELP` | halt |
-| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | TESTER |
+| DOCUMENTER_POST_ARCHITECT | `DOCUMENTER_DONE` | IMPLEMENTOR |
+| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE` | DOCUMENTER_POST_IMPLEMENTOR |
 | IMPLEMENTOR | `IMPLEMENTOR_NEEDS_ARCHITECT` | ARCHITECT |
 | IMPLEMENTOR | `IMPLEMENTOR_NEED_HELP` | halt |
-| TESTER | `TESTER_TESTS_PASS` | halt (pipeline complete) |
+| DOCUMENTER_POST_IMPLEMENTOR | `DOCUMENTER_DONE` | TESTER |
+| TESTER | `TESTER_TESTS_PASS` | halt *(pipeline complete)* |
 | TESTER | `TESTER_TESTS_FAIL` | IMPLEMENTOR |
 | TESTER | `TESTER_NEED_HELP` | halt |
 
-DOCUMENTER hook does not run in non-TM mode.
+Simple mode has no DECOMPOSE_HANDLER or LEAF_COMPLETE_HANDLER — it handles
+a single atomic job from a `--job` file.
 
 ---
 
@@ -91,53 +101,37 @@ catches cases where an agent emits a malformed or unexpected OUTCOME string.
 
 ---
 
-## DOCUMENTER Hook *(planned, not yet implemented)*
+## DOCUMENTER Agents
 
-In TM mode, the orchestrator inserts a DOCUMENTER post-step between certain
-roles and their routing destination. DOCUMENTER is not a node in the ROUTES
-table — it is managed directly by the orchestrator loop.
+`DOCUMENTER_POST_ARCHITECT` and `DOCUMENTER_POST_IMPLEMENTOR` are internal
+agents — they run Python code directly without invoking a model. Both are
+nodes in the state machine (see ROUTES tables above).
 
-**Trigger config:**
-```python
-DOCUMENTER_TRIGGERS = {"ARCHITECT", "IMPLEMENTOR", "TESTER"}
-```
+**What they do:**
+1. Read `documents_written` from `task.json`. If `false` or absent → return
+   `DOCUMENTER_DONE` immediately (no-op).
+2. Walk the output directory for `*.md` files with `Purpose:` / `Tags:` headers
+   (excluding root `README.md` and `master-index.md`).
+3. Rebuild the output directory's `README.md` with a documentation index
+   (design docs from ARCHITECT, implementation docs from IMPLEMENTOR).
 
-Handlers (`DECOMPOSE_HANDLER`, `LEAF_COMPLETE_HANDLER`) are excluded — they update task
-metadata only and produce no documentation artifacts.
-
-**Hook logic:**
-```
-1. Role completes → outcome and DOCS field parsed
-2. next_role = ROUTES[(current_role, outcome)]   ← saved as pending
-3. if current_role in DOCUMENTER_TRIGGERS and DOCS is non-empty:
-       run DOCUMENTER with context:
-         - which role just ran
-         - job document path
-         - output directory
-         - HANDOFF text from triggering role
-         - DOCS instructions from triggering role
-4. route to pending next_role
-```
-
-DOCUMENTER receives the `DOCS:` field written by the triggering role.
-The content producer — not DOCUMENTER — decides what documentation is needed
-and provides instructions. DOCUMENTER executes those instructions.
-
-If `DOCS:` is absent or `none`, step 3 is skipped entirely.
+Handlers (`DECOMPOSE_HANDLER`, `LEAF_COMPLETE_HANDLER`) are excluded — they
+update task metadata only and produce no documentation artifacts.
 
 ---
 
 ## Agent Assignment
 
-```python
-AGENTS = {
-    "DECOMPOSE_HANDLER":     "claude",
-    "LEAF_COMPLETE_HANDLER": "claude",
-    "ARCHITECT":             "claude",
-    "IMPLEMENTOR":           "claude",
-    "TESTER":                "claude",
-}
-```
+Agent types are declared per-role in the machine JSON (`"agent": "claude"` or
+`"agent": "internal"`). Internal agents run Python functions directly; AI
+agents spawn a subprocess via `agent_wrapper.py`.
 
-Agent assignment is a static configuration. The orchestrator looks up the
-agent name for the current role and passes it to `agent_wrapper.run_agent()`.
+| Role | Agent type |
+|------|-----------|
+| ARCHITECT | claude (or gemini) |
+| IMPLEMENTOR | claude (or gemini) |
+| TESTER | internal |
+| DECOMPOSE_HANDLER | internal |
+| LEAF_COMPLETE_HANDLER | internal |
+| DOCUMENTER_POST_ARCHITECT | internal |
+| DOCUMENTER_POST_IMPLEMENTOR | internal |

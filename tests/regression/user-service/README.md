@@ -24,9 +24,9 @@ user-service/
 
 ### Why gold/ and work/ are separate
 
-The pipeline's `--output-dir` is `/tmp/ai-builder-test-user-service-output/`.
+The pipeline's `--output-dir` is `sandbox/user-service-output/`.
 The gold tests run separately after the pipeline completes. The TESTER agent
-has no visibility into `gold/`, so it derives its own tests from the job's
+has no visibility into `gold/`, so it derives its own tests from the
 Acceptance Criteria. The gold tests independently verify the assembled binary
 behaviour. All regression tests follow this `gold/` / `work/` separation.
 
@@ -36,8 +36,8 @@ behaviour. All regression tests follow this `gold/` / `work/` separation.
 
 The full decomposition pipeline loop:
 
-1. **ARCHITECT** (decompose mode) — reads `JOB-user-service.md`, produces a
-   component table (`ARCHITECT_DECOMPOSITION_READY`)
+1. **ARCHITECT** (decompose mode) — reads the task goal/context, produces a
+   component array in its XML response (`ARCHITECT_DECOMPOSITION_READY`)
 2. **DECOMPOSE_HANDLER** — reads the component table, creates subtasks in the
    target repo's task system, queues the first one (`HANDLER_SUBTASKS_READY`)
 3. **ARCHITECT** (design mode) — designs the first component (`ARCHITECT_DESIGN_READY`)
@@ -68,9 +68,10 @@ writes `current-job.txt` (simulating Oracle).
 
 ```bash
 python3 ai-builder/orchestrator/orchestrator.py \
-    --target-repo sandbox/user-service-target \
-    --output-dir  sandbox/user-service-output \
-    --epic        main
+    --target-repo   sandbox/user-service-target \
+    --output-dir    sandbox/user-service-output \
+    --epic          main \
+    --state-machine ai-builder/orchestrator/machines/default.json
 ```
 
 **Step 3 — Run the gold test:**

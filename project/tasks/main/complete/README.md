@@ -29,4 +29,5 @@
 - [829461-split-task-format-and-internalize-decompose-handler](829461-split-task-format-and-internalize-decompose-handler/)
 - [b14e76-brainstorm-token-usage-and-caching-costs](b14e76-brainstorm-token-usage-and-caching-costs/)
 - [5ca80b-gemini-implementor-heredoc-parse-error](5ca80b-gemini-implementor-heredoc-parse-error/)
+- [49352f-redesign-pipeline-communication-architecture](49352f-redesign-pipeline-communication-architecture/)
 <!-- task-list-end -->

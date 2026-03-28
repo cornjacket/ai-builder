@@ -55,73 +55,93 @@ ARCHITECT fills it in.
 
 ## Agent Output Format
 
-Every agent ends its response with a structured block the orchestrator parses:
+AI agents (ARCHITECT, IMPLEMENTOR) end their response with a `<response>` XML
+block the orchestrator parses. Internal agents emit plain `OUTCOME:`/`HANDOFF:`
+lines.
+
+### AI agents — XML response block
+
+```xml
+<response>
+  <outcome>ARCHITECT_DESIGN_READY</outcome>
+  <handoff>one paragraph summary for downstream agents</handoff>
+  <documents_written>true</documents_written>
+  <!-- design-mode ARCHITECT also includes: -->
+  <design>## Design\n\n...</design>
+  <acceptance_criteria>## Acceptance Criteria\n\n1. ...</acceptance_criteria>
+  <test_command>cd /path && go test ./...</test_command>
+</response>
+```
+
+The `<response>` block must be the final content of the response. XML
+self-delimiting tags eliminate the JSON escaping failures that occurred with
+the previous fenced-JSON format — multiline design prose, shell commands, and
+code blocks are all valid inside a tag without escaping.
+
+### Internal agents — plain lines
 
 ```
-OUTCOME: <value>
-HANDOFF: <one paragraph summary for the next agent>
-DOCS: <documentation instructions for the DOCUMENTER, or 'none'>
+OUTCOME: HANDLER_SUBTASKS_READY
+HANDOFF: decomposed into 3 components; first: store
 ```
 
-### OUTCOME
-
-Valid outcomes per role:
+### Valid outcomes per role
 
 | Role | Valid outcomes |
 |------|---------------|
-| ARCHITECT | `DONE`, `NEED_HELP` |
-| IMPLEMENTOR | `DONE`, `NEEDS_ARCHITECT`, `NEED_HELP` |
-| TESTER | `DONE`, `FAILED`, `NEED_HELP` |
-| DECOMPOSE_HANDLER     | `HANDLER_SUBTASKS_READY`, `HANDLER_NEED_HELP` |
+| ARCHITECT | `ARCHITECT_DESIGN_READY`, `ARCHITECT_DECOMPOSITION_READY`, `ARCHITECT_NEEDS_REVISION`, `ARCHITECT_NEED_HELP` |
+| IMPLEMENTOR | `IMPLEMENTOR_IMPLEMENTATION_DONE`, `IMPLEMENTOR_NEEDS_ARCHITECT`, `IMPLEMENTOR_NEED_HELP` |
+| TESTER | `TESTER_TESTS_PASS`, `TESTER_TESTS_FAIL`, `TESTER_NEED_HELP` |
+| DECOMPOSE_HANDLER | `HANDLER_SUBTASKS_READY`, `HANDLER_STOP_AFTER`, `HANDLER_NEED_HELP` |
 | LEAF_COMPLETE_HANDLER | `HANDLER_SUBTASKS_READY`, `HANDLER_ALL_DONE`, `HANDLER_STOP_AFTER`, `HANDLER_NEED_HELP` |
+| DOCUMENTER_POST_* | `DOCUMENTER_DONE` |
 
-`NEED_HELP` from any role halts the pipeline and signals that human
+Any outcome ending in `_NEED_HELP` halts the pipeline and signals that human
 intervention is required. The orchestrator exits with code 0.
 
-### HANDOFF
+### HANDOFF accumulation
 
-A one-paragraph summary of what was done and what the next agent needs to
-know. Accumulated across all roles and injected into every subsequent
-agent's prompt as `## Handoff Notes from Previous Agents`.
-
-### DOCS
-
-Instructions for the DOCUMENTER hook. Written by the role that produced the
-content — the content producer is the authority on what needs documenting.
-
-Format: free prose describing what files to create or update and what
-sections to include. Example:
-
-```
-DOCS: Create leaf README at fibonacci/README.md. Sections needed:
-  - Purpose: computes first N Fibonacci numbers
-  - Interface: Compute(n int) []int — returns empty slice for n<=0
-  - Usage example from the test cases
-```
-
-If the role produced no documentation-worthy output, omit `DOCS:` or write
-`DOCS: none`. The DOCUMENTER hook is skipped for that step.
+The `handoff` field (XML for AI agents; `HANDOFF:` line for internal agents)
+is appended to `handoff_history` after every invocation and injected into
+every subsequent AI agent's prompt as `## Handoff Notes from Previous Agents`.
+Internal agents are excluded from receiving history (`no_history: true` in the
+machine JSON).
 
 ---
 
-## Job Document Lifecycle
+## Job Document Lifecycle (TM mode)
+
+In TM mode, the job document is a task `README.md` in the target repository's
+task tree. The orchestrator reads it for supplementary context; the primary
+inputs to each agent come from `task.json` fields injected inline into the
+prompt. Agents do not edit the job document.
 
 ```
-Oracle creates job doc from JOB-TEMPLATE.md
+Oracle creates task README + task.json (goal, context, complexity)
     |
     v
-ARCHITECT fills in Design + Acceptance Criteria (edits the file in place)
+orchestrator reads task.json → injects goal/context/complexity inline
     |
     v
-IMPLEMENTOR reads Design, produces implementation files in output-dir
+ARCHITECT emits XML <response> → orchestrator stores design fields in task.json
     |
     v
-TESTER reads Acceptance Criteria, verifies implementation
+orchestrator injects design/acceptance_criteria/test_command inline
     |
     v
-Pipeline halts; job doc remains in output-dir as a record of the run
+IMPLEMENTOR writes source files to output_dir
+    |
+    v
+TESTER reads test_command from task.json, runs subprocess
+    |
+    v
+LEAF_COMPLETE_HANDLER advances current-job.txt to next sibling
+    |
+    v
+Pipeline completes → orchestrator writes metrics, renders README,
+rebuilds master-index.md, applies deferred TOP rename
 ```
 
-In TM mode, the job document path is written to `current-job.txt` in the
-output directory by LEAF_COMPLETE_HANDLER, then read by the orchestrator to pass to
-downstream roles.
+`current-job.txt` (in `--run-dir`) always points to the active job document.
+It is updated by `set-current-job.sh` (DECOMPOSE_HANDLER after creating
+subtasks) and by `on-task-complete.sh` (LEAF_COMPLETE_HANDLER after completion).

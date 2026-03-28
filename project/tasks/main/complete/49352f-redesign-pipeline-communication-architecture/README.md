@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | orchestrator, architecture, pipeline               |
 | Priority    | HIGH           |
@@ -94,7 +94,7 @@ type being detected).
 - [x] [X-49352f-0029-xml-structured-output-format](X-49352f-0029-xml-structured-output-format/)
 - [x] [X-49352f-0030-audit-agent-prompts-for-stale-instructions](X-49352f-0030-audit-agent-prompts-for-stale-instructions/)
 - [x] [X-49352f-0031-investigate-output-documentation-quality](X-49352f-0031-investigate-output-documentation-quality/)
-- [ ] [49352f-0032-pipeline-theory-of-operation-doc](49352f-0032-pipeline-theory-of-operation-doc/)
+- [x] [X-49352f-0032-pipeline-theory-of-operation-doc](X-49352f-0032-pipeline-theory-of-operation-doc/)
 <!-- subtask-list-end -->
 
 ## Notes
