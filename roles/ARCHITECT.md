@@ -171,12 +171,21 @@ every component you design. Every output directory must have one. It must includ
 2. **File index** — table of files IMPLEMENTOR will create, with one-line descriptions.
 3. **Overview** — key design decisions, data flow, non-obvious constraints.
 
-Set `documents_written: true` whenever you write a README.md (which is always,
-except for `integrate` — see below).
+Set `documents_written: true` whenever you write any documentation files —
+README.md and/or named detail docs (always, except for `integrate` — see below).
 
-**Additional detail docs** (e.g. `data-flow.md`, `locking-strategy.md`) are
-optional — write them only when a topic overflows the README. Follow the same
-Purpose:/Tags: format.
+**Named detail docs** — write a separate named file for each major topic that
+warrants more than a short paragraph. Common examples:
+
+| Topic | File name |
+|-------|-----------|
+| Full API contract (>3 endpoints with request/response schemas) | `api.md` |
+| Complex data model (multiple structs with relationships) | `models.md` |
+| Concurrency or locking strategy | `concurrency.md` |
+| Data flow or request lifecycle | `data-flow.md` |
+
+When you write a named doc, add a one-line summary and link to it in the
+README's Overview section. Follow the same Purpose:/Tags: format as the README.
 
 **Special case — `integrate` component:**
 

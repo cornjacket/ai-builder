@@ -1,5 +1,28 @@
 # Documentation Format Convention
 
+## Source file headers
+
+Every source file written by IMPLEMENTOR must begin with a package-level doc
+comment that includes `Purpose:` and `Tags:` lines:
+
+```go
+// Package lifecycle provides in-memory user registration, authentication,
+// and session token management.
+//
+// Purpose: In-memory user lifecycle service — registration, bcrypt password
+// hashing, token issuance and invalidation.
+// Tags: implementation, lifecycle
+package lifecycle
+```
+
+The `Purpose:` line must stand alone as a meaningful one-sentence description.
+The `Tags:` line uses the same format as `.md` headers. This comment is the
+primary documentation for automated indexing of source files.
+
+---
+
+## Markdown file headers
+
 All `.md` files written to the output directory by ARCHITECT or IMPLEMENTOR
 must include the following header block near the top. For `README.md` files,
 a single `# heading` line may appear before the block; the block must then

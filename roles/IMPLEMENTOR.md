@@ -20,15 +20,36 @@ Testing boundaries:
 - Do NOT run acceptance tests. Do NOT test the public interface or CLI
   behaviour — that is the TESTER's exclusive responsibility.
 
-## Companion documentation
+## Documentation requirements
 
-Write a companion `.md` file only for non-obvious implementation details not
-covered by ARCHITECT's design — complex internal state, non-obvious error
-handling, performance trade-offs discovered during implementation. **Do not
-write docs for straightforward implementations** — ARCHITECT's design is
-sufficient in most cases.
+### Source file headers (mandatory)
 
-When you do write a companion doc, follow the format in `roles/doc-format.md`:
+Every source file you write must start with a package-level doc comment
+containing `Purpose:` and `Tags:` lines. Follow `roles/doc-format.md`.
+
+```go
+// Package store provides a thread-safe in-memory event store.
+//
+// Purpose: In-memory event store with concurrent-safe Add and List operations.
+// Tags: implementation, store
+package store
+```
+
+### Companion `.md` files
+
+Write a `<filename>.md` companion alongside each source file that contains
+non-trivial logic — any file with more than struct definitions or forwarding
+calls. The companion documents:
+- Key types and their responsibilities
+- Main functions and what they do
+- Design decisions made during implementation (e.g. mutex choice, error handling)
+- Non-obvious behaviour (e.g. why a write lock is held across a read+modify)
+
+Do not write a companion for trivially simple files (single-type structs, one-line
+constructors). Use judgement — if a reader would need more than a minute to
+understand the file's structure, write the companion.
+
+When you write any companion `.md` file, follow the format in `roles/doc-format.md`:
 Purpose:/Tags: header block at the top, with `Tags: implementation, <component-name>`.
 
 Signal doc writing in your `<response>` block via `<documents_written>true</documents_written>`
