@@ -15,27 +15,38 @@ python3 -m unittest discover -s tests/unit -v
 All tests use only the Python standard library (`unittest`, `pathlib`, `json`,
 `tempfile`, `datetime`). No external packages required.
 
-## Files
+---
 
-| File | Covers |
-|------|--------|
-| `test_metrics.py` | `metrics.py` — elapsed formatting, job path description, invocation recording, execution log table, `write_metrics_to_task_json` (execution_log + run_summary to task.json), `write_summary_to_readme`, `_build_summary_lines` |
-| `test_orchestrator_validation.py` | TM-mode entry point validation from `orchestrator.py` — task.json task-type and level field checking, resume bypass |
+## test_orchestrator_validation.py — Entry point guard (12 tests)
 
-## What is tested
+Tests the orchestrator's TM-mode entry point validation. The logic reads
+`task.json`, checks `task-type == PIPELINE-SUBTASK` and `level == TOP`, and
+accepts `--resume` as a bypass for the level check.
 
-**`test_metrics.py`** covers the metrics module's full public surface:
-- `_fmt_elapsed` — elapsed time formatting (sub-minute, mixed, large values)
-- `description_from_job_path` — human-readable task name extraction from path
-- `record_invocation` — appending invocation records to a RunData object
-- `_build_summary_lines` — Markdown summary table generation (invocations, per-role totals, token usage by role, per-agent counts)
-- `update_task_doc` — writing/updating the `## Execution Log` table in a task README
-- `write_metrics_to_task_json` — writing `execution_log` to task.json after each invocation; writing `run_summary` totals when `final=True`
-- `write_summary_to_readme` — appending a `## Run Summary` section to the Level:TOP README
+**How it works:** Writes a real `task.json` to a temp directory, calls the
+replicated validation function, checks the boolean result and error message.
 
-**`test_orchestrator_validation.py`** covers the TM-mode entry point guard:
-- Rejects USER-TASK and USER-SUBTASK task types
-- Rejects `Level: INTERNAL` and `Level: —` without `--resume`
-- Accepts `Level: INTERNAL` with `--resume` (resume skips the Level:TOP check)
-- Rejects missing or malformed task.json
-- Accepts a well-formed PIPELINE-SUBTASK with `Level: TOP`
+Note: the validation logic is replicated locally in the test file rather than
+imported from `orchestrator.py`, which has argparse side effects at import time.
+
+| Class | What it tests |
+|-------|--------------|
+| `TestTaskTypeValidation` | Accepts PIPELINE-SUBTASK; rejects USER-TASK, USER-SUBTASK; rejects missing file |
+| `TestLevelValidation` | Accepts TOP; rejects INTERNAL and `—`; accepts INTERNAL when `resume=True` |
+| `TestCombinedValidation` | Happy path, type check failure, level check failure, malformed JSON |
+
+---
+
+## test_metrics.py — Metrics module (34 tests)
+
+Tests `metrics.py` via direct import. Six categories:
+
+| Class | Tests | What it tests | How |
+|-------|-------|--------------|-----|
+| `TestFmtElapsed` | 5 | `_fmt_elapsed` — formats a timedelta as `"47s"` or `"2m 05s"` | Passes timedeltas, asserts formatted string |
+| `TestDescriptionFromJobPath` | 6 | `description_from_job_path` — strips hex prefix and NNNN from a task path to get a human name | Passes Path objects, asserts extracted name |
+| `TestRecordInvocation` | 2 | `record_invocation` — appends an InvocationRecord to RunData, computes elapsed | Builds a RunData, calls function, checks list length and field values |
+| `TestBuildSummaryLines` | 9 | `_build_summary_lines` — generates the full Markdown summary (header table, invocations, per-role totals, token usage, per-agent counts) | Builds a run with known invocations, joins lines to text, asserts section headers and values present |
+| `TestUpdateTaskDoc` | 5 | `update_task_doc` — writes/rewrites the `## Execution Log` table in a task README | Writes a README with/without the section to a temp file, calls function, reads back and asserts content |
+| `TestWriteMetricsToTaskJson` | 5 | `write_metrics_to_task_json` — writes `execution_log` to task.json each invocation; writes `run_summary` totals when `final=True` | Writes a minimal task.json, calls function, parses JSON back and asserts fields |
+| `TestWriteSummaryToReadme` | 2 | `write_summary_to_readme` — appends `## Run Summary` section to a README | Writes a README to temp file, calls function, reads back and checks sections |
