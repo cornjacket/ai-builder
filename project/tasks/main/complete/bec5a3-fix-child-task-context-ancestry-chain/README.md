@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | orchestrator, task-management, context               |
 | Priority    | HIGH           |
@@ -40,7 +40,7 @@ agents see a clean lineage without duplication.
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [x] [X-bec5a3-0000-implement-depth-field-and-ancestry-context](X-bec5a3-0000-implement-depth-field-and-ancestry-context/)
-- [ ] [bec5a3-0001-regression-test](bec5a3-0001-regression-test/)
+- [x] [X-bec5a3-0001-regression-test](X-bec5a3-0001-regression-test/)
 <!-- subtask-list-end -->
 
 ## Notes

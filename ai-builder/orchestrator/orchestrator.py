@@ -1,5 +1,6 @@
 import argparse
 import atexit
+import html
 import json
 import re
 import shutil
@@ -361,7 +362,7 @@ HANDOFF: one paragraph summarising what you did and what the next agent needs to
 
 def _extract_xml_tag(text: str, tag: str) -> str:
     m = re.search(rf'<{tag}>(.*?)</{tag}>', text, re.DOTALL)
-    return m.group(1).strip() if m else ""
+    return html.unescape(m.group(1).strip()) if m else ""
 
 def _extract_xml_components(text: str) -> list[dict]:
     components = []
@@ -1273,10 +1274,13 @@ while current_role is not None:
     if current_role == "DECOMPOSE_HANDLER" and not last_components and job_doc:
         last_components = task_state.get("components", [])
 
-    # Loop detection: same (role, job_doc) within the sliding window means a
-    # handler failed to advance current-job.txt. Halt before wasting an invocation.
+    # Loop detection: for handler roles only — same (role, job_doc) in the
+    # sliding window means the handler failed to advance current-job.txt.
+    # AI agent roles (ARCHITECT, IMPLEMENTOR) can legitimately revisit the same
+    # task via TESTER_TESTS_FAIL→IMPLEMENTOR or ARCHITECT_NEEDS_REVISION retries.
+    _HANDLER_ROLES = {"DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER"}
     _loop_key = (current_role, str(job_doc) if job_doc else "")
-    if _loop_key in _loop_window:
+    if current_role in _HANDLER_ROLES and _loop_key in _loop_window:
         _cycle_len = len(_loop_window) - _loop_window.index(_loop_key)
         _desc = description_from_job_path(job_doc)
         print(f"\n[orchestrator] ERROR: pipeline loop detected — "

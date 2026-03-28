@@ -7,6 +7,5 @@
 - [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
 - [ec6a38-bug-gemini-tester-cannot-read-job-doc](ec6a38-bug-gemini-tester-cannot-read-job-doc/)
 - [3e0310-design-documenter-agent](3e0310-design-documenter-agent/)
-- [bec5a3-fix-child-task-context-ancestry-chain](bec5a3-fix-child-task-context-ancestry-chain/)
 - [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
 <!-- task-list-end -->
