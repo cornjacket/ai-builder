@@ -31,23 +31,23 @@ sufficient in most cases.
 When you do write a companion doc, follow the format in `roles/doc-format.md`:
 Purpose:/Tags: header block at the top, with `Tags: implementation, <component-name>`.
 
-Signal doc writing in your JSON response via `documents_written: true/false`
+Signal doc writing in your `<response>` block via `<documents_written>true</documents_written>`
 (see Valid Outcomes below).
 
 ## Valid Outcomes
 
-Emit a terminal fenced JSON block as the **last thing in your response**:
+Emit a `<response>` XML block as the **last thing in your response**:
 
-```json
-{
-  "outcome": "IMPLEMENTOR_IMPLEMENTATION_DONE",
-  "handoff": "one paragraph summarising what was implemented",
-  "documents_written": false
-}
+```xml
+<response>
+  <outcome>IMPLEMENTOR_IMPLEMENTATION_DONE</outcome>
+  <handoff>one paragraph summarising what was implemented</handoff>
+  <documents_written>false</documents_written>
+</response>
 ```
 
 - `IMPLEMENTOR_IMPLEMENTATION_DONE` — implementation is complete and syntax checks pass
 - `IMPLEMENTOR_NEEDS_ARCHITECT` — the Design is ambiguous, incomplete, or contradictory
 - `IMPLEMENTOR_NEED_HELP` — blocked by an external issue that cannot be resolved
 
-Before emitting, mentally parse your JSON to verify it is valid.
+**The `<response>` block must be the final content of your response — nothing after the closing `</response>` tag.**

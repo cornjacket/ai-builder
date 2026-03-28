@@ -43,6 +43,14 @@ parser.add_argument(
     help="Epic name for the task system (TM mode only, default: main)",
 )
 parser.add_argument(
+    "--run-dir",
+    type=Path,
+    metavar="DIR",
+    help="Directory for per-run coordination files (execution.log, current-job.txt, "
+         "handoff-state.json, last-job.json). Defaults to --output-dir. Set to a "
+         "unique path per invocation to run multiple pipelines concurrently.",
+)
+parser.add_argument(
     "--state-machine",
     type=Path,
     metavar="FILE",
@@ -101,11 +109,18 @@ MACHINES_DIR    = Path(__file__).resolve().parent / "machines"
 OUTPUT_DIR      = args.output_dir.resolve()
 TIMEOUT_MINUTES = 5
 
+# RUN_DIR holds per-run coordination files (execution.log, current-job.txt,
+# handoff-state.json, last-job.json). Defaults to OUTPUT_DIR for backward
+# compatibility. Set --run-dir to a unique path per invocation to support
+# concurrent pipeline runs without coordination file collisions.
+RUN_DIR = args.run_dir.resolve() if args.run_dir else OUTPUT_DIR
+
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-EXECUTION_LOG       = OUTPUT_DIR / "execution.log"
-CURRENT_JOB_FILE    = OUTPUT_DIR / "current-job.txt"
-LAST_JOB_FILE       = OUTPUT_DIR / "last-job.json"
-HANDOFF_STATE_FILE  = OUTPUT_DIR / "handoff-state.json"
+RUN_DIR.mkdir(parents=True, exist_ok=True)
+EXECUTION_LOG       = RUN_DIR / "execution.log"
+CURRENT_JOB_FILE    = RUN_DIR / "current-job.txt"
+LAST_JOB_FILE       = RUN_DIR / "last-job.json"
+HANDOFF_STATE_FILE  = RUN_DIR / "handoff-state.json"
 
 if TM_MODE:
     TARGET_REPO    = args.target_repo.resolve()
@@ -320,10 +335,9 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
 
     agent_addendum = gemini_role_addendum(role) if agent == "gemini" else ""
 
-    # ARCHITECT uses a terminal JSON block (defined in roles/ARCHITECT.md) that
-    # already includes outcome, handoff, and design fields. Appending the generic
-    # OUTCOME/HANDOFF footer would conflict with that instruction and cause Claude
-    # to emit both, making the JSON block non-terminal and breaking field storage.
+    # ARCHITECT uses a terminal XML <response> block (defined in roles/ARCHITECT.md)
+    # that already includes outcome, handoff, and design fields. Appending the
+    # generic OUTCOME/HANDOFF footer would conflict with that instruction.
     if role == "ARCHITECT":
         return f"""Your role is {role}.
 {job_section}
@@ -342,17 +356,41 @@ HANDOFF: one paragraph summarising what you did and what the next agent needs to
 
 
 # ---------------------------------------------------------------------------
+# XML helpers (for ARCHITECT responses)
+# ---------------------------------------------------------------------------
+
+def _extract_xml_tag(text: str, tag: str) -> str:
+    m = re.search(rf'<{tag}>(.*?)</{tag}>', text, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+def _extract_xml_components(text: str) -> list[dict]:
+    components = []
+    for block in re.findall(r'<component>(.*?)</component>', text, re.DOTALL):
+        comp = {field: _extract_xml_tag(block, field)
+                for field in ("name", "complexity", "source_dir", "description")}
+        if comp.get("name"):
+            components.append(comp)
+    return components
+
+
+# ---------------------------------------------------------------------------
 # Outcome parser
 # ---------------------------------------------------------------------------
 
 def parse_response(response: str) -> tuple[str, str, list[dict]]:
     """Extract outcome, handoff, and components from an agent response.
 
-    Looks for a terminal fenced ```json block containing at minimum 'outcome'
-    and 'handoff' keys. The 'components' key is optional (decompose mode only).
-    Falls back to OUTCOME:/HANDOFF: regex for internal agents that don't emit
-    a JSON block.
+    Tries XML <response> block first (ARCHITECT), falls back to terminal
+    ```json block, then falls back to OUTCOME:/HANDOFF: lines (internal agents).
     """
+    xml_match = re.search(r'<response>(.*?)</response>', response, re.DOTALL)
+    if xml_match:
+        block = xml_match.group(0)
+        outcome = _extract_xml_tag(block, "outcome") or "UNKNOWN"
+        handoff = _extract_xml_tag(block, "handoff") or "(no handoff provided)"
+        components = _extract_xml_components(block)
+        return outcome, handoff, components
+
     json_match = re.search(r'```json\s*\n(\{.*?\})\s*```\s*$', response, re.DOTALL)
     if json_match:
         try:
@@ -516,12 +554,12 @@ def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResul
         return AgentResult(exit_code=1, response="No subtasks created")
 
     # Point pipeline at first subtask.
-    # Always write to the root OUTPUT_DIR — that is where the orchestrator
-    # reads current-job.txt from, regardless of nesting depth.
+    # Write current-job.txt to RUN_DIR (== OUTPUT_DIR by default) — that is
+    # where the orchestrator reads CURRENT_JOB_FILE from.
     first_readme = subtask_dirs[0] / "README.md"
     cmd = [
         str(PM_SCRIPTS_DIR / "set-current-job.sh"),
-        "--output-dir", str(OUTPUT_DIR),
+        "--output-dir", str(RUN_DIR),
         str(first_readme),
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
@@ -661,17 +699,20 @@ def _run_documenter_internal(job_doc: Path, output_dir: Path) -> AgentResult:
     )
 
 
-def _run_lch_internal(output_dir: Path) -> AgentResult:
+def _run_lch_internal(run_dir: Path) -> AgentResult:
     """Execute LEAF_COMPLETE_HANDLER logic directly without a claude subprocess.
 
     Runs on-task-complete.sh and maps its three possible outputs to the
     corresponding outcome strings. No AI reasoning is required for this role.
+
+    run_dir is passed as --output-dir to on-task-complete.sh so that
+    set-current-job.sh writes current-job.txt to the correct coordination dir.
     """
     current_job_path = CURRENT_JOB_FILE.read_text().strip()
     cmd = [
         str(PM_SCRIPTS_DIR / "on-task-complete.sh"),
         "--current", current_job_path,
-        "--output-dir", str(output_dir),
+        "--output-dir", str(run_dir),
         "--epic", EPIC,
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
@@ -747,23 +788,40 @@ def _load_handoff_state(path: Path) -> tuple[list[str], list[dict]]:
 
 
 def _store_architect_design_fields(response: str, job_doc: Path) -> None:
-    """Parse design fields from ARCHITECT's JSON block, update task_state, and
+    """Parse design fields from ARCHITECT's response, update task_state, and
     persist to task.json.
 
+    Tries XML <response> block first, falls back to terminal ```json block.
     Updates in-memory task_state first so downstream stages (IMPLEMENTOR,
     TESTER) can read values without a disk round-trip. task.json write is for
     persistence/resume only.
     """
-    json_match = re.search(r'```json\s*\n(\{.*?\})\s*```\s*$', response, re.DOTALL)
-    if not json_match:
-        return
-    try:
-        data = json.loads(json_match.group(1))
-    except json.JSONDecodeError:
+    fields: dict = {}
+
+    xml_match = re.search(r'<response>(.*?)</response>', response, re.DOTALL)
+    if xml_match:
+        block = xml_match.group(0)
+        for key in ("design", "acceptance_criteria", "test_command"):
+            val = _extract_xml_tag(block, key)
+            if val:
+                fields[key] = val
+        dw = _extract_xml_tag(block, "documents_written")
+        if dw:
+            fields["documents_written"] = dw.lower() == "true"
+    else:
+        json_match = re.search(r'```json\s*\n(\{.*?\})\s*```\s*$', response, re.DOTALL)
+        if not json_match:
+            return
+        try:
+            data = json.loads(json_match.group(1))
+        except json.JSONDecodeError:
+            return
+        fields = {k: data[k] for k in ("design", "acceptance_criteria", "test_command", "documents_written") if k in data}
+
+    if not fields:
         return
 
     # Update in-memory state first
-    fields = {k: data[k] for k in ("design", "acceptance_criteria", "test_command", "documents_written") if k in data}
     _update_task_state(fields)
 
     # Persist to task.json (resume/debug only)
@@ -823,9 +881,9 @@ def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], comp
 def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, components: list[dict] | None = None) -> AgentResult:
     """Dispatch to the internal implementation for the given role."""
     if role == "LEAF_COMPLETE_HANDLER":
-        # LCH always uses the root output dir (where current-job.txt lives),
-        # not the per-component subdirectory that task_output_dir may point to.
-        return _run_lch_internal(OUTPUT_DIR)
+        # LCH uses RUN_DIR (where current-job.txt lives), not the per-component
+        # subdirectory that task_output_dir may point to.
+        return _run_lch_internal(RUN_DIR)
     if role == "DECOMPOSE_HANDLER":
         if job_doc is None:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires a job_doc")
@@ -1172,6 +1230,8 @@ else:
 print(f"    machine file:  {_machine_file}")
 print(f"    start state:   {current_role}")
 print(f"    output dir:    {OUTPUT_DIR}")
+if RUN_DIR != OUTPUT_DIR:
+    print(f"    run dir:       {RUN_DIR}")
 print(f"    execution log: {EXECUTION_LOG}\n")
 
 last_components: list[dict] = []  # components from most recent ARCHITECT JSON response
@@ -1182,7 +1242,7 @@ last_components: list[dict] = []  # components from most recent ARCHITECT JSON r
 _pending_top_rename: Path | None = None
 
 # Register handoff state save on every exit (clean, sys.exit, KeyboardInterrupt).
-atexit.register(lambda: _save_handoff_state(OUTPUT_DIR, handoff_history, frame_stack))
+atexit.register(lambda: _save_handoff_state(RUN_DIR, handoff_history, frame_stack))
 
 while current_role is not None:
     agent = AGENTS.get(current_role)

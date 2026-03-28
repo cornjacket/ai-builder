@@ -31,22 +31,36 @@ Your job:
    the target repo's `CLAUDE.md` if present (e.g. `go build ./...`,
    `go test ./...`).
 5. Think through the component breakdown in your prose response, then emit a
-   terminal fenced JSON block as the **last thing in your response**:
+   `<response>` XML block as the **last thing in your response**:
 
-```json
-{
-  "outcome": "ARCHITECT_DECOMPOSITION_READY",
-  "handoff": "one paragraph summarising the decomposition and what the next agent needs to know",
-  "components": [
-    {"name": "store",    "complexity": "atomic",    "source_dir": "internal/myservice/store",    "description": "<full contract — see requirements below>"},
-    {"name": "handlers", "complexity": "composite", "source_dir": "internal/myservice/handlers", "description": "<one-line responsibility>"},
-    {"name": "integrate","complexity": "atomic",    "source_dir": ".",                           "description": "Wire all components into a cohesive unit and verify this level's acceptance criteria"}
-  ]
-}
+```xml
+<response>
+  <outcome>ARCHITECT_DECOMPOSITION_READY</outcome>
+  <handoff>one paragraph summarising the decomposition and what the next agent needs to know</handoff>
+  <components>
+    <component>
+      <name>store</name>
+      <complexity>atomic</complexity>
+      <source_dir>internal/myservice/store</source_dir>
+      <description>full contract — see requirements below</description>
+    </component>
+    <component>
+      <name>handlers</name>
+      <complexity>composite</complexity>
+      <source_dir>internal/myservice/handlers</source_dir>
+      <description>one-line responsibility</description>
+    </component>
+    <component>
+      <name>integrate</name>
+      <complexity>atomic</complexity>
+      <source_dir>.</source_dir>
+      <description>Wire all components into a cohesive unit and verify this level's acceptance criteria</description>
+    </component>
+  </components>
+</response>
 ```
 
-   **The JSON block must be the final content of your response — nothing after the closing fence.**
-   Before emitting, mentally parse your JSON to verify it is valid.
+   **The `<response>` block must be the final content of your response — nothing after the closing `</response>` tag.**
 
    **`source_dir` field requirements:**
 
@@ -57,7 +71,7 @@ Your job:
    land in the same location.
 
    - For regular components: set `source_dir` to the real package path (e.g. `internal/iam/lifecycle`).
-   - For `integrate`: set `source_dir` to `"."` — integrate writes to the parent output directory directly.
+   - For `integrate`: set `source_dir` to `.` — integrate writes to the parent output directory directly.
 
    **Description field requirements:**
 
@@ -120,25 +134,34 @@ Your job:
    requires minimal internal testing.
 6. **Write a README.md** to the output directory documenting this component
    (see rules below). This is mandatory — every output directory must have one.
-7. Think through the design in your prose response, then emit a terminal
-   fenced JSON block as the **last thing in your response**:
+7. Think through the design in your prose response, then emit a `<response>`
+   XML block as the **last thing in your response**:
 
-```json
-{
-  "outcome": "ARCHITECT_DESIGN_READY",
-  "handoff": "one paragraph summarising the design for downstream agents",
-  "documents_written": false,
-  "design": "## Design\n\nFull design prose here — language, files, deps, constraints...",
-  "acceptance_criteria": "## Acceptance Criteria\n\n1. ...\n2. ...",
-  "test_command": "cd /abs/path/to/output && go test ./..."
-}
+```xml
+<response>
+  <outcome>ARCHITECT_DESIGN_READY</outcome>
+  <handoff>one paragraph summarising the design for downstream agents</handoff>
+  <documents_written>true</documents_written>
+  <design>
+## Design
+
+Full design prose here — language, files, deps, constraints...
+  </design>
+  <acceptance_criteria>
+## Acceptance Criteria
+
+1. ...
+2. ...
+  </acceptance_criteria>
+  <test_command>cd /abs/path/to/output && go test ./...</test_command>
+</response>
 ```
 
-   **The JSON block must be the final content of your response — nothing after
-   the closing fence.** Before emitting, mentally parse your JSON to verify it
-   is valid. All field values are strings (Markdown prose where appropriate).
-   `documents_written` is a boolean: `true` if you wrote one or more
-   documentation files to disk, `false` otherwise.
+   **The `<response>` block must be the final content of your response —
+   nothing after the closing `</response>` tag.** The `design` and
+   `acceptance_criteria` fields are Markdown prose and may contain code blocks,
+   backticks, and newlines freely. `documents_written` is `true` if you wrote
+   one or more documentation files to disk, `false` otherwise.
 
 ### Documentation rules (design mode)
 
@@ -170,7 +193,7 @@ init). You must:
 - Do **not** write a README.md or any documentation files
 
 **Valid outcomes (design mode only — no other outcomes are permitted):**
-- `ARCHITECT_DESIGN_READY` — all design fields present in the JSON block
+- `ARCHITECT_DESIGN_READY` — all design fields present in the `<response>` block
 - `ARCHITECT_NEEDS_REVISION` — the Goal or Context has gaps; iterate before handing
   off to IMPLEMENTOR
 - `ARCHITECT_NEED_HELP` — blocked by missing information that cannot be resolved
