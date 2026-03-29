@@ -31,4 +31,5 @@
 - [5ca80b-gemini-implementor-heredoc-parse-error](5ca80b-gemini-implementor-heredoc-parse-error/)
 - [49352f-redesign-pipeline-communication-architecture](49352f-redesign-pipeline-communication-architecture/)
 - [bec5a3-fix-child-task-context-ancestry-chain](bec5a3-fix-child-task-context-ancestry-chain/)
+- [7d02d8-add-rename-and-insert-subtask-scripts](7d02d8-add-rename-and-insert-subtask-scripts/)
 <!-- task-list-end -->

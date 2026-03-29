@@ -10,7 +10,6 @@
 - [ef40e2-add-session-context-document](ef40e2-add-session-context-document/)
 - [a09648-optimize-pipeline-tm-prompt](a09648-optimize-pipeline-tm-prompt/)
 - [bd3b59-add-timestamps-to-task-metadata](bd3b59-add-timestamps-to-task-metadata/)
-- [7d02d8-add-rename-and-insert-subtask-scripts](7d02d8-add-rename-and-insert-subtask-scripts/)
 - [4f9fba-add-model-selection-to-machine-config](4f9fba-add-model-selection-to-machine-config/)
 - [403a88-role-doc-size-audit](403a88-role-doc-size-audit/)
 - [ba2238-regression-run-history-tracking](ba2238-regression-run-history-tracking/)

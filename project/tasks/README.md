@@ -289,6 +289,17 @@ project/tasks/scripts/set-current-job.sh \
 
 # Check whether a task is the last (integration) subtask (exit 0 = yes, 1 = no)
 project/tasks/scripts/is-last-task.sh <path-to-task-README.md>
+
+# Rename a subtask's NNNN position ID (also bumps Next-subtask-id if needed)
+project/tasks/scripts/rename-subtask.sh --epic main --folder in-progress \
+    --parent my-task --name a3f2c1-0003-my-sub --new-id 0005
+
+# Insert a new subtask at position NNNN, shifting later subtasks up by one
+project/tasks/scripts/insert-subtask.sh --epic main --folder in-progress \
+    --parent my-task --at 0003 --name new-step
+# With pipeline type:
+project/tasks/scripts/insert-subtask.sh --epic main --folder in-progress \
+    --parent my-task --at 0003 --name new-step --type pipeline
 ```
 
 ---
