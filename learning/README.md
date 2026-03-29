@@ -17,3 +17,4 @@ in practice, not just theory.
 | [agent-model-selection.md](agent-model-selection.md) | Model selection for Claude and Gemini — per-turn routing, pinning, and observability differences |
 | [pipeline-extract-dont-delegate.md](pipeline-extract-dont-delegate.md) | Orchestrator should extract and inline document content into prompts rather than delegating file reads to agents |
 | [pipeline-task-context-ancestry-chain.md](pipeline-task-context-ancestry-chain.md) | How child task `## Context` is built as a labelled ancestry chain to prevent flat-copy duplication at deep nesting |
+| [format-choices-xml-json-markdown.md](format-choices-xml-json-markdown.md) | XML for AI agent output, JSON for orchestrator state, Markdown as projection and human/AI interface — why each format was chosen |
