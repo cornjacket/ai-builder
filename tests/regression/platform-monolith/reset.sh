@@ -101,10 +101,25 @@ def col(r):
     t = roles[r]
     return f"{t['in']:,} / {t['out']:,} / {t['cached']:,}"
 
-elapsed_s = int(rs.get("elapsed_s", 0))
+# Fall back to execution_log when run_summary is absent (failed/interrupted runs)
+if rs.get("elapsed_s") is not None:
+    elapsed_s = int(rs["elapsed_s"])
+    date = (rs.get("start") or "—")[:10]
+elif log:
+    from datetime import datetime
+    try:
+        t0 = datetime.fromisoformat(log[0]["start"])
+        t1 = datetime.fromisoformat(log[-1]["end"])
+        elapsed_s = int((t1 - t0).total_seconds())
+        date = log[0]["start"][:10]
+    except Exception:
+        elapsed_s = 0
+        date = "—"
+else:
+    elapsed_s = 0
+    date = "—"
 m, s = divmod(elapsed_s, 60)
 elapsed = f"{m}m {s:02d}s" if m else f"{s}s"
-date = (rs.get("start") or "—")[:10]
 
 row = f"| {run_num} | {date} | {elapsed} | {col('ARCHITECT')} | {col('IMPLEMENTOR')} | {col('TESTER')} | | |\n"
 

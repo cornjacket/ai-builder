@@ -1,0 +1,4 @@
+# Runtime artifacts — not part of the test definition
+runs/*/
+last_run
+results/
