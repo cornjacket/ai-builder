@@ -72,4 +72,17 @@ sufficient; archiving runs to `runs/` is not required.
 
 ## Notes
 
-_None._
+**Absolute paths in gold state:** `task.json` files in the gold snapshots
+contain absolute paths (e.g. `output_dir: /Users/david/.../sandbox/...`).
+These will break on any machine other than the one that captured them, and
+will break when the sandbox paths change under the new layout. The redesign
+must address this — two options:
+
+1. **Rewrite at restore time:** `run.sh` replaces the old absolute prefix
+   with the current repo root when copying gold state into the sandbox.
+2. **Store repo-relative in gold:** capture a relative path token
+   (e.g. `__REPO_ROOT__/sandbox/stage/architect-user-service/output`) and
+   expand it in `run.sh`.
+
+Option 2 is cleaner — gold state is portable across machines. This is
+probably the trickiest part of the implementation.
