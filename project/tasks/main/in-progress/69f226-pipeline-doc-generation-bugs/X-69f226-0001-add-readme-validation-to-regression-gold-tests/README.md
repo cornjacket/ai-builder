@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 69f226-pipeline-doc-generation-bugs             |

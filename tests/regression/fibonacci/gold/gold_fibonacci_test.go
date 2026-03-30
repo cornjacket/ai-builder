@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/cornjacket/ai-builder/tests/regression/goldutil"
 )
 
 var outputDir string
@@ -56,6 +58,14 @@ func TestGoldCompute(t *testing.T) {
 	}
 }
 `
+
+// ---------------------------------------------------------------------------
+// Documentation coverage
+// ---------------------------------------------------------------------------
+
+func TestReadmeCoverage(t *testing.T) {
+	goldutil.CheckReadmeCoverage(t, outputDir)
+}
 
 func TestMain(m *testing.M) {
 	pkg, err := findGoPackageDir(outputDir)

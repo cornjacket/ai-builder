@@ -18,6 +18,97 @@ import (
 	"time"
 )
 
+// CheckReadmeCoverage validates README.md presence and absence at directory
+// levels within outputDir according to architectural relevance rules for Go
+// projects:
+//
+//   - A directory named exactly "internal" is a Go language visibility boundary.
+//     It must NOT have a README.md. Its absence is asserted.
+//   - Any other directory that directly contains .go files (a Go package) MUST
+//     have a README.md.
+//   - Any other directory whose immediate children include Go packages (a
+//     composite source level) MUST have a README.md.
+//   - The output root directory itself is not checked.
+//
+// All failures are accumulated and reported via t.Errorf — the function never
+// calls t.Fatalf, so every violation is reported in a single test run.
+func CheckReadmeCoverage(t *testing.T, outputDir string) {
+	t.Helper()
+
+	err := filepath.WalkDir(outputDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		if path == outputDir {
+			return nil // skip the output root
+		}
+
+		rel, _ := filepath.Rel(outputDir, path)
+		base := filepath.Base(path)
+		readmePath := filepath.Join(path, "README.md")
+		hasReadme := fileExists(readmePath)
+
+		if base == "internal" {
+			// Go language convention — not a design boundary; README must not exist.
+			if hasReadme {
+				t.Errorf("README.md must not exist in language-convention directory: %s/", rel)
+			}
+			return nil
+		}
+
+		// Architecturally relevant: contains Go source files directly (a package),
+		// or directly contains child directories that contain Go source files (a composite).
+		if isGoPackageDir(path) || hasGoPackageChildren(path) {
+			if !hasReadme {
+				t.Errorf("missing README.md in architecturally relevant directory: %s/", rel)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Errorf("CheckReadmeCoverage: directory walk error: %v", err)
+	}
+}
+
+// fileExists reports whether the named file exists and is not a directory.
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
+// isGoPackageDir reports whether dir directly contains at least one .go file.
+func isGoPackageDir(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".go") {
+			return true
+		}
+	}
+	return false
+}
+
+// hasGoPackageChildren reports whether dir has at least one immediate
+// subdirectory that directly contains .go files.
+func hasGoPackageChildren(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	for _, e := range entries {
+		if e.IsDir() && isGoPackageDir(filepath.Join(dir, e.Name())) {
+			return true
+		}
+	}
+	return false
+}
+
 // FindMainPackage returns the directory of the first Go file containing
 // "package main" found by a depth-first walk of root. Returns ("", nil)
 // if no main package exists. Useful for single-binary services.
