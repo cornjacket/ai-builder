@@ -36,6 +36,23 @@ Purpose: First sentence — a standalone, complete description of what this file
 Additional context sentence(s) if needed. Two to three sentences total maximum.
 
 Tags: <tag1>, <tag2>, ...
+
+```
+
+The blank line between `Purpose:` and `Tags:` is **mandatory**, even when Purpose
+is a single sentence. Without it, CommonMark renders both fields on the same line.
+
+**Correct (single-sentence Purpose):**
+```
+Purpose: Thread-safe in-memory CRUD store for User records.
+
+Tags: architecture, design
+```
+
+**Wrong — will render on one line:**
+```
+Purpose: Thread-safe in-memory CRUD store for User records.
+Tags: architecture, design
 ```
 
 ## Rules
@@ -48,7 +65,9 @@ Tags: <tag1>, <tag2>, ...
 - Write in present tense: "Describes the data flow..." not "This file describes..."
 
 **Tags field:**
-- Must appear on the line immediately after the Purpose block (after one blank line).
+- Must be separated from the Purpose block by exactly one blank line. This is
+  required even when Purpose is a single sentence. Without the blank line,
+  CommonMark renders Purpose and Tags on the same visual line.
 - Required tags by role:
   - ARCHITECT docs: `Tags: architecture, design`
   - IMPLEMENTOR docs: `Tags: implementation, <component-name>`

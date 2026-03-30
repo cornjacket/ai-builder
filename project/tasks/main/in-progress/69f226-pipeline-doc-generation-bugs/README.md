@@ -28,7 +28,7 @@ not currently validate the presence or absence of README files at specific level
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [69f226-0000-fix-purpose-tags-markdown-rendering](69f226-0000-fix-purpose-tags-markdown-rendering/)
+- [x] [X-69f226-0000-fix-purpose-tags-markdown-rendering](X-69f226-0000-fix-purpose-tags-markdown-rendering/)
 - [ ] [69f226-0001-add-readme-validation-to-regression-gold-tests](69f226-0001-add-readme-validation-to-regression-gold-tests/)
 - [ ] [69f226-0002-architect-generates-theory-of-operation-and-composite-readme](69f226-0002-architect-generates-theory-of-operation-and-composite-readme/)
 - [ ] [69f226-0003-improve-master-index-with-links-and-scoped-headers](69f226-0003-improve-master-index-with-links-and-scoped-headers/)

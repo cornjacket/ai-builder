@@ -168,6 +168,8 @@ every component you design. Every output directory must have one. It must includ
 1. **Purpose/Tags header** — `# component-name` heading, then immediately the
    `Purpose:` / `Tags:` block (no content between heading and Purpose:).
    Follow `roles/doc-format.md`. Use `Tags: architecture, design`.
+   A blank line between `Purpose:` and `Tags:` is mandatory — even for a
+   single-sentence Purpose. Without it they render on the same line.
 2. **File index** — table of files IMPLEMENTOR will create, with one-line descriptions.
 3. **Overview** — key design decisions, data flow, non-obvious constraints.
 

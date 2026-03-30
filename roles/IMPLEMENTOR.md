@@ -51,6 +51,8 @@ understand the file's structure, write the companion.
 
 When you write any companion `.md` file, follow the format in `roles/doc-format.md`:
 Purpose:/Tags: header block at the top, with `Tags: implementation, <component-name>`.
+A blank line between `Purpose:` and `Tags:` is mandatory — even for a single-sentence
+Purpose. Without it they render on the same line in a markdown viewer.
 
 Signal doc writing in your `<response>` block via `<documents_written>true</documents_written>`
 (see Valid Outcomes below).
