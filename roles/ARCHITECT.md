@@ -217,6 +217,8 @@ every component you design. Every output directory must have one. It must includ
    Follow `roles/doc-format.md`. Use `Tags: architecture, design`.
    A blank line between `Purpose:` and `Tags:` is mandatory — even for a
    single-sentence Purpose. Without it they render on the same line.
+   Do not cite specific tool/language version numbers unless stating a minimum
+   required version constraint — see `roles/doc-format.md` § Version numbers.
 2. **File index** — table of files IMPLEMENTOR will create, with one-line descriptions.
 3. **Overview** — key design decisions, data flow, non-obvious constraints.
 

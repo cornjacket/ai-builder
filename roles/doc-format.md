@@ -73,6 +73,25 @@ Tags: architecture, design
   - IMPLEMENTOR docs: `Tags: implementation, <component-name>`
 - Additional tags are additive. Do not remove the required tags.
 
+## Version numbers in generated docs
+
+Do **not** mention specific tool or language version numbers in documentation
+unless you are stating a minimum required version constraint.
+
+**Wrong:**
+> Uses Go 1.22 method+path patterns in `net/http.ServeMux`.
+
+**Correct (only when a minimum is required):**
+> Requires Go 1.22+: the `{id}` wildcard pattern in `net/http.ServeMux` was
+> introduced in 1.22.
+
+The source of truth for versions is always a config file (`go.mod`,
+`package.json`, `pyproject.toml`, etc.). Citing a specific version in prose
+creates stale documentation the moment the project upgrades. When in doubt,
+omit the version entirely and refer readers to the relevant config file.
+
+---
+
 ## Example — ARCHITECT design doc
 
 ```markdown

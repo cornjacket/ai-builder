@@ -32,4 +32,6 @@
 - [49352f-redesign-pipeline-communication-architecture](49352f-redesign-pipeline-communication-architecture/)
 - [bec5a3-fix-child-task-context-ancestry-chain](bec5a3-fix-child-task-context-ancestry-chain/)
 - [7d02d8-add-rename-and-insert-subtask-scripts](7d02d8-add-rename-and-insert-subtask-scripts/)
+- [69f226-pipeline-doc-generation-bugs](69f226-pipeline-doc-generation-bugs/)
+- [18cdcb-doc-version-number-policy](18cdcb-doc-version-number-policy/)
 <!-- task-list-end -->
