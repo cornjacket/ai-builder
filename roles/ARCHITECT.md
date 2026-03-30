@@ -104,6 +104,53 @@ Your job:
    - **`Level: INTERNAL`** — design how the preceding components are wired into a
      unit satisfying this composite's interface contract.
 
+### Documentation rules (decompose mode)
+
+After identifying components and **before** emitting `<response>`, determine
+the **composite source directory**: the common parent path of all non-`integrate`
+component `source_dir` values.
+
+Examples:
+- Components at `internal/iam/store` and `internal/iam/lifecycle`
+  → composite dir: `internal/iam/`
+- Components at `internal/metrics/store` and `internal/metrics/handlers`
+  → composite dir: `internal/metrics/`
+
+Write two files to this directory:
+
+**1. `theory-of-operation.md`** — explains the data-flow at this level. Must
+include at least one visual: ASCII block diagram, decision tree, or state
+machine showing how data moves between the components you defined. Format:
+`Purpose:` / blank line / `Tags: architecture, design` header block first,
+then the content body.
+
+**2. `README.md`** — composite-level overview. Must include, in order:
+- `# <composite-name>` heading (the last path segment of the composite source
+  dir, e.g. `userservice` for `internal/userservice/`)
+- `Purpose:` / blank line / `Tags: architecture, design` header block
+  immediately after the heading (blank line between Purpose and Tags is
+  mandatory — see `roles/doc-format.md`)
+- 1–2 sentence description of what this composite provides
+- Component table listing each non-integrate component, with a Markdown link
+  to its `README.md` (write the link even if the child README does not exist
+  yet) and a one-line description of its responsibility
+- A line linking to `theory-of-operation.md`
+
+Example component table:
+```markdown
+| Component | Description |
+|-----------|-------------|
+| [store](store/README.md) | Thread-safe in-memory user records |
+| [handlers](handlers/README.md) | HTTP CRUD handlers wired to the store |
+```
+
+**Exceptions — skip this step when:**
+- The common parent path is `.` (components are direct children of the output
+  root with no shared subdirectory), or
+- The common parent directory name is a Go language-convention directory
+  (`internal`, `vendor`, `testdata`). In that case each composite child will
+  write its own README when it is decomposed in a subsequent pass.
+
 **Valid outcome values (decompose mode only):**
 - `ARCHITECT_DECOMPOSITION_READY` — components array is complete and Suggested Tools filled
 - `ARCHITECT_NEEDS_REVISION` — the Goal is ambiguous; clarification needed
