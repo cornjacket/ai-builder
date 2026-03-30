@@ -35,17 +35,29 @@ section heading.
 
 ## Output format
 
+Section header depth mirrors directory depth relative to the output root
+(`##` for the shallowest dirs, `###` one level deeper, capped at `####`).
+Every filename in a table is a relative hyperlink from the index to the file.
+
 ```markdown
 # output-dir-name
 
-### store
+## internal/userservice
 | File | Tags | Description |
 |------|------|-------------|
-| store.md | architecture, design | Thread-safe in-memory user store. |
+| [README.md](internal/userservice/README.md) | architecture, design | Composite overview of the userservice package. |
+| [theory-of-operation.md](internal/userservice/theory-of-operation.md) | architecture, design | Data-flow diagram for the userservice layer. |
 
-### handlers
+### internal/userservice/handlers
 | File | Tags | Description |
-| api.md | architecture, design | HTTP handlers for the user management API. |
+|------|------|-------------|
+| [README.md](internal/userservice/handlers/README.md) | architecture, design | HTTP handlers for the user management API. |
+| [api.md](internal/userservice/handlers/api.md) | architecture, design | Full HTTP API contract. |
+
+### internal/userservice/store
+| File | Tags | Description |
+|------|------|-------------|
+| [store.md](internal/userservice/store/store.md) | architecture, design | Thread-safe in-memory user store. |
 ```
 
 ## CLI usage

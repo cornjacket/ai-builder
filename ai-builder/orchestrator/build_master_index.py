@@ -118,25 +118,32 @@ def _render_index(output_dir: Path, entries: list[dict], user_blocks: dict[str, 
     # Emit each directory section in sorted order
     for dir_path in sorted(by_dir.keys()):
         dir_entries = by_dir[dir_path]
-        depth = dir_entries[0]["depth"]
-        header_level = "#" * min(depth + 2, 6)  # ## for depth-0, ### for depth-1, etc.
+
+        # Header depth mirrors directory depth:
+        #   files at root (dir=.) → ##
+        #   one level deep        → ##
+        #   two levels deep       → ###
+        #   three+ levels deep    → #### (capped)
+        nparts = len(dir_path.parts)  # 0 for ".", 1 for "internal", 2 for "internal/foo", …
+        header_level = "#" * min(max(2, nparts), 4)
 
         section_title = str(dir_path) if dir_path != Path(".") else title
         lines += [f"{header_level} {section_title}", ""]
 
-        # User block for this directory (if any)
+        # User block for this directory (if any); keyed by full relative path
         user_key = str(dir_path)
         if user_key in user_blocks:
             lines += [_USER_START, user_blocks[user_key], _USER_END, ""]
 
-        # Table of files
+        # Table of files — filenames are hyperlinks relative to master-index.md
         lines += [
             "| File | Tags | Description |",
             "|------|------|-------------|",
         ]
         for e in sorted(dir_entries, key=lambda x: x["path"].name):
             fname = e["path"].name
-            lines.append(f"| {fname} | {e['tags']} | {e['purpose']} |")
+            href  = str(e["path"]).replace("\\", "/")  # normalise on Windows
+            lines.append(f"| [{fname}]({href}) | {e['tags']} | {e['purpose']} |")
         lines.append("")
 
     return "\n".join(lines) + "\n"

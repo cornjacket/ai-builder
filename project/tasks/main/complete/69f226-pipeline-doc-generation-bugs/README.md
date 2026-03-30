@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
@@ -31,7 +31,7 @@ not currently validate the presence or absence of README files at specific level
 - [x] [X-69f226-0000-fix-purpose-tags-markdown-rendering](X-69f226-0000-fix-purpose-tags-markdown-rendering/)
 - [x] [X-69f226-0001-add-readme-validation-to-regression-gold-tests](X-69f226-0001-add-readme-validation-to-regression-gold-tests/)
 - [x] [X-69f226-0002-architect-generates-theory-of-operation-and-composite-readme](X-69f226-0002-architect-generates-theory-of-operation-and-composite-readme/)
-- [ ] [69f226-0003-improve-master-index-with-links-and-scoped-headers](69f226-0003-improve-master-index-with-links-and-scoped-headers/)
+- [x] [X-69f226-0003-improve-master-index-with-links-and-scoped-headers](X-69f226-0003-improve-master-index-with-links-and-scoped-headers/)
 <!-- subtask-list-end -->
 
 ## Notes
