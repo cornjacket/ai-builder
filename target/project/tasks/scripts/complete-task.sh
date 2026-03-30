@@ -179,13 +179,19 @@ EOF
             echo "Subtask '$NAME' not found or already complete in $PARENT_README"
             exit 1
         fi
-        # Rename directory: NAME → X-NAME
-        mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
+        if [[ "$SKIP_RENAME" == false ]]; then
+            # Rename directory: NAME → X-NAME
+            mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
+        fi
         # Update checkbox and link in parent README
         sed -i '' "s|- \[ \] \[$NAME\]($NAME/)|- [x] [$XNAME](X-$NAME/)|" "$PARENT_README"
         # Handle plain format: - [ ] NAME (no link)
         sed -i '' "s|- \[ \] $NAME$|- [x] $XNAME|" "$PARENT_README"
-        sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$XSUBTASK_DIR/README.md"
+        if [[ "$SKIP_RENAME" == true ]]; then
+            sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_DIR/README.md"
+        else
+            sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$XSUBTASK_DIR/README.md"
+        fi
         echo "Marked complete: $NAME"
     fi
     exit 0

@@ -34,4 +34,5 @@
 - [7d02d8-add-rename-and-insert-subtask-scripts](7d02d8-add-rename-and-insert-subtask-scripts/)
 - [69f226-pipeline-doc-generation-bugs](69f226-pipeline-doc-generation-bugs/)
 - [18cdcb-doc-version-number-policy](18cdcb-doc-version-number-policy/)
+- [367963-bug-pipeline-subtask-not-marked-complete](367963-bug-pipeline-subtask-not-marked-complete/)
 <!-- task-list-end -->

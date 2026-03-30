@@ -21,6 +21,7 @@ const (
 
 var (
 	outputDir  string
+	targetDir  string
 	binaryPath string
 )
 
@@ -31,6 +32,7 @@ func init() {
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
 	outputDir = filepath.Join(root, "sandbox/user-service-output")
+	targetDir = filepath.Join(root, "sandbox/user-service-target")
 	binaryPath = filepath.Join(root, "sandbox/user-service-bin")
 }
 
@@ -74,6 +76,10 @@ func TestMain(m *testing.M) {
 
 func TestReadmeCoverage(t *testing.T) {
 	goldutil.CheckReadmeCoverage(t, outputDir)
+}
+
+func TestSubtasksComplete(t *testing.T) {
+	goldutil.CheckSubtasksComplete(t, targetDir)
 }
 
 // ---------------------------------------------------------------------------

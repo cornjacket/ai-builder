@@ -109,6 +109,49 @@ func hasGoPackageChildren(dir string) bool {
 	return false
 }
 
+// CheckSubtasksComplete walks all README.md files inside X-prefixed pipeline
+// task directories under targetDir and reports an error for any incomplete
+// subtask (a line matching "- [ ]"). An X-prefixed directory is one whose
+// base name starts with "X-"; these represent tasks that the pipeline has
+// marked complete. Any incomplete subtask entry left behind indicates that
+// the completion handler failed to update the README before the directory
+// was renamed.
+func CheckSubtasksComplete(t *testing.T, targetDir string) {
+	t.Helper()
+
+	err := filepath.WalkDir(targetDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || d.Name() != "README.md" {
+			return nil
+		}
+		dir := filepath.Dir(path)
+		if !strings.HasPrefix(filepath.Base(dir), "X-") {
+			return nil
+		}
+		// Only check pipeline task READMEs (directory has a sibling task.json)
+		if !fileExists(filepath.Join(dir, "task.json")) {
+			return nil
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		rel, _ := filepath.Rel(targetDir, path)
+		for i, line := range strings.Split(string(content), "\n") {
+			if strings.Contains(line, "- [ ]") {
+				t.Errorf("incomplete subtask in completed pipeline task %s line %d: %s",
+					rel, i+1, strings.TrimSpace(line))
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Errorf("CheckSubtasksComplete: walk error: %v", err)
+	}
+}
+
 // FindMainPackage returns the directory of the first Go file containing
 // "package main" found by a depth-first walk of root. Returns ("", nil)
 // if no main package exists. Useful for single-binary services.
