@@ -20,7 +20,10 @@ const (
 	iamAddr     = "http://localhost:8082"
 )
 
-var outputDir string
+var (
+	outputDir string
+	targetDir string
+)
 
 func init() {
 	wd, err := os.Getwd()
@@ -29,6 +32,7 @@ func init() {
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
 	outputDir = filepath.Join(root, "sandbox/platform-monolith-output")
+	targetDir = filepath.Join(root, "sandbox/platform-monolith-target")
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +98,14 @@ func TestMain(m *testing.M) {
 
 func TestReadmeCoverage(t *testing.T) {
 	goldutil.CheckReadmeCoverage(t, outputDir)
+}
+
+func TestSubtasksComplete(t *testing.T) {
+	goldutil.CheckSubtasksComplete(t, targetDir)
+}
+
+func TestRunSummaryExists(t *testing.T) {
+	goldutil.CheckRunSummaryExists(t, targetDir)
 }
 
 // ---------------------------------------------------------------------------
