@@ -25,4 +25,5 @@
 - [fe6b43-review-pipeline](fe6b43-review-pipeline/)
 - [b7249c-update-pipeline](b7249c-update-pipeline/)
 - [705550-reorganise-component-tests-into-stage-tests](705550-reorganise-component-tests-into-stage-tests/)
+- [aa0f2f-leaf-complete-handler-python-cold-start-optimization](aa0f2f-leaf-complete-handler-python-cold-start-optimization/)
 <!-- task-list-end -->
