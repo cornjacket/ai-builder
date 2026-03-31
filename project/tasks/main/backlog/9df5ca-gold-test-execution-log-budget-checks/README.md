@@ -123,9 +123,9 @@ always report 0 tokens, so only elapsed time thresholds are needed:
    run on 2026-03-30 (`sandbox/user-service-target`, build `86a08c-0000-build-1`)
    provides the initial data set.
 2. Apply a tolerance band to each observed value:
-   - **max** = observed × 2.0 (allow for model variance and slower hardware)
-   - **min** = observed × 0.25 (flag if suspiciously fast — possible skip or
-     trivial output)
+   - **max** = observed × 1.25 (25% headroom for model variance and hardware)
+   - **min** = observed × 0.75 (warn if 25% faster than baseline — possible
+     skip or unexpectedly short output)
 3. Round to a sensible precision (e.g. elapsed to nearest 5 s, tokens to
    nearest 500).
 4. Review the resulting values for sanity before committing the budget files.
