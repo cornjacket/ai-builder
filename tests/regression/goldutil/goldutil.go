@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+
 // CheckReadmeCoverage validates README.md presence and absence at directory
 // levels within outputDir according to architectural relevance rules for Go
 // projects:
@@ -107,6 +108,62 @@ func hasGoPackageChildren(dir string) bool {
 		}
 	}
 	return false
+}
+
+// CheckRunSummaryExists walks all completed TOP-level pipeline task directories
+// (X-prefixed directories that contain a task.json with "level": "TOP") and
+// asserts that the sibling README.md contains a "## Run Summary" section. Its
+// absence means the final write_metrics_to_task_json(final=True) call failed —
+// typically caused by the build directory being renamed before the orchestrator
+// could flush its final metrics.
+func CheckRunSummaryExists(t *testing.T, targetDir string) {
+	t.Helper()
+
+	err := filepath.WalkDir(targetDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() || !strings.HasPrefix(filepath.Base(path), "X-") {
+			return nil
+		}
+		tjPath := filepath.Join(path, "task.json")
+		if !fileExists(tjPath) {
+			return nil
+		}
+		raw, err := os.ReadFile(tjPath)
+		if err != nil {
+			return nil
+		}
+		var tj map[string]interface{}
+		if err := json.Unmarshal(raw, &tj); err != nil {
+			return nil
+		}
+		if tj["level"] != "TOP" {
+			return nil
+		}
+		// Only the pipeline entry point (build-N) should have a Run Summary.
+		// Component tasks may also carry level=TOP but their parent directory
+		// is a pipeline task (has a task.json). Skip those.
+		parentTaskJSON := filepath.Join(filepath.Dir(path), "task.json")
+		if fileExists(parentTaskJSON) {
+			return nil
+		}
+		readmePath := filepath.Join(path, "README.md")
+		content, err := os.ReadFile(readmePath)
+		if err != nil {
+			rel, _ := filepath.Rel(targetDir, readmePath)
+			t.Errorf("TOP pipeline task missing README.md: %s", rel)
+			return nil
+		}
+		if !strings.Contains(string(content), "## Run Summary") {
+			rel, _ := filepath.Rel(targetDir, readmePath)
+			t.Errorf("TOP pipeline task README missing Run Summary section: %s", rel)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Errorf("CheckRunSummaryExists: walk error: %v", err)
+	}
 }
 
 // CheckSubtasksComplete walks all README.md files inside X-prefixed pipeline

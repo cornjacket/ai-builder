@@ -82,6 +82,10 @@ func TestSubtasksComplete(t *testing.T) {
 	goldutil.CheckSubtasksComplete(t, targetDir)
 }
 
+func TestRunSummaryExists(t *testing.T) {
+	goldutil.CheckRunSummaryExists(t, targetDir)
+}
+
 // ---------------------------------------------------------------------------
 // Behavioural tests
 // ---------------------------------------------------------------------------

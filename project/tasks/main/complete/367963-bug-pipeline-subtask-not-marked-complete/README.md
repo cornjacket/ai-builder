@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
-| Next-subtask-id | 0001 |
+| Next-subtask-id | 0002 |
 
 ## Goal
 
@@ -30,6 +30,7 @@ last subtask in the README.
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [x] [X-367963-0000-fix-subtask-completion-and-gold-test](X-367963-0000-fix-subtask-completion-and-gold-test/)
+- [x] [X-367963-0001-gold-test-run-summary-exists](X-367963-0001-gold-test-run-summary-exists/)
 <!-- subtask-list-end -->
 
 ## Notes
