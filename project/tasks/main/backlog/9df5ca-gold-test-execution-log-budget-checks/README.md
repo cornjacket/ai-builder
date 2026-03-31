@@ -103,13 +103,43 @@ func TestExecutionLogBudget(t *testing.T) {
 Each regression (`user-service`, `platform-monolith`) carries its own
 `testdata/budget.json` with thresholds derived from observed baseline runs.
 
+## Selecting threshold values
+
+Before the budget files can be written, actual min and max values must be
+chosen for each row. This is a required subtask.
+
+**AI agent roles** (ARCHITECT, IMPLEMENTOR) require four thresholds per row:
+- `min_elapsed_s` / `max_elapsed_s`
+- `min_tokens_out` / `max_tokens_out`
+
+**Internal agent roles** (TESTER, TESTER, LEAF_COMPLETE_HANDLER,
+DECOMPOSE_HANDLER, DOCUMENTER_POST_ARCHITECT, DOCUMENTER_POST_IMPLEMENTOR)
+always report 0 tokens, so only elapsed time thresholds are needed:
+- `min_elapsed_s` / `max_elapsed_s`
+
+### Process for setting values
+
+1. Use the observed baseline run as the midpoint. The user-service regression
+   run on 2026-03-30 (`sandbox/user-service-target`, build `86a08c-0000-build-1`)
+   provides the initial data set.
+2. Apply a tolerance band to each observed value:
+   - **max** = observed × 2.0 (allow for model variance and slower hardware)
+   - **min** = observed × 0.25 (flag if suspiciously fast — possible skip or
+     trivial output)
+3. Round to a sensible precision (e.g. elapsed to nearest 5 s, tokens to
+   nearest 500).
+4. Review the resulting values for sanity before committing the budget files.
+   Thresholds that are obviously too tight or too loose should be adjusted by
+   hand.
+
+The selected values must be documented in each regression's `testdata/budget.json`
+and reviewed alongside the implementation PR.
+
 ## Notes
 
-- Budget values should be seeded from actual observed run data (e.g. the
-  user-service regression run on 2026-03-30 provides a baseline).
 - The `## Budget Violations` section written to the README is advisory —
   it is regenerated on each gold test run and should not be committed.
 - Min thresholds exist primarily to detect unexpectedly fast runs that may
   indicate a role is being skipped or producing trivially short output.
 - Token thresholds apply only to AI agent roles (ARCHITECT, IMPLEMENTOR);
-  internal roles always report 0 tokens and should have no token budgets.
+  internal roles always report 0 tokens and must not have token budget fields.
