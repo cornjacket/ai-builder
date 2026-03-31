@@ -161,7 +161,7 @@ Key relationships:
 ```
   Oracle
     │ python3 orchestrator.py --job spec.md --output-dir out/
-    │                         --state-machine machines/simple.json
+    │                         --state-machine machines/builder/simple.json
     ▼
   Orchestrator reads spec.md → creates task.json with goal from README
     │
@@ -216,7 +216,7 @@ Key relationships:
   Oracle
     │ sets up target repo, creates build-1 (Level:TOP), writes current-job.txt
     │ python3 orchestrator.py --target-repo target/ --output-dir out/
-    │                         --state-machine machines/default.json
+    │                         --state-machine machines/builder/default.json
     ▼
   ┌───────────────────────────────────────────────────────────┐
   │  ARCHITECT (decompose mode — Complexity: —)               │
@@ -385,8 +385,8 @@ inputs, outputs, and valid outcomes.
 The routing table is defined in a JSON file loaded at startup. Two built-in
 configurations:
 
-- `machines/simple.json` — non-TM (single-step) mode
-- `machines/default.json` — TM mode with full decomposition support
+- `machines/builder/simple.json` — non-TM (single-step) mode
+- `machines/builder/default.json` — TM mode with full decomposition support
 
 See [`machines/README.md`](machines/README.md) for the format specification
 and [`routing.md`](routing.md) for the full ROUTES tables.

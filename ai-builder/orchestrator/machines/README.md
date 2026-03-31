@@ -9,12 +9,9 @@ entry point, role→agent mapping, prompt files, and the full transition table.
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `default.json` | Full pipeline with TM handlers. Used when `--target-repo` is provided and no `--state-machine` is specified. |
-| `simple.json` | Flat (non-TM) pipeline. Used when only `--job` is provided and no `--state-machine` is specified. |
-| `default-gemini.json` | Same as `default.json` but with all AI roles set to `"agent": "gemini"`. |
-| `simple-gemini.json` | Same as `simple.json` but with all AI roles set to `"agent": "gemini"`. |
+| File / Directory | Purpose |
+|------------------|---------|
+| `builder/` | Builder machine configurations and role prompts — see [`builder/README.md`](builder/README.md) |
 
 ---
 
@@ -51,10 +48,10 @@ entry point, role→agent mapping, prompt files, and the full transition table.
 
 ### `prompt: null`
 
-Roles with `"prompt": null` use the orchestrator's built-in prompt generation
-(currently `DECOMPOSE_HANDLER` and `LEAF_COMPLETE_HANDLER`, which require
-runtime variable injection). Once a template variable injection system is
-implemented (task `7eec4a`), these can be extracted to static prompt files.
+Roles with `"agent": "internal"` and `"prompt": null` are handled entirely in
+Python — no AI subprocess is spawned. Their `"impl"` field points to the Python
+class that runs the logic. All five internal roles in the builder machine use
+this pattern.
 
 ### Handoff History Policy
 

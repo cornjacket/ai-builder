@@ -103,7 +103,7 @@ python3 "$REPO_ROOT/ai-builder/orchestrator/orchestrator.py" \
     --target-repo   "$TARGET_REPO" \
     --output-dir    "$OUTPUT_DIR" \
     --epic          "$EPIC" \
-    --state-machine "$REPO_ROOT/ai-builder/orchestrator/machines/default.json" \
+    --state-machine "$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json" \
     --job           "$CURRENT_JOB" \
     --start-state   "$START_STATE" \
     --resume

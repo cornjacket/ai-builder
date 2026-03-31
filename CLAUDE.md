@@ -204,6 +204,31 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 > verification. Move it to `complete/` using `move-task.sh` rather than
 > deleting it. Test tasks serve as living examples of correct usage.
 
+### Task granularity
+
+A top-level task should be completable in a single ARCHITECT → IMPLEMENTOR → TESTER
+pipeline run. **Split a task when** IMPLEMENTOR would touch more than ~5 unrelated
+files or implement more than ~3 independent concerns. A subtask should be a single,
+verifiable action (e.g. "write function X", "add migration Y") — not a phase or theme.
+When in doubt, smaller is better.
+
+**Break a task down further when:**
+- ARCHITECT cannot produce a coherent design without first resolving an unknown
+- IMPLEMENTOR would need to make a structural decision that warrants review
+- Two parts are independently testable with no shared state
+
+**Proceed as one task when:** all inputs/outputs are known, IMPLEMENTOR can work
+linearly, TESTER can verify in one pass.
+
+### TESTER failure decisions
+
+| Failure type | Action |
+|---|---|
+| Bug in code just written | Create a new subtask in the current task for the fix; do not widen scope |
+| Requirement misunderstood | Update the task description; restart the ARCHITECT for this task |
+| Systemic issue (missing dependency, wrong environment) | Create a new blocking task; pause current task until resolved |
+| Flaky test or environment noise | Retry the TESTER once; if it fails again, treat as a real failure |
+
 ### Scripts
 
 Run from the repo root:
@@ -243,7 +268,7 @@ python3 ai-builder/orchestrator/orchestrator.py \
     --target-repo <target-repo> \
     --output-dir  <output-dir> \
     --epic        main \
-    --state-machine ai-builder/orchestrator/machines/default.json
+    --state-machine ai-builder/orchestrator/machines/builder/default.json
 ```
 
 ---
@@ -272,5 +297,5 @@ task:
 - Update the relevant `README.md` file index and overview when files are added,
   moved, or removed.
 
-**Full documentation guideline:** [`roles/DOCUMENTER.md`](roles/DOCUMENTER.md)
+**Full documentation guideline:** [`ai-builder/docs/guidelines/documentation-standards.md`](ai-builder/docs/guidelines/documentation-standards.md)
 

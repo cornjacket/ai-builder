@@ -1,0 +1,32 @@
+{
+  "start_state": "ARCHITECT",
+  "roles": {
+    "ARCHITECT":                  { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/builder/roles/ARCHITECT.md",   "no_history": false },
+    "IMPLEMENTOR":                { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/builder/roles/IMPLEMENTOR.md", "no_history": false },
+    "TESTER":                     { "agent": "internal", "prompt": null                                        },
+    "DOCUMENTER_POST_ARCHITECT":  { "agent": "internal", "prompt": null                                        },
+    "DOCUMENTER_POST_IMPLEMENTOR":{ "agent": "internal", "prompt": null                                        }
+  },
+  "transitions": {
+    "ARCHITECT": {
+      "ARCHITECT_DESIGN_READY": "DOCUMENTER_POST_ARCHITECT",
+      "ARCHITECT_NEED_HELP":    null
+    },
+    "DOCUMENTER_POST_ARCHITECT": {
+      "DOCUMENTER_DONE": "IMPLEMENTOR"
+    },
+    "IMPLEMENTOR": {
+      "IMPLEMENTOR_IMPLEMENTATION_DONE": "DOCUMENTER_POST_IMPLEMENTOR",
+      "IMPLEMENTOR_NEEDS_ARCHITECT":     "ARCHITECT",
+      "IMPLEMENTOR_NEED_HELP":           null
+    },
+    "DOCUMENTER_POST_IMPLEMENTOR": {
+      "DOCUMENTER_DONE": "TESTER"
+    },
+    "TESTER": {
+      "TESTER_TESTS_PASS": null,
+      "TESTER_TESTS_FAIL": "IMPLEMENTOR",
+      "TESTER_NEED_HELP":  null
+    }
+  }
+}

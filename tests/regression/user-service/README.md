@@ -71,7 +71,7 @@ python3 ai-builder/orchestrator/orchestrator.py \
     --target-repo   sandbox/user-service-target \
     --output-dir    sandbox/user-service-output \
     --epic          main \
-    --state-machine ai-builder/orchestrator/machines/default.json
+    --state-machine ai-builder/orchestrator/machines/builder/default.json
 ```
 
 **Step 3 — Run the gold test:**

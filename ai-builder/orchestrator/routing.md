@@ -8,11 +8,11 @@ or `None` (halt).
 
 ## ROUTES Table
 
-The state machine is defined in `machines/default.json` (TM mode) and
-`machines/simple.json` (non-TM / single-step mode). The tables below reflect
+The state machine is defined in `machines/builder/default.json` (TM mode) and
+`machines/builder/simple.json` (non-TM / single-step mode). The tables below reflect
 the current `default.json` and `simple.json` configurations.
 
-### TM Mode (`machines/default.json`)
+### TM Mode (`machines/builder/default.json`)
 
 | From | Outcome | To |
 |------|---------|----|
@@ -36,7 +36,7 @@ the current `default.json` and `simple.json` configurations.
 | LEAF_COMPLETE_HANDLER | `HANDLER_STOP_AFTER` | halt *(Oracle intervention required)* |
 | LEAF_COMPLETE_HANDLER | `HANDLER_NEED_HELP` | halt |
 
-### Non-TM / Single-Step Mode (`machines/simple.json`)
+### Non-TM / Single-Step Mode (`machines/builder/simple.json`)
 
 | From | Outcome | To |
 |------|---------|----|

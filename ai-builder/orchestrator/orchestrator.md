@@ -14,7 +14,7 @@ encounters an unrecoverable state.
 | `--job` | non-TM mode | Path to the job document |
 | `--target-repo` | TM mode | Path to target repository; enables TM mode |
 | `--epic` | TM mode | Epic name in the task system (default: `main`) |
-| `--state-machine` | optional | Path to a JSON machine file; defaults to `machines/default.json` (TM mode) or `machines/simple.json` (non-TM mode) |
+| `--state-machine` | optional | Path to a JSON machine file; defaults to `machines/builder/default.json` (TM mode) or `machines/builder/simple.json` (non-TM mode) |
 | `--start-state` | optional | Override the machine's `start_state` at runtime; must be a role defined in the loaded machine |
 | `--resume` | optional | Skip the Level:TOP validation check; use when restarting a mid-run pipeline (see §Resuming a Stalled Run) |
 | `--clean-resume` | optional | Like `--resume`, but also deletes the interrupted component's output files before restarting (see §Resuming a Stalled Run). Implies `--resume`. |
@@ -126,7 +126,7 @@ line that serves as the boundary.
 | `ROUTES` | dict | Maps `(role, outcome)` → next role or `None`; populated from machine file |
 | `ROLE_PROMPTS` | dict | Maps role name → prompt `Path` or `None` (dynamic); populated from machine file |
 | `REPO_ROOT` | Path | Absolute path to the ai-builder repo root |
-| `ROLES_DIR` | Path | `REPO_ROOT/roles/` — default location for role prompt files |
+| `ROLES_DIR` | Path | `REPO_ROOT/ai-builder/orchestrator/machines/builder/roles/` — fallback location for role prompt files not specified in the machine JSON |
 | `MACHINES_DIR` | Path | `orchestrator/machines/` — built-in machine file directory |
 | `EXECUTION_LOG` | Path | `OUTPUT_DIR/execution.log` |
 | `CURRENT_JOB_FILE` | Path | `OUTPUT_DIR/current-job.txt` (TM mode only) |
@@ -241,7 +241,7 @@ injection system exists (see task `7eec4a`), handlers can be extracted to
 static files.
 
 **All other roles:** checks `ROLE_PROMPTS[role]` first (set from machine file);
-falls back to `roles/<ROLE>.md` if not set; falls back to a generic instruction
+falls back to `ROLES_DIR/<ROLE>.md` if not set; falls back to a generic instruction
 string if neither file exists.
 
 **All roles:** appends `## Handoff Notes from Previous Agents` section
@@ -355,7 +355,7 @@ this block; `run-summary.md` and `run-metrics.json` are not written for those ca
 | Operation | File | When |
 |-----------|------|------|
 | Read | `--job` (job document) | TM and non-TM mode startup; in TM mode `--resume` reads `last-job.json` instead |
-| Read | `roles/<ROLE>.md` | each `build_prompt()` call for non-TM roles |
+| Read | `ROLE_PROMPTS[role]` (from machine JSON) or `ROLES_DIR/<ROLE>.md` fallback | each `build_prompt()` call for AI roles |
 | Write | `execution.log` | after every role run (append) |
 | Write | `current-job.txt` | by `DECOMPOSE_HANDLER` or `LEAF_COMPLETE_HANDLER` after `HANDLER_SUBTASKS_READY` — internal handler comms; path to the next job README |
 | Read | `current-job.txt` | by orchestrator after a handler emits `HANDLER_SUBTASKS_READY` — updates `job_doc` for downstream roles |

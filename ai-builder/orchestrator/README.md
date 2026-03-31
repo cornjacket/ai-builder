@@ -14,6 +14,7 @@ document from input to tested implementation through specialist agents.
 | `metrics.py` | Captures per-invocation timing and token usage; writes run-summary.md and run-metrics.json |
 | `build_master_index.py` | Scans output dir for `.md` files with Purpose:/Tags: headers; writes `master-index.md` |
 | `render_readme.py` | Renders `README.md` from `task.json` (TOP-level: run summary + log; non-TOP: title + subtasks) |
+| `agents/` | Pluggable internal agent implementations (see [`agents/README.md`](agents/README.md)) |
 | `agent-roles.md` | Canonical reference: every pipeline agent — type, inputs, outputs, valid outcomes |
 | `orchestrator.md` | Code companion: inputs, outputs, internals for orchestrator.py |
 | `agent_wrapper.md` | Code companion: inputs, outputs, internals for agent_wrapper.py |
@@ -50,11 +51,11 @@ routes between agents based on that outcome.
 |------|-------|----------------|
 | ARCHITECT | claude | Designs the solution (decompose or design mode); emits XML response with structured fields |
 | IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed; emits XML response |
-| TESTER | internal | Runs `test_command` from `task.json`; returns pass/fail |
-| DECOMPOSE_HANDLER | internal | Creates pipeline subtask directories from ARCHITECT's components array; advances to first subtask |
-| LEAF_COMPLETE_HANDLER | internal | Marks task complete; walks up the tree; advances to next sibling or signals DONE |
-| DOCUMENTER_POST_ARCHITECT | internal | Scans output dir for `.md` files; rebuilds README index (runs after ARCHITECT design mode) |
-| DOCUMENTER_POST_IMPLEMENTOR | internal | Scans output dir for `.md` files; rebuilds README index (runs after IMPLEMENTOR) |
+| TESTER | internal | Runs `test_command` from `task.json`; returns pass/fail — impl: `agents.tester.TesterAgent` |
+| DECOMPOSE_HANDLER | internal | Creates pipeline subtask directories from ARCHITECT's components array; advances to first subtask — impl: `agents.decompose.DecomposeAgent` |
+| LEAF_COMPLETE_HANDLER | internal | Marks task complete; walks up the tree; advances to next sibling or signals DONE — impl: `agents.lch.LCHAgent` |
+| DOCUMENTER_POST_ARCHITECT | internal | Scans output dir for `.md` files; rebuilds README index (runs after ARCHITECT design mode) — impl: `agents.documenter.DocumenterAgent` |
+| DOCUMENTER_POST_IMPLEMENTOR | internal | Scans output dir for `.md` files; rebuilds README index (runs after IMPLEMENTOR) — impl: `agents.documenter.DocumenterAgent` |
 
 See [`agent-roles.md`](agent-roles.md) for full details on each agent.
 
@@ -111,7 +112,7 @@ Each role can be configured to receive or suppress the accumulated handoff
 history via the `no_history` field in the state machine JSON:
 
 ```json
-"TESTER": { "agent": "claude", "prompt": "roles/TESTER.md", "no_history": true }
+"TESTER": { "agent": "internal", "impl": "agents.builder.tester.TesterAgent", "prompt": null, "no_history": true }
 ```
 
 When `no_history: true`, the role's prompt contains only its role instructions
@@ -131,6 +132,30 @@ and rationale.
 
 ---
 
+## Internal Agents
+
+Internal agents are roles whose logic runs directly in Python rather than
+spawning a claude subprocess. They are declared in the machine JSON with
+`"agent": "internal"` and an `"impl"` field pointing to a dotted class path:
+
+```json
+"TESTER": { "agent": "internal", "impl": "agents.builder.tester.TesterAgent", "prompt": null }
+```
+
+At startup the orchestrator calls `agents.loader.load_internal_agent(impl_path, ctx)`
+which imports the module, instantiates the class (injecting `AgentContext` if
+the constructor accepts one), and stores it in a dispatch table. The main loop
+calls `agent.run(job_doc, output_dir, **kwargs)` — the same interface regardless
+of which class is behind it.
+
+All internal agent classes satisfy the `InternalAgent` Protocol defined in
+`agents/base.py`. Custom pipelines can swap implementations without touching
+orchestrator core code — just change the `"impl"` value in the machine JSON.
+
+See [`agents/README.md`](agents/README.md) for the full package reference.
+
+---
+
 ## Agent Knowledge Boundary
 
 **AI agents (ARCHITECT, IMPLEMENTOR, TESTER) must never have knowledge of:**
@@ -144,15 +169,15 @@ and rationale.
 - Target-repo build/test commands — from `## Suggested Tools` in the job doc
 
 This boundary is enforced structurally:
-1. Agent prompts (`roles/*.md`) contain no script names, no `task.json`
-   references, and no `last-job.json` references.
+1. Agent prompts (`machines/builder/roles/*.md`) contain no script names, no
+   `task.json` references, and no `last-job.json` references.
 2. `CLAUDE.md` is not injected into agent prompts. Agents run with
-   `cwd=output_dir` (not the repo root), so CLAUDE.md is not loaded.
+   `cwd=/tmp` (not the repo root), so CLAUDE.md is not loaded.
 3. DECOMPOSE_HANDLER and LEAF_COMPLETE_HANDLER are **internal** (no AI model
    invoked) — the only roles that previously needed script knowledge are now
    pure Python. No agent prompt covers these roles.
 
-**Rule for future prompt edits:** if a proposed change to any `roles/*.md`
+**Rule for future prompt edits:** if a proposed change to any role prompt
 file would require an AI agent to know about scripts, task.json fields, or
 pipeline internals, the change is wrong. The orchestrator mediates all
 pipeline mechanics; agents read and write only the job doc prose.
@@ -190,7 +215,7 @@ python3 ai-builder/orchestrator/orchestrator.py \
     --target-repo <target-repo> \
     --output-dir  <output-dir> \
     --epic        main \
-    --state-machine ai-builder/orchestrator/machines/default.json
+    --state-machine ai-builder/orchestrator/machines/builder/default.json
 ```
 
 ---

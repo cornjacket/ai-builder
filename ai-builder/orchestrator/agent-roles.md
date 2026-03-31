@@ -4,9 +4,9 @@ Purpose: Canonical reference for every agent in the pipeline — what it receive
 what it produces, and what outcomes it can emit.
 Tags: orchestrator, pipeline, architecture
 
-This document covers all agents defined in `machines/default.json`. AI agents
+This document covers all agents defined in `machines/builder/default.json`. AI agents
 receive a text prompt built by the orchestrator; internal agents are Python
-functions that run shell scripts directly without invoking a model.
+classes that run directly without invoking a model.
 
 ---
 

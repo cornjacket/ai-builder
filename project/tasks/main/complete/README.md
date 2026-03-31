@@ -35,4 +35,7 @@
 - [69f226-pipeline-doc-generation-bugs](69f226-pipeline-doc-generation-bugs/)
 - [18cdcb-doc-version-number-policy](18cdcb-doc-version-number-policy/)
 - [367963-bug-pipeline-subtask-not-marked-complete](367963-bug-pipeline-subtask-not-marked-complete/)
+- [356c4e-extract-internal-agents-into-configurable-modules](356c4e-extract-internal-agents-into-configurable-modules/)
+- [46f78a-stage-builder-machine-as-configurable-pipeline](46f78a-stage-builder-machine-as-configurable-pipeline/)
+- [463215-inline-job-doc-sections-per-role](463215-inline-job-doc-sections-per-role/)
 <!-- task-list-end -->

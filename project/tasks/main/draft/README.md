@@ -18,4 +18,5 @@
 - [f48538-add-project-flag-to-task-scripts](f48538-add-project-flag-to-task-scripts/)
 - [26d8ee-regression-execution-log-validation](26d8ee-regression-execution-log-validation/)
 - [818b46-regression-run-metrics-history](818b46-regression-run-metrics-history/)
+- [3d9f24-parallel-pipeline-via-git-worktrees](3d9f24-parallel-pipeline-via-git-worktrees/)
 <!-- task-list-end -->

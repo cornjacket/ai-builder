@@ -19,7 +19,6 @@
 - [e7dce3-brainstorm-direct-api-calls](e7dce3-brainstorm-direct-api-calls/)
 - [f1b888-brainstorm-gemini-as-frontend-ai](f1b888-brainstorm-gemini-as-frontend-ai/)
 - [99ed0c-document-claude-vs-gemini-behavioral-differences](99ed0c-document-claude-vs-gemini-behavioral-differences/)
-- [463215-inline-job-doc-sections-per-role](463215-inline-job-doc-sections-per-role/)
 - [66251c-design-model-role-addendum-in-machine-config](66251c-design-model-role-addendum-in-machine-config/)
 - [b9529c-doc-pipeline](b9529c-doc-pipeline/)
 - [fe6b43-review-pipeline](fe6b43-review-pipeline/)
@@ -27,4 +26,5 @@
 - [705550-reorganise-component-tests-into-stage-tests](705550-reorganise-component-tests-into-stage-tests/)
 - [aa0f2f-leaf-complete-handler-python-cold-start-optimization](aa0f2f-leaf-complete-handler-python-cold-start-optimization/)
 - [9df5ca-gold-test-execution-log-budget-checks](9df5ca-gold-test-execution-log-budget-checks/)
+- [188227-adopt-mypy-static-type-checking](188227-adopt-mypy-static-type-checking/)
 <!-- task-list-end -->

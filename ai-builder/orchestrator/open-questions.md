@@ -58,9 +58,9 @@ coordination, review management), a dedicated role file is probably warranted.
 ## DOCUMENTER
 
 **DOCUMENTER prompt not yet written**
-`roles/DOCUMENTER.md` contains the guideline but not a formal agent prompt.
-Needs to be tightened into instructions an AI agent can follow directly.
-See task `3e0310-design-documenter-agent`.
+`ai-builder/docs/guidelines/documentation-standards.md` contains the guideline
+but not a formal agent prompt. Needs to be tightened into instructions an AI
+agent can follow directly. See task `3e0310-design-documenter-agent`.
 
 **Maximum README size threshold**
 What is the threshold that triggers DOCUMENTER to split a README into

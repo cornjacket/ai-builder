@@ -1,0 +1,24 @@
+{
+  "start_state": "ARCHITECT",
+  "roles": {
+    "ARCHITECT":  { "agent": "gemini", "prompt": "ai-builder/orchestrator/machines/builder/roles/ARCHITECT.md",   "no_history": false },
+    "IMPLEMENTOR":{ "agent": "gemini", "prompt": "ai-builder/orchestrator/machines/builder/roles/IMPLEMENTOR.md", "no_history": false },
+    "TESTER":     { "agent": "internal", "impl": "agents.builder.tester.TesterAgent", "prompt": null }
+  },
+  "transitions": {
+    "ARCHITECT": {
+      "ARCHITECT_DESIGN_READY": "IMPLEMENTOR",
+      "ARCHITECT_NEED_HELP":    null
+    },
+    "IMPLEMENTOR": {
+      "IMPLEMENTOR_IMPLEMENTATION_DONE": "TESTER",
+      "IMPLEMENTOR_NEEDS_ARCHITECT":     "ARCHITECT",
+      "IMPLEMENTOR_NEED_HELP":           null
+    },
+    "TESTER": {
+      "TESTER_TESTS_PASS": null,
+      "TESTER_TESTS_FAIL": "IMPLEMENTOR",
+      "TESTER_NEED_HELP":  null
+    }
+  }
+}

@@ -108,7 +108,7 @@ python3 ai-builder/orchestrator/orchestrator.py \
     --target-repo   sandbox/user-service-target \
     --output-dir    sandbox/user-service-output \
     --epic          main \
-    --state-machine ai-builder/orchestrator/machines/default.json
+    --state-machine ai-builder/orchestrator/machines/builder/default.json
 
 # 5. Inject stop-after into the first component's task.json
 python3 -c "

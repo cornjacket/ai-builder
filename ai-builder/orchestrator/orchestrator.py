@@ -10,6 +10,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from agent_wrapper import run_agent, AgentResult
+from agents.tester import TesterAgent
+from agents.documenter import DocumenterAgent
+from agents.decompose import DecomposeAgent
+from agents.lch import LCHAgent
+from agents.context import AgentContext
+from agents.loader import load_internal_agent
 from gemini_compat import gemini_role_addendum
 import metrics as metrics_mod
 from metrics import RunData, InvocationRecord, description_from_job_path
@@ -105,7 +111,7 @@ else:
         sys.exit(1)
 
 REPO_ROOT       = Path(__file__).resolve().parent.parent.parent
-ROLES_DIR       = REPO_ROOT / "roles"
+ROLES_DIR       = REPO_ROOT / "ai-builder" / "orchestrator" / "machines" / "builder" / "roles"
 MACHINES_DIR    = Path(__file__).resolve().parent / "machines"
 OUTPUT_DIR      = args.output_dir.resolve()
 TIMEOUT_MINUTES = 5
@@ -169,6 +175,19 @@ if TM_MODE:
         sys.exit(1)
 else:
     initial_job_doc = args.job.resolve()
+
+# Build the AgentContext used by internal agents that need orchestrator-level
+# constants. TARGET_REPO / PM_SCRIPTS_DIR / EPIC are only set in TM mode;
+# agents that require them (DecomposeAgent, LCHAgent) are only invoked in
+# TM mode, so the None defaults are never reached in practice.
+_agent_ctx = AgentContext(
+    run_dir          = RUN_DIR,
+    current_job_file = CURRENT_JOB_FILE,
+    pm_scripts_dir   = PM_SCRIPTS_DIR if TM_MODE else Path("."),
+    epic             = EPIC if TM_MODE else "",
+    output_dir       = OUTPUT_DIR,
+    target_repo      = TARGET_REPO if TM_MODE else None,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -243,9 +262,9 @@ if args.state_machine:
         print(f"[orchestrator] Machine file not found: {_machine_file}")
         sys.exit(1)
 elif TM_MODE:
-    _machine_file = MACHINES_DIR / "default.json"
+    _machine_file = MACHINES_DIR / "builder" / "default.json"
 else:
-    _machine_file = MACHINES_DIR / "simple.json"
+    _machine_file = MACHINES_DIR / "builder" / "simple.json"
 
 AGENTS, ROUTES, _start_state, ROLE_PROMPTS, NO_HISTORY_ROLES = load_state_machine(_machine_file)
 
@@ -413,350 +432,6 @@ def parse_response(response: str) -> tuple[str, str, list[dict]]:
     return outcome, handoff, []
 
 
-# ---------------------------------------------------------------------------
-# Internal agents — deterministic roles that run shell scripts directly
-# in Python rather than spawning a claude subprocess.
-#
-# An "internal" agent is declared in the machine JSON with "agent": "internal".
-# It returns an AgentResult with zero token counts (no model was invoked).
-# ---------------------------------------------------------------------------
-
-def _run_decompose_internal(job_doc: Path, components: list[dict]) -> AgentResult:
-    """Execute DECOMPOSE_HANDLER logic directly without a claude subprocess.
-
-    Receives the components array from ARCHITECT's JSON response (already parsed
-    by the orchestrator). Creates a pipeline subtask and output subdirectory for
-    each component, stores output_dir in each task.json, fills in Goal/Context,
-    and points current-job.txt at the first subtask.
-    """
-    parent_dir = job_doc.parent
-    task_json_path = parent_dir / "task.json"
-    if not task_json_path.exists():
-        return AgentResult(exit_code=1, response=f"task.json not found at {task_json_path}")
-
-    try:
-        parent_data = json.loads(task_json_path.read_text())
-    except Exception as e:
-        return AgentResult(exit_code=1, response=f"Failed to parse task.json: {e}")
-
-    parent_level = parent_data.get("level", "TOP")
-    parent_depth = parent_data.get("depth", 0)
-    child_depth  = parent_depth + 1
-    parent_output_dir = Path(parent_data.get("output_dir", str(OUTPUT_DIR)))
-
-    if not components:
-        return AgentResult(exit_code=1, response="No components provided to DECOMPOSE_HANDLER")
-
-    # Determine parent's path relative to in-progress/ (for --parent flag)
-    in_progress_dir = TARGET_REPO / "project" / "tasks" / EPIC / "in-progress"
-    try:
-        parent_rel = str(parent_dir.relative_to(in_progress_dir))
-    except ValueError:
-        return AgentResult(exit_code=1, response=f"Cannot compute parent rel path: {parent_dir}")
-
-    # Extract parent name and goal to append as a new ancestry level in child context.
-    # The child's ## Context is built as a labelled chain: one ### Level N entry per
-    # ancestor, newest appended last. This prevents the flat-copy duplication that
-    # occurs when context is copied verbatim at each descent.
-    parent_content = job_doc.read_text()
-    goal_match = re.search(r'## Goal\s*\n\n(.*?)(?=\n## |\Z)', parent_content, re.DOTALL)
-    parent_goal = goal_match.group(1).strip() if goal_match else ""
-    context_match = re.search(r'## Context\s*\n\n(.*?)(?=\n## |\Z)', parent_content, re.DOTALL)
-    parent_context = context_match.group(1).strip() if context_match else ""
-    # Suppress placeholder context from freshly created tasks
-    if parent_context == "_To be written._":
-        parent_context = ""
-
-    # Build the new ancestry entry for this level
-    parent_task_name = parent_dir.name
-    new_level_entry = f"### Level {child_depth} — {parent_task_name}\n{parent_goal}"
-
-    # Compose child context: inherited chain + new entry for this level
-    if parent_context:
-        child_context = f"{parent_context}\n\n{new_level_entry}"
-    else:
-        child_context = new_level_entry
-
-    subtask_dirs = []
-    for i, component in enumerate(components):
-        comp_name = component["name"]
-        complexity = component["complexity"]
-        description = component["description"]
-
-        cmd = [
-            str(PM_SCRIPTS_DIR / "new-pipeline-subtask.sh"),
-            "--epic", EPIC,
-            "--folder", "in-progress",
-            "--parent", parent_rel,
-            "--name", comp_name,
-        ]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        if proc.returncode != 0:
-            err = proc.stderr.strip() or proc.stdout.strip()
-            return AgentResult(exit_code=1, response=f"new-pipeline-subtask.sh failed for '{comp_name}': {err}")
-
-        # Parse created subtask relative path from script output
-        created_rel = None
-        for line in proc.stdout.splitlines():
-            if line.startswith("Created pipeline-subtask:"):
-                created_rel = line.split(": ", 1)[1].strip().rstrip("/")
-                break
-        if created_rel is None:
-            return AgentResult(exit_code=1, response=f"Cannot parse subtask path from: {proc.stdout!r}")
-
-        subtask_dir = TARGET_REPO / created_rel
-        subtask_dirs.append(subtask_dir)
-
-        # Determine output directory for this component
-        source_dir = component.get("source_dir", "").strip()
-        if comp_name == "integrate" or not source_dir or source_dir == ".":
-            comp_output_dir = parent_output_dir  # integrate writes to parent dir directly
-        else:
-            comp_output_dir = parent_output_dir / source_dir
-            comp_output_dir.mkdir(parents=True, exist_ok=True)
-            placeholder = comp_output_dir / "README.md"
-            if not placeholder.exists():
-                placeholder.write_text(f"# {comp_name}\n\n_Placeholder. ARCHITECT fills in documentation._\n")
-
-        # Update task.json: set complexity, depth, goal, context, output_dir;
-        # for last component also set last-task + level
-        subtask_json = subtask_dir / "task.json"
-        if subtask_json.exists():
-            try:
-                subtask_data = json.loads(subtask_json.read_text())
-                subtask_data["name"] = comp_name
-                subtask_data["complexity"] = complexity
-                subtask_data["depth"] = child_depth
-                subtask_data["goal"] = description
-                subtask_data["context"] = child_context
-                subtask_data["output_dir"] = str(comp_output_dir)
-                if i == len(components) - 1:
-                    subtask_data["last-task"] = True
-                    subtask_data["level"] = parent_level
-                subtask_json.write_text(json.dumps(subtask_data, indent=2) + "\n")
-            except Exception as e:
-                return AgentResult(exit_code=1, response=f"Failed to update subtask task.json for '{comp_name}': {e}")
-
-        # Update README: Goal = component description, Context = ancestry chain
-        subtask_readme = subtask_dir / "README.md"
-        if subtask_readme.exists():
-            readme = subtask_readme.read_text()
-            readme = readme.replace(
-                "## Goal\n\n_To be written._",
-                f"## Goal\n\n{description}",
-            )
-            readme = readme.replace(
-                "## Context\n\n_To be written._",
-                f"## Context\n\n{child_context}",
-            )
-            subtask_readme.write_text(readme)
-
-    if not subtask_dirs:
-        return AgentResult(exit_code=1, response="No subtasks created")
-
-    # Point pipeline at first subtask.
-    # Write current-job.txt to RUN_DIR (== OUTPUT_DIR by default) — that is
-    # where the orchestrator reads CURRENT_JOB_FILE from.
-    first_readme = subtask_dirs[0] / "README.md"
-    cmd = [
-        str(PM_SCRIPTS_DIR / "set-current-job.sh"),
-        "--output-dir", str(RUN_DIR),
-        str(first_readme),
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
-        err = proc.stderr.strip() or proc.stdout.strip()
-        return AgentResult(exit_code=1, response=f"set-current-job.sh failed: {err}")
-
-    # Check stop-after on the parent task.  When set, the orchestrator pauses
-    # here instead of advancing to the first component's ARCHITECT.  This is
-    # the mechanism used by component-level regression tests to isolate the
-    # decompose step: capture the initial state with stop-after=true in the
-    # TOP task.json, run the orchestrator, verify it stops here.
-    if parent_data.get("stop-after"):
-        response = (
-            f"OUTCOME: HANDLER_STOP_AFTER\n"
-            f"HANDOFF: decomposed into {len(components)} components "
-            f"(level={parent_level}), first: {subtask_dirs[0].name}; "
-            f"stop-after=true on parent task — pausing"
-        )
-        return AgentResult(exit_code=0, response=response)
-
-    response = (
-        f"OUTCOME: HANDLER_SUBTASKS_READY\n"
-        f"HANDOFF: decomposed into {len(components)} components "
-        f"(level={parent_level}), first: {subtask_dirs[0].name}"
-    )
-    return AgentResult(exit_code=0, response=response)
-
-
-def _run_tester_internal(job_doc: Path) -> AgentResult:
-    """Run the test command from task.json and return pass/fail as a structured result."""
-    task_json_path = job_doc.parent / "task.json"
-    if not task_json_path.exists():
-        return AgentResult(exit_code=1, response="OUTCOME: TESTER_NEED_HELP\nHANDOFF: task.json not found; cannot determine test command.")
-    try:
-        tj = json.loads(task_json_path.read_text())
-    except Exception as e:
-        return AgentResult(exit_code=1, response=f"OUTCOME: TESTER_NEED_HELP\nHANDOFF: Failed to read task.json: {e}")
-
-    test_command = tj.get("test_command", "").strip()
-    if not test_command:
-        return AgentResult(exit_code=1, response="OUTCOME: TESTER_NEED_HELP\nHANDOFF: test_command field missing from task.json.")
-
-    try:
-        proc = subprocess.run(test_command, shell=True, capture_output=True, text=True)
-    except Exception as e:
-        return AgentResult(exit_code=1, response=f"OUTCOME: TESTER_NEED_HELP\nHANDOFF: subprocess.run() raised an exception: {e}")
-
-    if proc.returncode == 0:
-        response = "OUTCOME: TESTER_TESTS_PASS\nHANDOFF: All tests passed."
-    else:
-        response = (
-            f"OUTCOME: TESTER_TESTS_FAIL\n"
-            f"HANDOFF: Tests failed (exit code {proc.returncode}).\n"
-            f"{proc.stdout}\n{proc.stderr}"
-        ).rstrip()
-    return AgentResult(exit_code=0, response=response)
-
-
-def _run_documenter_internal(job_doc: Path, output_dir: Path) -> AgentResult:
-    """Scan output_dir for *.md files and rebuild README.md with a documentation index.
-
-    Reads documents_written from task.json; returns DOCUMENTER_DONE immediately
-    (no-op) if the field is false or absent.
-    """
-    task_json_path = job_doc.parent / "task.json"
-    documents_written = False
-    if task_json_path.exists():
-        try:
-            documents_written = json.loads(task_json_path.read_text()).get("documents_written", False)
-        except Exception:
-            pass
-
-    if not documents_written:
-        return AgentResult(exit_code=0, response="OUTCOME: DOCUMENTER_DONE\nHANDOFF: documents_written=false; skipped")
-
-    design_docs: list[tuple[str, str]] = []
-    impl_docs:   list[tuple[str, str]] = []
-
-    for md_file in sorted(output_dir.glob("*.md")):
-        if md_file.name == "README.md":
-            continue
-        content = md_file.read_text()
-
-        purpose = ""
-        m = re.search(r'[Pp]urpose[:\s]+([^\n.]+\.?)', content)
-        if m:
-            purpose = m.group(1).strip().rstrip('.')
-
-        tags: list[str] = []
-        m = re.search(r'[Tt]ags[:\s]+([^\n]+)', content)
-        if m:
-            tags = [t.strip() for t in m.group(1).split(',')]
-
-        entry = (md_file.name, purpose)
-        if "implementation" in tags:
-            impl_docs.append(entry)
-        else:
-            design_docs.append(entry)
-
-    if not design_docs and not impl_docs:
-        return AgentResult(exit_code=0, response="OUTCOME: DOCUMENTER_DONE\nHANDOFF: no .md files found to index")
-
-    lines: list[str] = ["## Documentation", ""]
-    if design_docs:
-        lines += ["### Design", "| File | Description |", "|------|-------------|"]
-        for name, desc in design_docs:
-            lines.append(f"| {name} | {desc} |")
-        lines.append("")
-    if impl_docs:
-        lines += ["### Implementation Notes", "| File | Description |", "|------|-------------|"]
-        for name, desc in impl_docs:
-            lines.append(f"| {name} | {desc} |")
-        lines.append("")
-
-    doc_section = "\n".join(lines)
-
-    readme_path = output_dir / "README.md"
-    if readme_path.exists():
-        readme = readme_path.read_text()
-        if "## Documentation" in readme:
-            readme = re.sub(r'## Documentation.*?(?=\n## |\Z)', doc_section + "\n", readme, flags=re.DOTALL)
-        else:
-            readme = readme.rstrip() + "\n\n" + doc_section + "\n"
-    else:
-        readme = f"# Documentation\n\n{doc_section}\n"
-    readme_path.write_text(readme)
-
-    n = len(design_docs) + len(impl_docs)
-    return AgentResult(
-        exit_code=0,
-        response=(
-            f"OUTCOME: DOCUMENTER_DONE\n"
-            f"HANDOFF: indexed {n} doc(s) into README.md "
-            f"({len(design_docs)} design, {len(impl_docs)} implementation)"
-        ),
-    )
-
-
-def _run_lch_internal(run_dir: Path) -> AgentResult:
-    """Execute LEAF_COMPLETE_HANDLER logic directly without a claude subprocess.
-
-    Runs on-task-complete.sh and maps its three possible outputs to the
-    corresponding outcome strings. No AI reasoning is required for this role.
-
-    run_dir is passed as --output-dir to on-task-complete.sh so that
-    set-current-job.sh writes current-job.txt to the correct coordination dir.
-    """
-    current_job_path = CURRENT_JOB_FILE.read_text().strip()
-    cmd = [
-        str(PM_SCRIPTS_DIR / "on-task-complete.sh"),
-        "--current", current_job_path,
-        "--output-dir", str(run_dir),
-        "--epic", EPIC,
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    stdout = proc.stdout.strip()
-
-    if proc.returncode != 0:
-        err = proc.stderr.strip() or stdout
-        print(f"[internal/LCH] on-task-complete.sh failed (exit {proc.returncode}): {err}")
-        return AgentResult(exit_code=1, response=f"on-task-complete.sh failed: {err}")
-
-    # on-task-complete.sh may emit status lines before the terminal token.
-    # Scan each line for NEXT/DONE/STOP_AFTER and the optional TOP_RENAME_PENDING
-    # token (emitted when the top-level build directory rename is deferred).
-    outcome = None
-    token_line = ""
-    top_rename_pending = None
-    for line in proc.stdout.splitlines():
-        line = line.strip()
-        if line.startswith("TOP_RENAME_PENDING "):
-            # advance-pipeline.sh deferred the top-level rename so the orchestrator
-            # can flush metrics to task.json while paths are still valid. Capture
-            # the directory to rename; the orchestrator applies it after all writes.
-            top_rename_pending = line[len("TOP_RENAME_PENDING "):].strip()
-        elif line.startswith("NEXT "):
-            outcome = "HANDLER_SUBTASKS_READY"
-            token_line = line
-        elif line == "DONE":
-            outcome = "HANDLER_ALL_DONE"
-            token_line = line
-        elif line == "STOP_AFTER":
-            outcome = "HANDLER_STOP_AFTER"
-            token_line = line
-
-    if outcome is None:
-        print(f"[internal/LCH] unexpected output from on-task-complete.sh: {stdout!r}")
-        return AgentResult(exit_code=1, response=f"Unexpected output: {stdout}")
-
-    response = f"OUTCOME: {outcome}\nHANDOFF: ran on-task-complete.sh → {token_line}"
-    if top_rename_pending:
-        response += f"\nTOP_RENAME_PENDING: {top_rename_pending}"
-    return AgentResult(exit_code=0, response=response)
-
-
 def _save_handoff_state(output_dir: Path, handoff_history: list[str], frame_stack: list[dict]) -> None:
     """Write handoff_history and frame_stack to handoff-state.json in output_dir."""
     state = {
@@ -879,26 +554,25 @@ def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], comp
             handoff_history.append(f"[{parent_name} complete] {level_summaries}")
 
 
+
 def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, components: list[dict] | None = None) -> AgentResult:
     """Dispatch to the internal implementation for the given role."""
     if role == "LEAF_COMPLETE_HANDLER":
-        # LCH uses RUN_DIR (where current-job.txt lives), not the per-component
-        # subdirectory that task_output_dir may point to.
-        return _run_lch_internal(RUN_DIR)
+        return LCHAgent(ctx=_agent_ctx).run(job_doc or Path("."), output_dir)
     if role == "DECOMPOSE_HANDLER":
         if job_doc is None:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires a job_doc")
         if not components:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires components from ARCHITECT JSON response")
-        return _run_decompose_internal(job_doc, components)
+        return DecomposeAgent(ctx=_agent_ctx).run(job_doc, output_dir, components=components)
     if role in ("DOCUMENTER_POST_ARCHITECT", "DOCUMENTER_POST_IMPLEMENTOR"):
         if job_doc is None:
             return AgentResult(exit_code=1, response=f"{role} requires a job_doc")
-        return _run_documenter_internal(job_doc, output_dir)
+        return DocumenterAgent().run(job_doc, output_dir)
     if role == "TESTER":
         if job_doc is None:
             return AgentResult(exit_code=1, response="TESTER requires a job_doc")
-        return _run_tester_internal(job_doc)
+        return TesterAgent().run(job_doc, output_dir)
     return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
 
 

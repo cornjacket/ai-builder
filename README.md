@@ -11,7 +11,7 @@ it, and reassembles the whole — without human involvement between steps.
 
 ```
 ai-builder/         Orchestrator, state machines, role prompts loader, companion docs
-roles/              Role prompt files (ARCHITECT, IMPLEMENTOR, TESTER, DOCUMENTER, ...)
+ai-builder/orchestrator/machines/builder/roles/   Role prompt files (ARCHITECT, IMPLEMENTOR)
 target/             Bootstrap scripts for setting up a target repository
 tests/
     regression/     Gold tests for full pipeline runs; infra smoke test
@@ -64,13 +64,13 @@ Use `new-pipeline-build.sh` to create one (see Quick Start below).
 |------|-------|----------------|
 | `ARCHITECT` | claude | Designs the solution; decides whether to decompose or implement directly |
 | `IMPLEMENTOR` | claude | Writes code exactly as ARCHITECT specified |
-| `TESTER` | claude | Verifies the implementation passes the Acceptance Criteria |
-| `DECOMPOSE_HANDLER` | claude | Creates component subtasks from the ARCHITECT's Components table; advances the pipeline to the first subtask |
-| `LEAF_COMPLETE_HANDLER` | claude | Marks completed subtasks done; walks the task tree to find the next subtask or signals completion |
+| `TESTER` | internal | Runs the `test_command` from `task.json` and maps the exit code to an outcome |
+| `DECOMPOSE_HANDLER` | internal | Creates component subtasks from the ARCHITECT's Components table; advances the pipeline to the first subtask |
+| `LEAF_COMPLETE_HANDLER` | internal | Marks completed subtasks done; walks the task tree to find the next subtask or signals completion |
 
-Role prompt files live in [`roles/`](roles/). The orchestrator loads them
-via the state machine configuration in
-[`ai-builder/orchestrator/machines/`](ai-builder/orchestrator/machines/).
+Role prompt files live in [`ai-builder/orchestrator/machines/builder/roles/`](ai-builder/orchestrator/machines/builder/roles/).
+The orchestrator loads them via the state machine configuration in
+[`ai-builder/orchestrator/machines/builder/`](ai-builder/orchestrator/machines/builder/).
 
 ---
 
@@ -108,7 +108,7 @@ python3 ai-builder/orchestrator/orchestrator.py \
     --target-repo  /path/to/target-repo \
     --output-dir   /path/to/output \
     --epic         main \
-    --state-machine ai-builder/orchestrator/machines/default.json
+    --state-machine ai-builder/orchestrator/machines/builder/default.json
 ```
 
 See [`ai-builder/orchestrator/README.md`](ai-builder/orchestrator/README.md)
