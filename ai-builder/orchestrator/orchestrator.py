@@ -10,10 +10,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from agent_wrapper import run_agent, AgentResult
-from agents.tester import TesterAgent
-from agents.documenter import DocumenterAgent
-from agents.decompose import DecomposeAgent
-from agents.lch import LCHAgent
+from agents.builder.tester import TesterAgent
+from agents.builder.documenter import DocumenterAgent
+from agents.builder.decompose import DecomposeAgent
+from agents.builder.lch import LCHAgent
 from agents.context import AgentContext
 from agents.loader import load_internal_agent
 from gemini_compat import gemini_role_addendum
@@ -575,6 +575,13 @@ def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, compon
         if job_doc is None:
             return AgentResult(exit_code=1, response="TESTER requires a job_doc")
         return TesterAgent().run(job_doc, output_dir)
+    # Generic fallback: resolve impl path from machine JSON and instantiate via loader
+    impl_path = ROLE_CONFIGS.get(role, {}).get("impl")
+    if impl_path:
+        if job_doc is None:
+            return AgentResult(exit_code=1, response=f"{role} requires a job_doc")
+        agent = load_internal_agent(impl_path, _agent_ctx)
+        return agent.run(job_doc, output_dir)
     return AgentResult(exit_code=1, response=f"No internal implementation for role: {role}")
 
 
@@ -1069,15 +1076,20 @@ while current_role is not None:
             print(f"\n[orchestrator] Unrecognised outcome '{outcome}' from {current_role}. Halting.")
         sys.exit(1)
 
-    # After a handler signals HANDLER_SUBTASKS_READY, read the current job path for downstream agents.
+    # After a handler signals any "ready" outcome, read the current job path for downstream agents.
     # DECOMPOSE: push a decompose frame BEFORE job_doc is updated.
     # LEAF:      two-phase pop AFTER job_doc is updated.
-    if current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER") and outcome == "HANDLER_SUBTASKS_READY":
+    # Matches HANDLER_SUBTASKS_READY, HANDLER_INTEGRATE_READY, or any future typed-ready outcomes.
+    _is_handler_ready = (
+        current_role in ("DECOMPOSE_HANDLER", "LEAF_COMPLETE_HANDLER")
+        and outcome.startswith("HANDLER_") and outcome.endswith("_READY")
+    )
+    if _is_handler_ready:
         if not CURRENT_JOB_FILE.exists():
             print(f"\n[orchestrator] Handler did not write job path to {CURRENT_JOB_FILE}. Halting.")
             sys.exit(1)
 
-        if current_role == "DECOMPOSE_HANDLER" and job_doc:
+        if current_role == "DECOMPOSE_HANDLER" and job_doc and outcome == "HANDLER_SUBTASKS_READY":
             frame_stack.append({
                 "type": "decompose",
                 "anchor_index": len(handoff_history) - 1,

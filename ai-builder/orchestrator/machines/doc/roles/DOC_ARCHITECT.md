@@ -97,6 +97,17 @@ Your job:
 4. Write all new or updated files, then emit a `<response>` XML block as the
    **last thing in your response**.
 
+### Linter rules — every `.md` file you write must pass these checks
+
+1. **`Purpose:` header present** — every file must have a `Purpose:` line
+2. **`Tags:` header present** — every file must have a `Tags:` line
+3. **No empty sections** — every `##` section heading must have at least one
+   sentence of prose directly under it before any `###` subsections or the
+   next `##` heading. A heading followed immediately by another heading (or
+   EOF) is an empty section and will fail.
+4. **No placeholder text** — no `_To be written._`, `TODO`, `FIXME`, or
+   `PLACEHOLDER` anywhere in the file.
+
 ### What to write in each companion `.md`
 
 Each companion `<filename>.md` must include:
@@ -162,3 +173,8 @@ The `README.md` is the directory-level index and overview. It must include:
 **Valid outcomes (atomic mode only):**
 - `DOC_ARCHITECT_ATOMIC_DONE` — all companion docs and README written or verified current
 - `DOC_ARCHITECT_NEED_HELP` — blocked; cannot read source files or determine structure
+
+**The `<response>` XML block is mandatory on every invocation** — including retries
+after a linter failure. After fixing linter errors, emit `DOC_ARCHITECT_ATOMIC_DONE`
+exactly as you would on a first-pass completion. Never emit `DONE` or any outcome
+not listed above.

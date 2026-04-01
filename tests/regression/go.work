@@ -1,6 +1,7 @@
 go 1.25.5
 
 use (
+	./doc-user-service/gold
 	./fibonacci/gold
 	./goldutil
 	./infra-smoke/fixture

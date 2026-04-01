@@ -15,7 +15,10 @@ if [[ ! -f "$OUTPUT_DIR/current-job.txt" ]]; then
     exit 1
 fi
 
+JOB=$(cat "$OUTPUT_DIR/current-job.txt")
+
 python3 "$REPO_ROOT/ai-builder/orchestrator/orchestrator.py" \
+    --job           "$JOB" \
     --target-repo   "$TARGET_REPO" \
     --output-dir    "$OUTPUT_DIR" \
     --epic          main \

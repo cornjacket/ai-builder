@@ -68,6 +68,17 @@ A blank line between `Purpose:` and `Tags:` is mandatory.
 | `api` | Documents an HTTP API surface |
 | `overview` | Directory-level summary and index |
 
+### Linter rules — every `.md` file you write must pass these checks
+
+1. **`Purpose:` header present** — every file must have a `Purpose:` line
+2. **`Tags:` header present** — every file must have a `Tags:` line
+3. **No empty sections** — every `##` section heading must have at least one
+   sentence of prose directly under it before any `###` subsections or the
+   next `##` heading. A heading followed immediately by another heading (or
+   EOF) is an empty section and will fail.
+4. **No placeholder text** — no `_To be written._`, `TODO`, `FIXME`, or
+   `PLACEHOLDER` anywhere in the file.
+
 ### What not to duplicate
 
 DOC_INTEGRATOR produces synthesis, not repetition. Do not copy-paste content
@@ -95,3 +106,8 @@ in your response**:
 - `DOC_INTEGRATOR_DONE` — all synthesis docs written
 - `DOC_INTEGRATOR_NEED_HELP` — blocked; handoff summaries are insufficient to
   produce meaningful synthesis
+
+**The `<response>` XML block is mandatory on every invocation** — including retries
+after a linter failure. After fixing linter errors, emit `DOC_INTEGRATOR_DONE`
+exactly as you would on a first-pass completion. Never emit `DONE` or any outcome
+not listed above.
