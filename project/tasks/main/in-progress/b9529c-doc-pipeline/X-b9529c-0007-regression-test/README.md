@@ -3,12 +3,12 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | b9529c-doc-pipeline             |
 | Priority    | —           |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0005 |
 
 ## Goal
 
@@ -34,6 +34,11 @@ Run with the doc machine: `--state-machine machines/doc/default.json`.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [x] [X-b9529c-0000-create-regression-test-dir](X-b9529c-0000-create-regression-test-dir/)
+- [x] [X-b9529c-0001-copy-user-service-source-as-template](X-b9529c-0001-copy-user-service-source-as-template/)
+- [x] [X-b9529c-0002-reset-copies-source-to-sandbox](X-b9529c-0002-reset-copies-source-to-sandbox/)
+- [x] [X-b9529c-0003-setup-task-system-and-pipeline-task](X-b9529c-0003-setup-task-system-and-pipeline-task/)
+- [x] [X-b9529c-0004-reset-run-and-gold-scripts](X-b9529c-0004-reset-run-and-gold-scripts/)
 <!-- subtask-list-end -->
 
 ## Notes

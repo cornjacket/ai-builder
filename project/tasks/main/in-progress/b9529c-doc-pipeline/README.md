@@ -56,7 +56,7 @@ pad / no cleanup (unlike review/update pipelines).
 - [x] [X-b9529c-0004-doc-integrator-prompt](X-b9529c-0004-doc-integrator-prompt/)
 - [x] [X-b9529c-0005-markdown-linter-agent](X-b9529c-0005-markdown-linter-agent/)
 - [x] [X-b9529c-0006-unit-tests](X-b9529c-0006-unit-tests/)
-- [ ] [b9529c-0007-regression-test](b9529c-0007-regression-test/)
+- [x] [X-b9529c-0007-regression-test](X-b9529c-0007-regression-test/)
 - [ ] [b9529c-0008-documentation](b9529c-0008-documentation/)
 - [ ] [b9529c-0009-delete-brainstorm](b9529c-0009-delete-brainstorm/)
 <!-- subtask-list-end -->
