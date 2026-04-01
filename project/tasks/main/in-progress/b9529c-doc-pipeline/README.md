@@ -49,13 +49,13 @@ pad / no cleanup (unlike review/update pipelines).
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [b9529c-0000-extend-lch-route-on](b9529c-0000-extend-lch-route-on/)
-- [ ] [b9529c-0001-decompose-handler-component-type](b9529c-0001-decompose-handler-component-type/)
-- [ ] [b9529c-0002-doc-machine-json](b9529c-0002-doc-machine-json/)
-- [ ] [b9529c-0003-doc-architect-prompt](b9529c-0003-doc-architect-prompt/)
-- [ ] [b9529c-0004-doc-integrator-prompt](b9529c-0004-doc-integrator-prompt/)
-- [ ] [b9529c-0005-markdown-linter-agent](b9529c-0005-markdown-linter-agent/)
-- [ ] [b9529c-0006-unit-tests](b9529c-0006-unit-tests/)
+- [x] [X-b9529c-0000-extend-lch-route-on](X-b9529c-0000-extend-lch-route-on/)
+- [x] [X-b9529c-0001-decompose-handler-component-type](X-b9529c-0001-decompose-handler-component-type/)
+- [x] [X-b9529c-0002-doc-machine-json](X-b9529c-0002-doc-machine-json/)
+- [x] [X-b9529c-0003-doc-architect-prompt](X-b9529c-0003-doc-architect-prompt/)
+- [x] [X-b9529c-0004-doc-integrator-prompt](X-b9529c-0004-doc-integrator-prompt/)
+- [x] [X-b9529c-0005-markdown-linter-agent](X-b9529c-0005-markdown-linter-agent/)
+- [x] [X-b9529c-0006-unit-tests](X-b9529c-0006-unit-tests/)
 - [ ] [b9529c-0007-regression-test](b9529c-0007-regression-test/)
 - [ ] [b9529c-0008-documentation](b9529c-0008-documentation/)
 - [ ] [b9529c-0009-delete-brainstorm](b9529c-0009-delete-brainstorm/)

@@ -1,0 +1,46 @@
+{
+  "start_state": "DOC_ARCHITECT",
+  "roles": {
+    "DOC_ARCHITECT":       { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/doc/roles/DOC_ARCHITECT.md",   "no_history": false },
+    "DOC_INTEGRATOR":      { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/doc/roles/DOC_INTEGRATOR.md",  "no_history": false },
+    "DECOMPOSE_HANDLER":   { "agent": "internal", "impl": "agents.builder.decompose.DecomposeAgent", "prompt": null },
+    "LEAF_COMPLETE_HANDLER": {
+      "agent": "internal", "impl": "agents.builder.lch.LCHAgent", "prompt": null,
+      "route_on": {
+        "field":   "component_type",
+        "default": "HANDLER_SUBTASKS_READY",
+        "integrate": "HANDLER_INTEGRATE_READY"
+      }
+    },
+    "POST_DOC_HANDLER":    { "agent": "internal", "impl": "agents.doc.linter.MarkdownLinterAgent", "prompt": null }
+  },
+  "transitions": {
+    "DOC_ARCHITECT": {
+      "DOC_ARCHITECT_DECOMPOSITION_READY": "DECOMPOSE_HANDLER",
+      "DOC_ARCHITECT_ATOMIC_DONE":         "POST_DOC_HANDLER",
+      "DOC_ARCHITECT_NEED_HELP":           null
+    },
+    "DOC_INTEGRATOR": {
+      "DOC_INTEGRATOR_DONE":      "POST_DOC_HANDLER",
+      "DOC_INTEGRATOR_NEED_HELP": null
+    },
+    "DECOMPOSE_HANDLER": {
+      "HANDLER_SUBTASKS_READY": "DOC_ARCHITECT",
+      "HANDLER_STOP_AFTER":     null,
+      "HANDLER_NEED_HELP":      null
+    },
+    "LEAF_COMPLETE_HANDLER": {
+      "HANDLER_SUBTASKS_READY":  "DOC_ARCHITECT",
+      "HANDLER_INTEGRATE_READY": "DOC_INTEGRATOR",
+      "HANDLER_ALL_DONE":        null,
+      "HANDLER_STOP_AFTER":      null,
+      "HANDLER_NEED_HELP":       null
+    },
+    "POST_DOC_HANDLER": {
+      "POST_DOC_HANDLER_ATOMIC_PASS":     "LEAF_COMPLETE_HANDLER",
+      "POST_DOC_HANDLER_ATOMIC_FAIL":     "DOC_ARCHITECT",
+      "POST_DOC_HANDLER_INTEGRATE_PASS":  "LEAF_COMPLETE_HANDLER",
+      "POST_DOC_HANDLER_INTEGRATE_FAIL":  "DOC_INTEGRATOR"
+    }
+  }
+}

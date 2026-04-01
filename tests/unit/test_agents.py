@@ -18,6 +18,7 @@ from agents.builder.tester import TesterAgent
 from agents.builder.documenter import DocumenterAgent
 from agents.builder.decompose import DecomposeAgent
 from agents.builder.lch import LCHAgent
+from agents.doc.linter import MarkdownLinterAgent
 
 
 def _minimal_ctx() -> AgentContext:
@@ -152,6 +153,134 @@ class TestDecomposeAgentProtocol(unittest.TestCase):
 class TestLCHAgentProtocol(unittest.TestCase):
     def test_satisfies_internal_agent_protocol(self):
         self.assertIsInstance(LCHAgent(ctx=_minimal_ctx()), InternalAgent)
+
+
+class TestLCHAgentRouteOn(unittest.TestCase):
+    def _make_task_json(self, tmp: str, component_type: str | None = None) -> Path:
+        data: dict = {}
+        if component_type is not None:
+            data["component_type"] = component_type
+        p = Path(tmp) / "task.json"
+        p.write_text(json.dumps(data))
+        return p
+
+    def _agent(self, route_on: dict | None) -> LCHAgent:
+        return LCHAgent(ctx=_minimal_ctx(), route_on=route_on)
+
+    def test_no_route_on_returns_subtasks_ready(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            next_readme = self._make_task_json(tmp)
+            outcome = self._agent(None)._resolve_next_outcome(str(next_readme))
+            self.assertEqual(outcome, "HANDLER_SUBTASKS_READY")
+
+    def test_default_when_field_absent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            next_readme = self._make_task_json(tmp)  # no component_type
+            route_on = {"field": "component_type", "default": "HANDLER_SUBTASKS_READY", "integrate": "HANDLER_INTEGRATE_READY"}
+            outcome = self._agent(route_on)._resolve_next_outcome(str(next_readme))
+            self.assertEqual(outcome, "HANDLER_SUBTASKS_READY")
+
+    def test_matched_value_returns_mapped_outcome(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            next_readme = self._make_task_json(tmp, component_type="integrate")
+            route_on = {"field": "component_type", "default": "HANDLER_SUBTASKS_READY", "integrate": "HANDLER_INTEGRATE_READY"}
+            outcome = self._agent(route_on)._resolve_next_outcome(str(next_readme))
+            self.assertEqual(outcome, "HANDLER_INTEGRATE_READY")
+
+    def test_missing_default_key_falls_back_gracefully(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            next_readme = self._make_task_json(tmp, component_type="integrate")
+            route_on = {"field": "component_type", "integrate": "HANDLER_INTEGRATE_READY"}  # no default
+            outcome = self._agent(route_on)._resolve_next_outcome(str(next_readme))
+            self.assertEqual(outcome, "HANDLER_SUBTASKS_READY")
+
+    def test_missing_task_json_returns_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            route_on = {"field": "component_type", "default": "HANDLER_SUBTASKS_READY", "integrate": "HANDLER_INTEGRATE_READY"}
+            outcome = self._agent(route_on)._resolve_next_outcome(str(Path(tmp) / "nonexistent" / "README.md"))
+            self.assertEqual(outcome, "HANDLER_SUBTASKS_READY")
+
+
+class TestMarkdownLinterAgent(unittest.TestCase):
+    _VALID_MD = "# store.go\n\nPurpose: Manages user records.\n\nTags: data-access\n\n## Public API\n\nsome content\n"
+
+    def _run(self, files: dict[str, str], component_type: str | None = None) -> "AgentResult":  # type: ignore[name-defined]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            for name, content in files.items():
+                (tmp_path / name).write_text(content)
+            task_json = tmp_path / "task.json"
+            data: dict = {}
+            if component_type:
+                data["component_type"] = component_type
+            task_json.write_text(json.dumps(data))
+            job_doc = task_json
+            return MarkdownLinterAgent().run(job_doc=job_doc, output_dir=tmp_path)
+
+    def test_pass_atomic(self):
+        result = self._run({"store.md": self._VALID_MD})
+        self.assertIn("POST_DOC_HANDLER_ATOMIC_PASS", result.response)
+
+    def test_pass_integrate(self):
+        result = self._run({"README.md": self._VALID_MD}, component_type="integrate")
+        self.assertIn("POST_DOC_HANDLER_INTEGRATE_PASS", result.response)
+
+    def test_fail_missing_purpose(self):
+        result = self._run({"store.md": "# store.go\n\nTags: data-access\n\ncontent\n"})
+        self.assertIn("POST_DOC_HANDLER_ATOMIC_FAIL", result.response)
+        self.assertIn("Purpose", result.response)
+
+    def test_fail_missing_tags(self):
+        result = self._run({"store.md": "# store.go\n\nPurpose: Does things.\n\ncontent\n"})
+        self.assertIn("POST_DOC_HANDLER_ATOMIC_FAIL", result.response)
+        self.assertIn("Tags", result.response)
+
+    def test_fail_placeholder_text(self):
+        result = self._run({"store.md": "# store.go\n\nPurpose: x\n\nTags: x\n\n_To be written._\n"})
+        self.assertIn("POST_DOC_HANDLER_ATOMIC_FAIL", result.response)
+        self.assertIn("placeholder", result.response)
+
+    def test_fail_empty_section(self):
+        md = "# store.go\n\nPurpose: x\n\nTags: x\n\n## Public API\n\n## Dependencies\n\ncontent\n"
+        result = self._run({"store.md": md})
+        self.assertIn("POST_DOC_HANDLER_ATOMIC_FAIL", result.response)
+        self.assertIn("empty section", result.response)
+
+    def test_no_md_files_passes(self):
+        result = self._run({})
+        self.assertIn("POST_DOC_HANDLER_ATOMIC_PASS", result.response)
+
+    def test_fail_integrate_routes_to_integrator(self):
+        result = self._run({"README.md": "# dir\n\nTags: overview\n\ncontent\n"}, component_type="integrate")
+        self.assertIn("POST_DOC_HANDLER_INTEGRATE_FAIL", result.response)
+
+    def test_satisfies_internal_agent_protocol(self):
+        self.assertIsInstance(MarkdownLinterAgent(), InternalAgent)
+
+
+_DOC_MACHINE_PATH = Path(__file__).resolve().parents[2] / "ai-builder" / "orchestrator" / "machines" / "doc" / "default.json"
+
+
+class TestDocMachineImplPaths(unittest.TestCase):
+    def test_all_impl_paths_resolve(self):
+        machine = _json.loads(_DOC_MACHINE_PATH.read_text())
+        ctx = _minimal_ctx()
+        for role, cfg in machine["roles"].items():
+            if cfg.get("agent") != "internal" or "impl" not in cfg:
+                continue
+            with self.subTest(role=role):
+                agent = load_internal_agent(cfg["impl"], ctx)
+                self.assertIsNotNone(agent)
+
+    def test_all_resolved_agents_satisfy_protocol(self):
+        machine = _json.loads(_DOC_MACHINE_PATH.read_text())
+        ctx = _minimal_ctx()
+        for role, cfg in machine["roles"].items():
+            if cfg.get("agent") != "internal" or "impl" not in cfg:
+                continue
+            with self.subTest(role=role):
+                agent = load_internal_agent(cfg["impl"], ctx)
+                self.assertIsInstance(agent, InternalAgent)
 
 
 if __name__ == "__main__":

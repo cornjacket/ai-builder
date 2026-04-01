@@ -194,15 +194,16 @@ _agent_ctx = AgentContext(
 # State machine loader
 # ---------------------------------------------------------------------------
 
-def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict, set[str]]:
+def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict, set[str], dict]:
     """Load and validate a machine JSON file.
 
-    Returns (agents, routes, start_state, role_prompts, no_history_roles) where:
+    Returns (agents, routes, start_state, role_prompts, no_history_roles, role_configs) where:
       agents           — maps role name → agent CLI name
       routes           — maps (role, outcome) → next role or None
       start_state      — default entry role
       role_prompts     — maps role → Path (prompt file) or None (dynamic generation)
       no_history_roles — set of roles that receive no handoff history in their prompt
+      role_configs     — maps role name → full config dict from machine JSON
     """
     try:
         data = json.loads(machine_file.read_text())
@@ -249,7 +250,7 @@ def load_state_machine(machine_file: Path) -> tuple[dict, dict, str, dict, set[s
         role for role, cfg in roles.items() if cfg.get("no_history", False)
     }
 
-    return agents, routes, start_state, role_prompts, no_history_roles
+    return agents, routes, start_state, role_prompts, no_history_roles, roles
 
 
 # ---------------------------------------------------------------------------
@@ -266,7 +267,7 @@ elif TM_MODE:
 else:
     _machine_file = MACHINES_DIR / "builder" / "simple.json"
 
-AGENTS, ROUTES, _start_state, ROLE_PROMPTS, NO_HISTORY_ROLES = load_state_machine(_machine_file)
+AGENTS, ROUTES, _start_state, ROLE_PROMPTS, NO_HISTORY_ROLES, ROLE_CONFIGS = load_state_machine(_machine_file)
 
 if args.start_state:
     if args.start_state not in AGENTS:
@@ -558,7 +559,8 @@ def _lch_two_phase_pop(frame_stack: list[dict], handoff_history: list[str], comp
 def run_internal_agent(role: str, output_dir: Path, job_doc: Path | None, components: list[dict] | None = None) -> AgentResult:
     """Dispatch to the internal implementation for the given role."""
     if role == "LEAF_COMPLETE_HANDLER":
-        return LCHAgent(ctx=_agent_ctx).run(job_doc or Path("."), output_dir)
+        route_on = ROLE_CONFIGS.get(role, {}).get("route_on")
+        return LCHAgent(ctx=_agent_ctx, route_on=route_on).run(job_doc or Path("."), output_dir)
     if role == "DECOMPOSE_HANDLER":
         if job_doc is None:
             return AgentResult(exit_code=1, response="DECOMPOSE_HANDLER requires a job_doc")

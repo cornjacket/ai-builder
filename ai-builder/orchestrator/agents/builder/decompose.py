@@ -105,6 +105,8 @@ class DecomposeAgent:
                     subtask_data["goal"]       = description
                     subtask_data["context"]    = child_context
                     subtask_data["output_dir"] = str(comp_output_dir)
+                    if comp_name == "integrate":
+                        subtask_data["component_type"] = "integrate"
                     if i == len(components) - 1:
                         subtask_data["last-task"] = True
                         subtask_data["level"]     = parent_level
