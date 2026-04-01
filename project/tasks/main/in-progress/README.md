@@ -7,4 +7,5 @@
 - [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
 - [ec6a38-bug-gemini-tester-cannot-read-job-doc](ec6a38-bug-gemini-tester-cannot-read-job-doc/)
 - [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
+- [b9529c-doc-pipeline](b9529c-doc-pipeline/)
 <!-- task-list-end -->

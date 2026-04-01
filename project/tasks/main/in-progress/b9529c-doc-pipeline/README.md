@@ -3,11 +3,11 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | backlog             |
+| Status | in-progress |
 | Epic        | main               |
 | Tags        | pipeline, documentation               |
 | Priority    | MED           |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0010 |
 
 ## Goal
 
@@ -49,6 +49,16 @@ pad / no cleanup (unlike review/update pipelines).
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [ ] [b9529c-0000-extend-lch-route-on](b9529c-0000-extend-lch-route-on/)
+- [ ] [b9529c-0001-decompose-handler-component-type](b9529c-0001-decompose-handler-component-type/)
+- [ ] [b9529c-0002-doc-machine-json](b9529c-0002-doc-machine-json/)
+- [ ] [b9529c-0003-doc-architect-prompt](b9529c-0003-doc-architect-prompt/)
+- [ ] [b9529c-0004-doc-integrator-prompt](b9529c-0004-doc-integrator-prompt/)
+- [ ] [b9529c-0005-markdown-linter-agent](b9529c-0005-markdown-linter-agent/)
+- [ ] [b9529c-0006-unit-tests](b9529c-0006-unit-tests/)
+- [ ] [b9529c-0007-regression-test](b9529c-0007-regression-test/)
+- [ ] [b9529c-0008-documentation](b9529c-0008-documentation/)
+- [ ] [b9529c-0009-delete-brainstorm](b9529c-0009-delete-brainstorm/)
 <!-- subtask-list-end -->
 
 ## Notes
