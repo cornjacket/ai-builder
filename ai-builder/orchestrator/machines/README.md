@@ -12,6 +12,7 @@ entry point, role→agent mapping, prompt files, and the full transition table.
 | File / Directory | Purpose |
 |------------------|---------|
 | `builder/` | Builder machine configurations and role prompts — see [`builder/README.md`](builder/README.md) |
+| `doc/` | Doc pipeline machine and role prompts — see [`doc/README.md`](doc/README.md) |
 
 ---
 
@@ -46,12 +47,19 @@ entry point, role→agent mapping, prompt files, and the full transition table.
 | `roles[R].no_history` | no | `false` | If `true`, the role receives no accumulated handoff history in its prompt — only its role instructions and the current job doc. See [Handoff History Policy](#handoff-history-policy) below. |
 | `transitions` | yes | — | State diagram. Each key is a role; each value maps outcome strings to next roles (`null` = halt). |
 
-### `prompt: null`
+### `prompt: null` and `impl`
 
 Roles with `"agent": "internal"` and `"prompt": null` are handled entirely in
 Python — no AI subprocess is spawned. Their `"impl"` field points to the Python
-class that runs the logic. All five internal roles in the builder machine use
-this pattern.
+class that runs the logic. All internal roles in both the builder and doc
+machines use this pattern.
+
+### `route_on`
+
+An optional `route_on` object on an internal role instructs `LCHAgent` to
+emit different outcome tokens based on a field in the next task's `task.json`.
+See [`doc/README.md`](doc/README.md) and [`../agents/builder/lch.md`](../agents/builder/lch.md)
+for the full config schema and an example.
 
 ### Handoff History Policy
 

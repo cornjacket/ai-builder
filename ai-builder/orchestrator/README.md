@@ -47,15 +47,27 @@ routes between agents based on that outcome.
 
 **Roles and agents:**
 
+**Builder pipeline (`machines/builder/default.json`):**
+
 | Role | Agent | Responsibility |
 |------|-------|----------------|
 | ARCHITECT | claude | Designs the solution (decompose or design mode); emits XML response with structured fields |
 | IMPLEMENTOR | claude | Implements exactly what ARCHITECT designed; emits XML response |
-| TESTER | internal | Runs `test_command` from `task.json`; returns pass/fail — impl: `agents.tester.TesterAgent` |
-| DECOMPOSE_HANDLER | internal | Creates pipeline subtask directories from ARCHITECT's components array; advances to first subtask — impl: `agents.decompose.DecomposeAgent` |
-| LEAF_COMPLETE_HANDLER | internal | Marks task complete; walks up the tree; advances to next sibling or signals DONE — impl: `agents.lch.LCHAgent` |
-| DOCUMENTER_POST_ARCHITECT | internal | Scans output dir for `.md` files; rebuilds README index (runs after ARCHITECT design mode) — impl: `agents.documenter.DocumenterAgent` |
-| DOCUMENTER_POST_IMPLEMENTOR | internal | Scans output dir for `.md` files; rebuilds README index (runs after IMPLEMENTOR) — impl: `agents.documenter.DocumenterAgent` |
+| TESTER | internal | Runs `test_command` from `task.json`; returns pass/fail — impl: `agents.builder.tester.TesterAgent` |
+| DECOMPOSE_HANDLER | internal | Creates pipeline subtask directories from ARCHITECT's components array; advances to first subtask — impl: `agents.builder.decompose.DecomposeAgent` |
+| LEAF_COMPLETE_HANDLER | internal | Marks task complete; walks up the tree; advances to next sibling or signals DONE — impl: `agents.builder.lch.LCHAgent` |
+| DOCUMENTER_POST_ARCHITECT | internal | Scans output dir for `.md` files; rebuilds README index (runs after ARCHITECT design mode) — impl: `agents.builder.documenter.DocumenterAgent` |
+| DOCUMENTER_POST_IMPLEMENTOR | internal | Scans output dir for `.md` files; rebuilds README index (runs after IMPLEMENTOR) — impl: `agents.builder.documenter.DocumenterAgent` |
+
+**Doc pipeline (`machines/doc/default.json`):**
+
+| Role | Agent | Responsibility |
+|------|-------|----------------|
+| DOC_ARCHITECT | claude | Decompose mode: scan directory, identify sub-components, return components JSON. Atomic mode: read source files, write companion `.md` and `README.md`. |
+| DECOMPOSE_HANDLER | internal | Same as builder pipeline; also writes `component_type: integrate` to integrate subtask's `task.json` — impl: `agents.builder.decompose.DecomposeAgent` |
+| POST_DOC_HANDLER | internal | Markdown linter — checks Purpose/Tags headers, empty sections, placeholder text — impl: `agents.doc.linter.MarkdownLinterAgent` |
+| LEAF_COMPLETE_HANDLER | internal | Same as builder pipeline; uses `route_on` config to emit `HANDLER_INTEGRATE_READY` for integrate subtasks — impl: `agents.builder.lch.LCHAgent` |
+| DOC_INTEGRATOR | claude | Runs only at integrate nodes; reads handoff summaries, writes cross-component synthesis docs |
 
 See [`agent-roles.md`](agent-roles.md) for full details on each agent.
 
@@ -183,18 +195,6 @@ pipeline internals, the change is wrong. The orchestrator mediates all
 pipeline mechanics; agents read and write only the job doc prose.
 
 ---
-
-## DOCUMENTER Hook *(planned, not yet implemented)*
-
-In TM mode, the orchestrator will run a DOCUMENTER post-step after ARCHITECT,
-IMPLEMENTOR, and TESTER — before routing to the next role. DOCUMENTER is not
-a node in the ROUTES table; it will be inserted automatically by the orchestrator.
-
-The hook will run only when the triggering role emits a non-empty `DOCS:` field.
-If `DOCS:` is absent or `none`, the hook will be skipped for that step.
-
-This hook is not present in the current `orchestrator.py`. See
-[`routing.md`](routing.md) for the intended design.
 
 ---
 

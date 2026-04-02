@@ -35,9 +35,13 @@ See [`../context.py`](../context.md) for `AgentContext` field definitions.
 ## Machine JSON configuration
 
 ```json
-"TESTER":                     { "agent": "internal", "impl": "agents.builder.tester.TesterAgent",       "prompt": null },
+"TESTER":                     { "agent": "internal", "impl": "agents.builder.tester.TesterAgent",        "prompt": null },
 "DECOMPOSE_HANDLER":          { "agent": "internal", "impl": "agents.builder.decompose.DecomposeAgent",  "prompt": null },
 "LEAF_COMPLETE_HANDLER":      { "agent": "internal", "impl": "agents.builder.lch.LCHAgent",              "prompt": null },
 "DOCUMENTER_POST_ARCHITECT":  { "agent": "internal", "impl": "agents.builder.documenter.DocumenterAgent","prompt": null },
 "DOCUMENTER_POST_IMPLEMENTOR":{ "agent": "internal", "impl": "agents.builder.documenter.DocumenterAgent","prompt": null }
 ```
+
+`LCHAgent` also accepts an optional `route_on` object (see
+[`lch.md`](lch.md)) that enables different outcome tokens for different
+next-task types. The builder pipeline does not use this; the doc pipeline does.

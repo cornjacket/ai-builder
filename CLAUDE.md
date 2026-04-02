@@ -84,8 +84,8 @@ is incomplete. Do not use `--force` unless you have confirmed the pipeline
 process is no longer running.
 
 Only one regression run may be active at a time. The sandbox output directories
-are shared (`sandbox/platform-monolith-output`, etc.) — two concurrent runs
-will corrupt each other's task trees and token data.
+are shared (`sandbox/regressions/platform-monolith/output`, etc.) — two concurrent
+runs will corrupt each other's task trees and token data.
 
 ---
 
@@ -276,7 +276,7 @@ python3 ai-builder/orchestrator/orchestrator.py \
 ## Brainstorming
 
 When the user says "let's brainstorm on X", "brainstorm X", or similar, immediately
-create `sandbox/brainstorm-{subject}.md` before the discussion begins. Write design
+create `sandbox/brainstorms/brainstorm-{subject}.md` before the discussion begins. Write design
 decisions to that file in real time as the discussion unfolds — do not discuss first
 and reconstruct afterward. The file is the record; chat is ephemeral.
 

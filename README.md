@@ -10,8 +10,9 @@ it, and reassembles the whole — without human involvement between steps.
 ## Repository Layout
 
 ```
-ai-builder/         Orchestrator, state machines, role prompts loader, companion docs
-ai-builder/orchestrator/machines/builder/roles/   Role prompt files (ARCHITECT, IMPLEMENTOR)
+ai-builder/         Orchestrator, state machines, role prompts, companion docs
+ai-builder/orchestrator/machines/builder/  Builder pipeline machine + role prompts
+ai-builder/orchestrator/machines/doc/      Doc pipeline machine + role prompts
 target/             Bootstrap scripts for setting up a target repository
 tests/
     regression/     Gold tests for full pipeline runs; infra smoke test
@@ -25,10 +26,15 @@ docs/               Design notes and reference documents
 
 ## How the Pipeline Works
 
-The pipeline runs specialist AI agents in sequence. Each agent reads a shared
-job document, does its work, and emits a structured outcome. The orchestrator
-routes between agents based on that outcome.
+The orchestrator drives specialist AI agents in sequence. Each agent reads a
+shared job document, does its work, and emits a structured outcome. The
+orchestrator routes between agents based on that outcome.
 
+The pipeline is configured by a **machine JSON file** that defines the roles,
+their agent types, and the full transition table. Different machine files
+implement different pipelines — the orchestrator core is unchanged.
+
+**Builder pipeline** (design → implement → test):
 ```
 [Oracle] writes job doc → orchestrator.py
     → ARCHITECT    designs the solution; fills Design + Acceptance Criteria
@@ -38,9 +44,17 @@ routes between agents based on that outcome.
     → DONE
 ```
 
-For complex tasks the ARCHITECT decomposes the work into a subtask tree.
-The pipeline traverses the tree depth-first — implementing and testing each
-atomic component before moving up to integrate. See
+**Doc pipeline** (traverse source tree → generate documentation):
+```
+[Oracle] writes job doc → orchestrator.py
+    → DOC_ARCHITECT   decomposes or documents a source directory
+    → POST_DOC_HANDLER  lints the generated .md files
+    → LEAF_COMPLETE_HANDLER → DOC_INTEGRATOR (at composite nodes)
+    → (repeat for each sub-directory; synthesise at each composite node)
+    → DONE
+```
+
+For complex tasks, the pipeline traverses a subtask tree depth-first. See
 [`ai-builder/orchestrator/pipeline-behavior.md`](ai-builder/orchestrator/pipeline-behavior.md)
 for the full traversal algorithm.
 
@@ -58,19 +72,16 @@ Use `new-pipeline-build.sh` to create one (see Quick Start below).
 
 ---
 
-## Roles
+## Pipelines
 
-| Role | Agent | Responsibility |
-|------|-------|----------------|
-| `ARCHITECT` | claude | Designs the solution; decides whether to decompose or implement directly |
-| `IMPLEMENTOR` | claude | Writes code exactly as ARCHITECT specified |
-| `TESTER` | internal | Runs the `test_command` from `task.json` and maps the exit code to an outcome |
-| `DECOMPOSE_HANDLER` | internal | Creates component subtasks from the ARCHITECT's Components table; advances the pipeline to the first subtask |
-| `LEAF_COMPLETE_HANDLER` | internal | Marks completed subtasks done; walks the task tree to find the next subtask or signals completion |
+| Machine file | Purpose |
+|--------------|---------|
+| `machines/builder/default.json` | Build pipeline — ARCHITECT → IMPLEMENTOR → TESTER |
+| `machines/doc/default.json` | Doc pipeline — traverses a source tree and generates companion `.md` files |
 
-Role prompt files live in [`ai-builder/orchestrator/machines/builder/roles/`](ai-builder/orchestrator/machines/builder/roles/).
-The orchestrator loads them via the state machine configuration in
-[`ai-builder/orchestrator/machines/builder/`](ai-builder/orchestrator/machines/builder/).
+Pass any machine file with `--state-machine <file>`. See
+[`ai-builder/orchestrator/machines/README.md`](ai-builder/orchestrator/machines/README.md)
+for the machine JSON format reference.
 
 ---
 

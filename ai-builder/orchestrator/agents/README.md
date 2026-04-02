@@ -17,6 +17,7 @@ touching orchestrator core code.
 | `context.py` | `AgentContext` dataclass — orchestrator-level constants for agents that need them |
 | `loader.py` | `load_internal_agent(impl_path, ctx)` — resolves a dotted class path and instantiates it |
 | `builder/` | Builder-specific agent implementations — see [`builder/README.md`](builder/README.md) |
+| `doc/` | Doc-pipeline agent implementations — see [`doc/README.md`](doc/README.md) |
 
 ---
 
@@ -84,6 +85,8 @@ startup. To use a custom implementation, point `"impl"` at any class whose
 `tests/unit/test_agents.py` covers:
 - `TesterAgent`: pass/fail/missing-command/missing-task-json cases
 - `DocumenterAgent`: skip, rebuild, tag routing, no-files cases
-- Protocol conformance for all four classes (`assertIsInstance(agent, InternalAgent)`)
-- `load_internal_agent` resolution: all `"impl"` paths in `machines/builder/default.json` resolve
-  and satisfy the Protocol
+- `LCHAgent` with `route_on`: no config, default fallback, matched value, missing keys, missing task.json
+- `MarkdownLinterAgent`: pass/fail for atomic and integrate steps, all four linter checks
+- Protocol conformance for all agent classes (`assertIsInstance(agent, InternalAgent)`)
+- `load_internal_agent` resolution: all `"impl"` paths in both `machines/builder/default.json`
+  and `machines/doc/default.json` resolve and satisfy the Protocol
