@@ -14,7 +14,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATE_DIR="$SCRIPT_DIR/project"
+CANONICAL_SCRIPTS="$REPO_ROOT/project/tasks/scripts"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -62,10 +64,16 @@ if [[ -d "$TARGET_TASKS" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Copy template
+# Copy template skeleton and canonical scripts
 # ---------------------------------------------------------------------------
 
+# Copy the skeleton structure (status dir .gitkeeps, project/status/.gitkeep)
+# but not the scripts directory — that comes from the canonical source.
 cp -r "$TEMPLATE_DIR" "$TARGET_REPO/project"
+rm -rf "$TARGET_REPO/project/tasks/scripts"
+
+# Copy scripts from the canonical source so there is only one copy to maintain.
+cp -r "$CANONICAL_SCRIPTS" "$TARGET_REPO/project/tasks/scripts"
 
 # Make all scripts executable
 find "$TARGET_REPO/project/tasks/scripts" -name "*.sh" -exec chmod +x {} \;
