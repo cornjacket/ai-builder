@@ -9,46 +9,10 @@ it, and reassembles the whole — without human involvement between steps.
 
 ## Getting Started
 
-### Initial setup (new machine)
-
-This repository uses a git worktree workspace. One-time setup:
-
 ```bash
-cd ~/Go/src/github.com/cornjacket          # or wherever you keep your repos
-git clone git@github.com:cornjacket/ai-builder.git ai-builder-bootstrap
-bash ai-builder-bootstrap/bootstrap/setup-workspace.sh
-rm -rf ai-builder-bootstrap
+git clone git@github.com:cornjacket/ai-builder.git
+cd ai-builder
 ```
-
-This creates:
-```
-ai-builder/
-    .bare/    git object store
-    .git      pointer to .bare/
-    main/     main branch worktree  ← work here
-```
-
-**Never work directly in `ai-builder/`** — it is a container, not a working
-tree. Always `cd` into `main/` or a feature worktree.
-
-### Feature branch workflow
-
-Each task gets its own worktree. Run these from inside `main/`:
-
-```bash
-# Start a new task
-bash bootstrap/new-worktree.sh my-feature
-cd ../my-feature
-# ... do work, commit, push ...
-
-# When done: merge and clean up (from main/)
-cd ../main
-git merge my-feature
-bash bootstrap/remove-worktree.sh my-feature --delete-branch
-```
-
-See [`bootstrap/README.md`](bootstrap/README.md) for the full worktree
-management reference.
 
 ---
 
@@ -222,3 +186,14 @@ for instructions on adding a new regression test.
 | [`ai-builder/orchestrator/monitoring.md`](ai-builder/orchestrator/monitoring.md) | Metrics architecture, live execution log, end-of-run outputs |
 | [`ai-builder/orchestrator/routing.md`](ai-builder/orchestrator/routing.md) | ROUTES table, outcome values, DOCUMENTER hook |
 | [`CLAUDE.md`](CLAUDE.md) | Instructions for AI agents working in this repository |
+
+---
+
+## Maintainer Notes
+
+The maintainer of this repository uses a **git worktree workspace** for
+parallel development — multiple branches checked out simultaneously in sibling
+directories. This is not required for ordinary use; a standard clone is fine.
+
+See [`bootstrap/README.md`](bootstrap/README.md) for the workspace setup
+procedure and per-task worktree workflow.
