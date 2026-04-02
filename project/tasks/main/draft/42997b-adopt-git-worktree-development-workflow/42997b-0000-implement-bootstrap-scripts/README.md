@@ -25,18 +25,18 @@ and testable. They live in `bootstrap/` in the repo root.
 
 **Scripts to implement:**
 
-**`bootstrap/setup-workspace.sh`** — run from inside the ai-builder repo root.
-Bash holds the file open so execution continues after the directory is renamed.
-1. Validate: inside a git repo with a remote origin URL; abort if unpushed commits
-2. Read remote URL from `.git/config`
-3. Rename `../ai-builder/` → `../ai-builder-gold/`
-4. `mkdir ../ai-builder/`
-5. `git clone --bare ../ai-builder-gold/ ../ai-builder/.bare/`  ← local clone, fast
-6. `git -C ../ai-builder/.bare remote set-url origin <remote-url>`  ← reconfigure remote
-7. `echo "gitdir: ./.bare" > ../ai-builder/.git`
-8. Fix fetch refspec
-9. `git -C ../ai-builder worktree add main main`
-10. Print success + instructions for sandbox copy and memory rename
+**`bootstrap/setup-workspace.sh`** — run from `cornjacket/` parent directory,
+invoked via `ai-builder-bootstrap/` (a local or remote clone created solely to
+run the script). `ai-builder-gold/` is never referenced or touched after rename.
+1. Validate: `ai-builder-bootstrap/` exists as sibling; read remote URL from its `.git/config`
+2. If `ai-builder/` exists: rename → `ai-builder-gold/`; else skip (fresh machine)
+3. `mkdir ai-builder/`
+4. `git clone --bare ai-builder-bootstrap/ ai-builder/.bare/`  ← local, fast
+5. `git -C ai-builder/.bare remote set-url origin <remote-url>`  ← reconfigure to GitHub
+6. `echo "gitdir: ./.bare" > ai-builder/.git`
+7. Fix fetch refspec
+8. `git -C ai-builder worktree add main main`
+9. Print success + tell user to delete `ai-builder-bootstrap/`, copy sandbox, rename memory
 
 **`bootstrap/new-worktree.sh <branch-name> [--from <base>]`** — run from `ai-builder/`:
 1. Validate branch name not already in use
