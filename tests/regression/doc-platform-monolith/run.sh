@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the doc pipeline against the doc-user-service source tree.
+# Run the doc pipeline against the doc-platform-monolith source tree.
 # Run reset.sh first to set up the sandbox.
 
 set -euo pipefail
@@ -7,8 +7,8 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
-TARGET_REPO="$REPO_ROOT/sandbox/regressions/doc-user-service/target"
-OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/doc-user-service/output"
+TARGET_REPO="$REPO_ROOT/sandbox/regressions/doc-platform-monolith/target"
+OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/doc-platform-monolith/output"
 
 if [[ ! -f "$OUTPUT_DIR/current-job.txt" ]]; then
     echo "ERROR: $OUTPUT_DIR/current-job.txt not found — run reset.sh first"

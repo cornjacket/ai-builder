@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cornjacket/ai-builder/sandbox/user-service-output/internal/userservice/store"
+	"github.com/cornjacket/ai-builder/sandbox/regressions/user-service/output/internal/userservice/store"
 )
 
 // stubStore is an in-memory Store implementation for testing.

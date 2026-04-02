@@ -6,9 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/cornjacket/ai-builder/tests/regression/goldutil"
 )
 
-var outputDir string
+var (
+	outputDir string
+	targetDir string
+)
 
 func init() {
 	wd, err := os.Getwd()
@@ -16,7 +21,8 @@ func init() {
 		panic(err)
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
-	outputDir = filepath.Join(root, "sandbox/doc-user-service-output")
+	outputDir = filepath.Join(root, "sandbox/regressions/doc-user-service/output")
+	targetDir = filepath.Join(root, "sandbox/regressions/doc-user-service/target")
 }
 
 // checkFile asserts that a file exists at the given path relative to outputDir.
@@ -46,6 +52,10 @@ func TestRootReadmeExists(t *testing.T) {
 	checkFile(t, "README.md")
 }
 
+func TestInternalReadmeExists(t *testing.T) {
+	checkFile(t, "internal/README.md")
+}
+
 func TestUserserviceReadmeExists(t *testing.T) {
 	checkFile(t, "internal/userservice/README.md")
 }
@@ -56,6 +66,22 @@ func TestStoreReadmeExists(t *testing.T) {
 
 func TestHandlersReadmeExists(t *testing.T) {
 	checkFile(t, "internal/userservice/handlers/README.md")
+}
+
+// ---------------------------------------------------------------------------
+// data-flow.md files — one per composite node (always required)
+// ---------------------------------------------------------------------------
+
+func TestRootDataFlowExists(t *testing.T) {
+	checkFile(t, "data-flow.md")
+}
+
+func TestInternalDataFlowExists(t *testing.T) {
+	checkFile(t, "internal/data-flow.md")
+}
+
+func TestUserserviceDataFlowExists(t *testing.T) {
+	checkFile(t, "internal/userservice/data-flow.md")
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +123,18 @@ func TestSourceFilesIntact(t *testing.T) {
 	for _, s := range sources {
 		checkSourceIntact(t, s)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Orchestrator teardown outputs
+// ---------------------------------------------------------------------------
+
+func TestMasterIndexExists(t *testing.T) {
+	checkFile(t, "master-index.md")
+}
+
+func TestRetryWarnings(t *testing.T) {
+	goldutil.CheckRetryWarnings(t, targetDir, 0)
 }
 
 // ---------------------------------------------------------------------------

@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/cornjacket/ai-builder/sandbox/user-service-output/internal/userservice/store"
+	"github.com/cornjacket/ai-builder/sandbox/regressions/user-service/output/internal/userservice/store"
 )
 
 // Store is the interface that the store package's *store.Store satisfies.
