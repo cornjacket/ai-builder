@@ -9,8 +9,9 @@ it, and reassembles the whole — without human involvement between steps.
 
 ## Getting Started
 
-This repository uses a git worktree workspace layout. To set up on a new
-machine, clone into a bootstrap directory and run the setup script:
+### Initial setup (new machine)
+
+This repository uses a git worktree workspace. One-time setup:
 
 ```bash
 cd ~/Go/src/github.com/cornjacket          # or wherever you keep your repos
@@ -27,8 +28,27 @@ ai-builder/
     main/     main branch worktree  ← work here
 ```
 
-All day-to-day work happens inside `main/` (or a feature worktree). See
-[`bootstrap/README.md`](bootstrap/README.md) for branch worktree management.
+**Never work directly in `ai-builder/`** — it is a container, not a working
+tree. Always `cd` into `main/` or a feature worktree.
+
+### Feature branch workflow
+
+Each task gets its own worktree. Run these from inside `main/`:
+
+```bash
+# Start a new task
+bash bootstrap/new-worktree.sh my-feature
+cd ../my-feature
+# ... do work, commit, push ...
+
+# When done: merge and clean up (from main/)
+cd ../main
+git merge my-feature
+bash bootstrap/remove-worktree.sh my-feature --delete-branch
+```
+
+See [`bootstrap/README.md`](bootstrap/README.md) for the full worktree
+management reference.
 
 ---
 
