@@ -7,12 +7,38 @@ it, and reassembles the whole — without human involvement between steps.
 
 ---
 
+## Getting Started
+
+This repository uses a git worktree workspace layout. To set up on a new
+machine, clone into a bootstrap directory and run the setup script:
+
+```bash
+cd ~/Go/src/github.com/cornjacket          # or wherever you keep your repos
+git clone git@github.com:cornjacket/ai-builder.git ai-builder-bootstrap
+bash ai-builder-bootstrap/bootstrap/setup-workspace.sh
+rm -rf ai-builder-bootstrap
+```
+
+This creates:
+```
+ai-builder/
+    .bare/    git object store
+    .git      pointer to .bare/
+    main/     main branch worktree  ← work here
+```
+
+All day-to-day work happens inside `main/` (or a feature worktree). See
+[`bootstrap/README.md`](bootstrap/README.md) for branch worktree management.
+
+---
+
 ## Repository Layout
 
 ```
 ai-builder/         Orchestrator, state machines, role prompts, companion docs
 ai-builder/orchestrator/machines/builder/  Builder pipeline machine + role prompts
 ai-builder/orchestrator/machines/doc/      Doc pipeline machine + role prompts
+bootstrap/          Workspace setup and worktree management scripts
 target/             Bootstrap scripts for setting up a target repository
 tests/
     regression/     Gold tests for full pipeline runs; infra smoke test

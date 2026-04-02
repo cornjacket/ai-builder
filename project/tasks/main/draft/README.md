@@ -19,5 +19,4 @@
 - [26d8ee-regression-execution-log-validation](26d8ee-regression-execution-log-validation/)
 - [818b46-regression-run-metrics-history](818b46-regression-run-metrics-history/)
 - [3d9f24-parallel-pipeline-via-git-worktrees](3d9f24-parallel-pipeline-via-git-worktrees/)
-- [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 <!-- task-list-end -->
