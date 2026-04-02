@@ -38,4 +38,9 @@
 - [356c4e-extract-internal-agents-into-configurable-modules](356c4e-extract-internal-agents-into-configurable-modules/)
 - [46f78a-stage-builder-machine-as-configurable-pipeline](46f78a-stage-builder-machine-as-configurable-pipeline/)
 - [463215-inline-job-doc-sections-per-role](463215-inline-job-doc-sections-per-role/)
+- [b4a146-doc-integrator-synthesis-rules](b4a146-doc-integrator-synthesis-rules/)
+- [b9529c-doc-pipeline](b9529c-doc-pipeline/)
+- [5df21d-reorganize-sandbox](5df21d-reorganize-sandbox/)
+- [1ffc75-investigate-doc-architect-linter-failures](1ffc75-investigate-doc-architect-linter-failures/)
+- [bd3b59-add-timestamps-to-task-metadata](bd3b59-add-timestamps-to-task-metadata/)
 <!-- task-list-end -->

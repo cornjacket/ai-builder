@@ -1,24 +1,22 @@
-# Task: delete-brainstorm
+# Task: implement-synthesis-rules
 
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
-| Parent      | b9529c-doc-pipeline             |
+| Parent      | b4a146-doc-integrator-synthesis-rules             |
 | Priority    | —           |
 | Next-subtask-id | 0000               |
 
 ## Goal
 
-Delete `sandbox/brainstorm-doc-pipeline.md`. All decisions have been captured in
-subtask READMEs and implemented; the brainstorm has no further value.
+_To be written._
 
 ## Context
 
-Verify first that all settled decisions in the brainstorm are reflected in the
-implementation or in task documentation. Then delete the file and commit.
+_To be written._
 
 ## Subtasks
 

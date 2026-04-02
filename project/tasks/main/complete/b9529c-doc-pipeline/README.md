@@ -3,11 +3,11 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | pipeline, documentation               |
 | Priority    | MED           |
-| Next-subtask-id | 0010 |
+| Next-subtask-id | 0013 |
 
 ## Goal
 
@@ -57,8 +57,10 @@ pad / no cleanup (unlike review/update pipelines).
 - [x] [X-b9529c-0005-markdown-linter-agent](X-b9529c-0005-markdown-linter-agent/)
 - [x] [X-b9529c-0006-unit-tests](X-b9529c-0006-unit-tests/)
 - [x] [X-b9529c-0007-regression-test](X-b9529c-0007-regression-test/)
-- [ ] [b9529c-0008-documentation](b9529c-0008-documentation/)
-- [ ] [b9529c-0009-delete-brainstorm](b9529c-0009-delete-brainstorm/)
+- [x] [X-b9529c-0008-documentation](X-b9529c-0008-documentation/)
+- [x] [X-b9529c-0009-add-master-index-gold-checks](X-b9529c-0009-add-master-index-gold-checks/)
+- [x] [X-b9529c-0010-doc-platform-monolith-regression-test](X-b9529c-0010-doc-platform-monolith-regression-test/)
+- [x] [X-b9529c-0011-delete-brainstorm](X-b9529c-0011-delete-brainstorm/)
 <!-- subtask-list-end -->
 
 ## Notes
