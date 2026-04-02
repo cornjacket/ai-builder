@@ -31,8 +31,8 @@ func init() {
 		panic(err)
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
-	outputDir = filepath.Join(root, "sandbox/platform-monolith-output")
-	targetDir = filepath.Join(root, "sandbox/platform-monolith-target")
+	outputDir = filepath.Join(root, "sandbox/regressions/platform-monolith/output")
+	targetDir = filepath.Join(root, "sandbox/regressions/platform-monolith/target")
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +106,10 @@ func TestSubtasksComplete(t *testing.T) {
 
 func TestRunSummaryExists(t *testing.T) {
 	goldutil.CheckRunSummaryExists(t, targetDir)
+}
+
+func TestRetryWarnings(t *testing.T) {
+	goldutil.CheckRetryWarnings(t, targetDir, 0)
 }
 
 // ---------------------------------------------------------------------------

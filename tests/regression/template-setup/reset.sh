@@ -6,7 +6,7 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
-TARGET="$REPO_ROOT/sandbox/template-setup-target"
+TARGET="$REPO_ROOT/sandbox/regressions/template-setup/target"
 
 if [[ -d "$TARGET" ]]; then
     rm -rf "$TARGET"

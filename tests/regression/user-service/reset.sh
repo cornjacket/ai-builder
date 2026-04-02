@@ -3,7 +3,7 @@
 # Run this before each pipeline run.
 #
 # What this does:
-#   1. Creates a fresh target repo at sandbox/user-service-target/
+#   1. Creates a fresh target repo at sandbox/regressions/user-service/target/
 #   2. Installs the task management system and CLAUDE.md
 #   3. Creates a USER-TASK "user-service" in in-progress/ (Oracle-owned boundary)
 #   4. Creates a PIPELINE-SUBTASK "build-1" under it with Level=TOP
@@ -16,8 +16,8 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
-TARGET_REPO="$REPO_ROOT/sandbox/user-service-target"
-OUTPUT_DIR="$REPO_ROOT/sandbox/user-service-output"
+TARGET_REPO="$REPO_ROOT/sandbox/regressions/user-service/target"
+OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/user-service/output"
 EPIC="main"
 PARENT_TASK_NAME="user-service"
 ENTRY_TASK_NAME="build-1"

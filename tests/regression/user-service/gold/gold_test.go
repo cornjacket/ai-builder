@@ -31,7 +31,7 @@ func init() {
 		panic(err)
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
-	outputDir = filepath.Join(root, "sandbox/user-service-output")
+	outputDir = filepath.Join(root, "sandbox/regressions/user-service/output")
 	targetDir = filepath.Join(root, "sandbox/user-service-target")
 	binaryPath = filepath.Join(root, "sandbox/user-service-bin")
 }
@@ -84,6 +84,10 @@ func TestSubtasksComplete(t *testing.T) {
 
 func TestRunSummaryExists(t *testing.T) {
 	goldutil.CheckRunSummaryExists(t, targetDir)
+}
+
+func TestRetryWarnings(t *testing.T) {
+	goldutil.CheckRetryWarnings(t, targetDir, 0)
 }
 
 // ---------------------------------------------------------------------------

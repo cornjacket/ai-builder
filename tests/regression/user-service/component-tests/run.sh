@@ -26,8 +26,8 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../../../" && pwd)"
 
-TARGET_REPO="$REPO_ROOT/sandbox/user-service-target"
-OUTPUT_DIR="$REPO_ROOT/sandbox/user-service-output"
+TARGET_REPO="$REPO_ROOT/sandbox/regressions/user-service/target"
+OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/user-service/output"
 EPIC="main"
 
 STEP=""

@@ -22,7 +22,7 @@ func init() {
 		panic(err)
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
-	outputDir = filepath.Join(root, "sandbox/fibonacci-output")
+	outputDir = filepath.Join(root, "sandbox/regressions/fibonacci/output")
 }
 
 // oracleTestSrc is injected into the generated package at test time.

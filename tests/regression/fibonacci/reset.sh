@@ -3,14 +3,14 @@
 # Run this before each pipeline run.
 #
 # What this does:
-#   1. Clears previous pipeline output from sandbox/fibonacci-output/
+#   1. Clears previous pipeline output from sandbox/regressions/fibonacci/output/
 
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
-OUTPUT_DIR="$REPO_ROOT/sandbox/fibonacci-output"
+OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/fibonacci/output"
 JOB_DOC="$DIR/JOB-fibonacci-demo.md"
 
 # ---------------------------------------------------------------------------

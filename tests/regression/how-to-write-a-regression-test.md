@@ -87,8 +87,8 @@ Print the pipeline run command and gold test command at the end.
 
 | Directory | Purpose |
 |-----------|---------|
-| `sandbox/<test-name>-target/` | Fresh target repo (task system + generated code) |
-| `sandbox/<test-name>-output/` | Pipeline output dir (execution.log, logs/, current-job.txt) |
+| `sandbox/regressions/<test-name>/target/` | Fresh target repo (task system + generated code) |
+| `sandbox/regressions/<test-name>/output/` | Pipeline output dir (execution.log, logs/, current-job.txt) |
 
 **Never use `/tmp/`** for target repos or output dirs. Sandbox paths are
 tracked in git (gitignored content, committed structure) and survive sessions.
@@ -105,9 +105,9 @@ gitignored — it is a local workspace artifact only.
 
 | File | Source | Always present |
 |------|--------|----------------|
-| `execution.log` | `sandbox/<test-name>-output/` | yes (triggers save) |
-| `run-metrics.json` | `sandbox/<test-name>-output/` | only on normal completion |
-| `run-summary.md` | `sandbox/<test-name>-output/` | only on normal completion |
+| `execution.log` | `sandbox/regressions/<test-name>/output/` | yes (triggers save) |
+| `run-metrics.json` | `sandbox/regressions/<test-name>/output/` | only on normal completion |
+| `run-summary.md` | `sandbox/regressions/<test-name>/output/` | only on normal completion |
 | `build-README.md` | Level:TOP task README in target repo (TM mode only) | only when path resolves |
 
 `run-metrics.json` and `run-summary.md` are written by the orchestrator only
@@ -204,6 +204,29 @@ Gold tests should be tolerant of minor naming variations (e.g. `id` vs `ID`
 vs `userId`) while remaining strict about field presence and correctness.
 Use a helper like `extractField(m, "id", "ID", "userId")` rather than
 hard-coding a single key.
+
+### goldutil — shared pipeline health checks
+
+Import `github.com/cornjacket/ai-builder/tests/regression/goldutil` and add these
+checks to every gold test that runs a full pipeline:
+
+| Function | What it checks | Where to find data |
+|----------|---------------|--------------------|
+| `goldutil.CheckSubtasksComplete(t, targetDir)` | No `- [ ]` lines in any completed pipeline task README — verifies the LCH wrote all subtask completions before rename | target repo |
+| `goldutil.CheckRunSummaryExists(t, targetDir)` | Level:TOP pipeline task README contains `## Run Summary` — verifies the post-loop metrics flush ran | target repo |
+| `goldutil.CheckRetryWarnings(t, targetDir, maxRetries)` | `run_summary.warnings` count ≤ `maxRetries` — verifies linter/tester failures are within the expected budget | target repo |
+| `goldutil.CheckReadmeCoverage(t, outputDir)` | Every Go package directory in the output has a README.md | output dir |
+
+`maxRetries` in `CheckRetryWarnings` is a **budget**: set it to the current
+observed value for existing runs so they pass, but any increase is caught as a
+regression. Start at 0 for new regressions — a clean pipeline should produce no
+retries. Update the value only when the retry is known-acceptable (e.g. a known
+AI limitation that cannot yet be fixed upstream).
+
+**Do not assert on elapsed time.** Timing is environment-dependent and produces
+flaky tests. Token counts are stable enough to monitor manually via
+`last_run/run-metrics.json` but are not recommended as assertions — cached token
+counts vary between runs.
 
 ### Running
 
@@ -329,9 +352,11 @@ is possible by parsing `execution.log`, but no tooling exists for this yet.
 
 ## 9. Existing Tests Reference
 
-| Test | Pipeline capability exercised |
-|------|-------------------------------|
-| `fibonacci/` | Flat atomic — single ARCHITECT→IMPLEMENTOR→TESTER pass |
-| `template-setup/` | Task system setup and CLAUDE.md installation |
-| `user-service/` | Single-level decomposition — service decomposed into 3 components |
-| `platform-monolith/` | Multi-level decomposition — 3-level tree, tree traversal, networked monolith |
+| Test | Pipeline | Capability exercised |
+|------|----------|----------------------|
+| `fibonacci/` | builder | Flat atomic — single ARCHITECT→IMPLEMENTOR→TESTER pass |
+| `template-setup/` | — | Task system setup and CLAUDE.md installation |
+| `user-service/` | builder | Single-level decomposition — service decomposed into 3 components |
+| `platform-monolith/` | builder | Multi-level decomposition — 3-level tree, tree traversal, networked monolith |
+| `doc-user-service/` | doc | Doc pipeline — 2-level decomposition, atomic leaf documentation |
+| `doc-platform-monolith/` | doc | Doc pipeline — 3-level decomposition, integrate nodes |

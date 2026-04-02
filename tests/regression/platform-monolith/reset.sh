@@ -3,7 +3,7 @@
 # Run this before each pipeline run.
 #
 # What this does:
-#   1. Creates a fresh target repo at sandbox/platform-monolith-target/
+#   1. Creates a fresh target repo at sandbox/regressions/platform-monolith/target/
 #   2. Installs the task management system and CLAUDE.md
 #   3. Creates a USER-TASK "platform" in in-progress/ (Oracle-owned boundary)
 #   4. Creates a PIPELINE-SUBTASK "build-1" under it with Level=TOP
@@ -16,8 +16,8 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
-TARGET_REPO="$REPO_ROOT/sandbox/platform-monolith-target"
-OUTPUT_DIR="$REPO_ROOT/sandbox/platform-monolith-output"
+TARGET_REPO="$REPO_ROOT/sandbox/regressions/platform-monolith/target"
+OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/platform-monolith/output"
 EPIC="main"
 PARENT_TASK_NAME="platform"
 ENTRY_TASK_NAME="build-1"

@@ -259,6 +259,63 @@ func FindMainPackages(root string) ([]string, error) {
 	return pkgs, err
 }
 
+// CheckRetryWarnings walks all completed TOP-level pipeline task directories
+// (X-prefixed directories with task.json "level": "TOP") and asserts that
+// the number of retry warnings in run_summary does not exceed maxRetries.
+// A retry warning is recorded whenever a *_FAIL outcome triggers a pipeline
+// retry (e.g. linter fail, tester fail). maxRetries acts as a budget: set it
+// to the current observed value so any increase is caught as a regression.
+func CheckRetryWarnings(t *testing.T, targetDir string, maxRetries int) {
+	t.Helper()
+
+	err := filepath.WalkDir(targetDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() || !strings.HasPrefix(filepath.Base(path), "X-") {
+			return nil
+		}
+		tjPath := filepath.Join(path, "task.json")
+		if !fileExists(tjPath) {
+			return nil
+		}
+		raw, err := os.ReadFile(tjPath)
+		if err != nil {
+			return nil
+		}
+		var tj map[string]interface{}
+		if err := json.Unmarshal(raw, &tj); err != nil {
+			return nil
+		}
+		if tj["level"] != "TOP" {
+			return nil
+		}
+		// Only check the true pipeline entry point (no parent task.json).
+		parentTaskJSON := filepath.Join(filepath.Dir(path), "task.json")
+		if fileExists(parentTaskJSON) {
+			return nil
+		}
+		rs, ok := tj["run_summary"].(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		rawWarnings, _ := rs["warnings"].([]interface{})
+		count := len(rawWarnings)
+		if count > maxRetries {
+			rel, _ := filepath.Rel(targetDir, path)
+			t.Errorf("retry warning budget exceeded in %s: got %d warnings, max %d",
+				rel, count, maxRetries)
+			for i, w := range rawWarnings {
+				t.Logf("  warning[%d]: %v", i, w)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Errorf("CheckRetryWarnings: walk error: %v", err)
+	}
+}
+
 // BuildBinary compiles the Go package at pkgDir and writes the resulting
 // binary to outPath. Returns a descriptive error including compiler output
 // on failure.
