@@ -55,6 +55,7 @@ if [[ ! -d "$STATUS_DIR" ]]; then
 fi
 
 STATUS="$FOLDER"
+CREATED="$(date +%Y-%m-%d)"
 
 # Generate a short unique ID and build the directory name
 ID="$(openssl rand -hex 3)"
@@ -75,6 +76,7 @@ sed \
     -e "s/{{EPIC}}/$EPIC/g" \
     -e "s/{{TAGS}}/$TAGS/g" \
     -e "s/{{PRIORITY}}/$PRIORITY/g" \
+    -e "s/{{CREATED}}/$CREATED/g" \
     "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------

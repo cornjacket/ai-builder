@@ -68,6 +68,7 @@ if [[ -z "$NEXT_ID" ]]; then
     sed -i '' "s/| Priority *|[^|]*|/&\n| Next-subtask-id | 0000               |/" "$PARENT_README"
 fi
 DIRNAME="$PARENT_SHORT_ID-$NEXT_ID-$NAME"
+CREATED="$(date +%Y-%m-%d)"
 
 TASK_DIR="$PARENT_DIR/$DIRNAME"
 
@@ -83,6 +84,7 @@ sed \
     -e "s/{{TAGS}}/$TAGS/g" \
     -e "s|{{PARENT}}|$PARENT|g" \
     -e "s/{{PRIORITY}}/$PRIORITY/g" \
+    -e "s/{{CREATED}}/$CREATED/g" \
     "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,8 @@
 | Tags        | {{TAGS}}               |
 | Parent      | {{PARENT}}             |
 | Priority    | {{PRIORITY}}           |
+| Created     | {{CREATED}}            |
+| Completed   | —                      |
 | Next-subtask-id | 0000               |
 
 ## Goal

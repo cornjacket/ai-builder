@@ -106,9 +106,18 @@ with open(path, 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
 EOF
-            # Restore status in child task.json if present
+            # Restore status and clear completed_at in child task.json if present
             if [[ -f "$SUBTASK_DIR/task.json" ]]; then
                 json_set_str "$SUBTASK_DIR/task.json" "status" "—"
+                python3 - "$SUBTASK_DIR/task.json" <<'PYEOF'
+import sys, json
+path = sys.argv[1]
+data = json.load(open(path))
+data["completed_at"] = None
+with open(path, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+PYEOF
             fi
             echo "Marked incomplete: $NAME"
         else
@@ -123,6 +132,7 @@ EOF
                 json_complete_subtask "$PARENT_JSON" "$NAME"
                 if [[ -f "$SUBTASK_DIR/task.json" ]]; then
                     json_set_str "$SUBTASK_DIR/task.json" "status" "complete"
+                    json_set_str "$SUBTASK_DIR/task.json" "completed_at" "$(date +%Y-%m-%d)"
                 fi
                 echo "Marked complete (rename deferred): $NAME"
             else
@@ -130,9 +140,10 @@ EOF
                 mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
                 # Update subtask entry in parent task.json
                 json_complete_subtask "$PARENT_JSON" "$NAME"
-                # Update status in child task.json
+                # Update status and completed_at in child task.json
                 if [[ -f "$XSUBTASK_DIR/task.json" ]]; then
                     json_set_str "$XSUBTASK_DIR/task.json" "status" "complete"
+                    json_set_str "$XSUBTASK_DIR/task.json" "completed_at" "$(date +%Y-%m-%d)"
                 fi
                 echo "Marked complete: $NAME"
             fi
@@ -173,6 +184,7 @@ EOF
         sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
         sed -i '' "s|- \[x\] $NAME$|- [ ] $NAME|" "$PARENT_README"
         sed -i '' "s/| Status *|[^|]*|/| Status | — |/" "$SUBTASK_README"
+        sed -i '' "s/| Completed *|[^|]*|/| Completed | — |/" "$SUBTASK_README"
         echo "Marked incomplete: $NAME"
     else
         if ! grep -q "\- \[ \].*$NAME" "$PARENT_README"; then
@@ -187,10 +199,13 @@ EOF
         sed -i '' "s|- \[ \] \[$NAME\]($NAME/)|- [x] [$XNAME](X-$NAME/)|" "$PARENT_README"
         # Handle plain format: - [ ] NAME (no link)
         sed -i '' "s|- \[ \] $NAME$|- [x] $XNAME|" "$PARENT_README"
+        COMPLETED_DATE="$(date +%Y-%m-%d)"
         if [[ "$SKIP_RENAME" == true ]]; then
             sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_DIR/README.md"
+            sed -i '' "s/| Completed *|[^|]*|/| Completed | $COMPLETED_DATE |/" "$SUBTASK_DIR/README.md"
         else
             sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$XSUBTASK_DIR/README.md"
+            sed -i '' "s/| Completed *|[^|]*|/| Completed | $COMPLETED_DATE |/" "$XSUBTASK_DIR/README.md"
         fi
         echo "Marked complete: $NAME"
     fi
@@ -236,6 +251,11 @@ mv "$SRC_DIR" "$DST_DIR"
 # Update task README Status field (for user tasks that have a metadata table)
 if [[ -f "$DST_DIR/README.md" ]]; then
     sed -i '' "s/| Status *|[^|]*|/| Status | $TO |/" "$DST_DIR/README.md"
+    if [[ "$UNDO" == true ]]; then
+        sed -i '' "s/| Completed *|[^|]*|/| Completed | — |/" "$DST_DIR/README.md"
+    else
+        sed -i '' "s/| Completed *|[^|]*|/| Completed | $(date +%Y-%m-%d) |/" "$DST_DIR/README.md"
+    fi
 fi
 
 # Also update task.json status if this is a pipeline task

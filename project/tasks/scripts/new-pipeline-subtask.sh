@@ -103,6 +103,7 @@ mkdir -p "$TASK_DIR"
 # Write task.json with all structured metadata
 python3 - "$TASK_DIR/task.json" "$NAME" "$EPIC" "$PARENT_NAME" "$PRIORITY" "$LEVEL" "$TAGS" <<'EOF'
 import sys, json
+from datetime import date
 path, name, epic, parent, priority, level, tags = sys.argv[1:]
 data = {
     "task-type": "PIPELINE-SUBTASK",
@@ -111,6 +112,8 @@ data = {
     "parent": parent,
     "tags": tags,
     "priority": priority,
+    "created_at": date.today().isoformat(),
+    "completed_at": None,
     "next-subtask-id": "0000",
     "complexity": "—",
     "level": level,

@@ -138,6 +138,8 @@ filesystem level.
 | Epic            | main        |
 | Tags            | —           |
 | Priority        | HIGH        |
+| Created         | 2026-04-02  |
+| Completed       | —           |
 | Next-subtask-id | 0000        |
 ```
 
@@ -151,6 +153,8 @@ filesystem level.
 | Tags            | —              |
 | Parent          | my-parent-task |
 | Priority        | —              |
+| Created         | 2026-04-02     |
+| Completed       | —              |
 | Next-subtask-id | 0000           |
 ```
 
@@ -169,6 +173,10 @@ filesystem level.
 | Stop-after      | false              |
 | Last-task       | false              |
 ```
+
+Pipeline subtask timestamps are stored in `task.json` (not the README, which is
+prose-only): `created_at` (ISO 8601 date string) is set at creation;
+`completed_at` (ISO 8601 date string, or `null`) is set by `complete-task.sh`.
 
 Valid Priority values: `CRITICAL`, `HIGH`, `MED`, `LOW`, `—` (unset).
 
