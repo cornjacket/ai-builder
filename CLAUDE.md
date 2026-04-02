@@ -1,5 +1,36 @@
 # AI Agent Instructions — ai-builder
 
+## Development Workflow (Git Worktrees)
+
+This repository uses a git worktree workspace. The layout on disk is:
+
+```
+ai-builder/          ← workspace root (not a working tree itself)
+    .bare/           ← bare clone (git object store)
+    .git             ← pointer file to .bare/
+    main/            ← worktree for 'main' branch  ← you are here
+    <branch>/        ← ephemeral worktrees for feature branches
+```
+
+**Creating a worktree for a new task:**
+```bash
+bash ai-builder/main/bootstrap/new-worktree.sh <branch-name>
+# Creates ai-builder/<branch-name>/ on a new branch
+```
+
+**Removing a worktree after merging:**
+```bash
+bash ai-builder/main/bootstrap/remove-worktree.sh <branch-name>
+```
+
+Each worktree has its own `sandbox/` — regression runs in different worktrees
+do not interfere with each other.
+
+**`ai-builder-gold/`** is the archived pre-migration repo. It is read-only
+and should not be modified.
+
+---
+
 ## Workflow Guideline
 
 All work in this repository — whether human or AI driven — must be tracked
@@ -83,9 +114,10 @@ running by inspecting the Level: TOP pipeline-subtask README in the target repo.
 is incomplete. Do not use `--force` unless you have confirmed the pipeline
 process is no longer running.
 
-Only one regression run may be active at a time. The sandbox output directories
-are shared (`sandbox/regressions/platform-monolith/output`, etc.) — two concurrent
-runs will corrupt each other's task trees and token data.
+Only one regression run may be active per worktree at a time. Each worktree has
+its own `sandbox/regressions/` directory, so runs in different worktrees are
+independent. Within a single worktree, two concurrent runs will corrupt each
+other's task trees and token data.
 
 ---
 
