@@ -25,18 +25,17 @@ and testable. They live in `bootstrap/` in the repo root.
 
 **Scripts to implement:**
 
-**`bootstrap/setup-workspace.sh`** — run from `cornjacket/` parent directory,
-invoked via `ai-builder-bootstrap/` (a local or remote clone created solely to
-run the script). `ai-builder-gold/` is never referenced or touched after rename.
+**`bootstrap/setup-workspace.sh`** — run from `cornjacket/` parent directory.
+`ai-builder-bootstrap/` (cloned from the remote) must exist as a sibling.
+The script has no knowledge of `ai-builder-gold/` — it is irrelevant to bootstrap.
 1. Validate: `ai-builder-bootstrap/` exists as sibling; read remote URL from its `.git/config`
-2. If `ai-builder/` exists: rename → `ai-builder-gold/`; else skip (fresh machine)
-3. `mkdir ai-builder/`
-4. `git clone --bare ai-builder-bootstrap/ ai-builder/.bare/`  ← local, fast
-5. `git -C ai-builder/.bare remote set-url origin <remote-url>`  ← reconfigure to GitHub
-6. `echo "gitdir: ./.bare" > ai-builder/.git`
-7. Fix fetch refspec
-8. `git -C ai-builder worktree add main main`
-9. Print success + tell user to delete `ai-builder-bootstrap/`, copy sandbox, rename memory
+2. `mkdir ai-builder/`
+3. `git clone --bare ai-builder-bootstrap/ ai-builder/.bare/`  ← local copy of the remote clone
+4. `git -C ai-builder/.bare remote set-url origin <remote-url>`  ← point to GitHub
+5. `echo "gitdir: ./.bare" > ai-builder/.git`
+6. Fix fetch refspec
+7. `git -C ai-builder worktree add main main`
+8. Print success + tell user to delete `ai-builder-bootstrap/`, copy sandbox, rename memory
 
 **`bootstrap/new-worktree.sh <branch-name> [--from <base>]`** — run from `ai-builder/`:
 1. Validate branch name not already in use
@@ -51,15 +50,15 @@ run the script). `ai-builder-gold/` is never referenced or touched after rename.
 **`bootstrap/README.md`** — documents all three scripts, the workspace structure,
 and the day-to-day worktree workflow.
 
-**Top-level `README.md`** — add a "Getting Started" section explaining how to
-bootstrap the workspace on a fresh machine:
+**Top-level `README.md`** — add a "Getting Started" section with the exact
+three-line bootstrap procedure:
+```bash
+git clone <remote-url> ai-builder-bootstrap
+bash ai-builder-bootstrap/bootstrap/setup-workspace.sh
+rm -rf ai-builder-bootstrap
 ```
-git clone <remote-url> ai-builder-setup
-cd ai-builder-setup
-bash bootstrap/setup-workspace.sh
-rm -rf ../ai-builder-setup
-```
-This must be in the README so it's visible on GitHub before the workspace exists.
+This must be visible on GitHub (before the workspace exists) and must reflect
+the exact commands used and tested during `0001`.
 
 After implementing all of the above, commit and push to remote before starting `0001`.
 

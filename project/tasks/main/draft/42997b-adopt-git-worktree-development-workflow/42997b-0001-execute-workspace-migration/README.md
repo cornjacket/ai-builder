@@ -23,18 +23,17 @@ Prerequisite: `0000-implement-bootstrap-scripts` is complete and pushed to remot
 
 **Steps (in order):**
 
-1. **Push any unpushed commits** from `ai-builder/` first. The bootstrap clone
-   is local so all local commits are present, but the workspace's remote URL
-   points to GitHub — anything not pushed will be missing from `git fetch`.
+1. **Rename and push:** rename `ai-builder/` → `ai-builder-gold/`, write the
+   bootstrap scripts (subtask `0000`) inside `ai-builder-gold/`, commit and push.
 
-2. **Create bootstrap clone, run the script, clean up:**
+2. **Run the bootstrap procedure** (exactly as documented in `README.md`):
    ```bash
    cd ~/Go/src/github.com/cornjacket
-   git clone ai-builder/ ai-builder-bootstrap
+   git clone <remote-url> ai-builder-bootstrap
    bash ai-builder-bootstrap/bootstrap/setup-workspace.sh
    rm -rf ai-builder-bootstrap
    ```
-   Result: `ai-builder-gold/` (original, untouched), `ai-builder/` (workspace with `main/`)
+   Result: `ai-builder-gold/` (untouched), `ai-builder/` (workspace with `main/`)
 
 3. **Verify `main/` works:**
    - Task scripts: `ai-builder/main/project/tasks/scripts/new-user-task.sh --help`
