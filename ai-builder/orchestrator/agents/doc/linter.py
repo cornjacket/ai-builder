@@ -12,10 +12,35 @@ _PLACEHOLDER_PATTERNS = [
     re.compile(r"\bPLACEHOLDER\b", re.IGNORECASE),
 ]
 
-_EMPTY_SECTION_RE = re.compile(
-    r"^(#{1,6}\s+.+)\n+(?=#{1,6}\s|\Z)",
-    re.MULTILINE,
-)
+def _find_empty_sections(text: str) -> list[str]:
+    """Return headings whose sections are truly empty.
+
+    A section is empty when the next non-blank line after the heading is a heading
+    at the SAME or HIGHER level (same or fewer #s), or when the heading has nothing
+    after it (end of file). A heading whose immediate content is only sub-headings
+    (deeper # level) is NOT considered empty — those sub-headings are its content.
+    """
+    lines = text.splitlines()
+    empties = []
+    i = 0
+    while i < len(lines):
+        m = re.match(r'^(#{1,6})\s+(.+)', lines[i])
+        if m:
+            level = len(m.group(1))
+            heading = lines[i].strip()
+            j = i + 1
+            while j < len(lines) and lines[j].strip() == '':
+                j += 1
+            if j >= len(lines):
+                empties.append(heading)  # heading at EOF with no content
+            else:
+                next_m = re.match(r'^(#{1,6})\s+', lines[j])
+                if next_m and len(next_m.group(1)) <= level:
+                    # next non-blank is a peer or parent heading → section is empty
+                    empties.append(heading)
+                # else: has prose or a deeper sub-heading → not empty
+        i += 1
+    return empties
 
 
 def _check_file(path: Path) -> list[str]:
@@ -35,8 +60,8 @@ def _check_file(path: Path) -> list[str]:
         errors.append(f"{path.name}: missing 'Tags:' header")
 
     # No empty sections
-    for match in _EMPTY_SECTION_RE.finditer(text):
-        errors.append(f"{path.name}: empty section '{match.group(1).strip()}'")
+    for heading in _find_empty_sections(text):
+        errors.append(f"{path.name}: empty section '{heading}'")
 
     # No placeholder text
     for pattern in _PLACEHOLDER_PATTERNS:

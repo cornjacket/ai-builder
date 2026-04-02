@@ -22,10 +22,26 @@ existing README.
 
 ## Render modes
 
-| Level field | Content |
-|-------------|---------|
-| `TOP` | Title (from `parent`), Run Summary (if present), Execution Log, Subtask list |
-| Any other / absent | Title (from `name` or `goal`), Subtask list only |
+### TOP-level task (`level == "TOP"`)
+
+| Section | Source in task.json |
+|---------|---------------------|
+| Title | `parent` field (or `name` / first line of `goal` as fallback) |
+| Run Summary | `run_summary` (written at pipeline completion) |
+| Execution Log | `execution_log` (updated after each invocation) |
+| Subtask list | `subtasks` array |
+
+### Non-TOP pipeline subtask
+
+| Section | Source in task.json | When present |
+|---------|---------------------|--------------|
+| Title | `name` (or first line of `goal`) | always |
+| Goal | `goal` | always (set by decompose.py) |
+| Context | `context` | always (breadcrumb trail set by decompose.py) |
+| Design | `design` | after ARCHITECT design-ready outcome |
+| Acceptance Criteria | `acceptance_criteria` | after ARCHITECT design-ready outcome |
+| Test Command | `test_command` | after ARCHITECT design-ready outcome |
+| Subtask list | `subtasks` | composite nodes only |
 
 ## CLI usage
 

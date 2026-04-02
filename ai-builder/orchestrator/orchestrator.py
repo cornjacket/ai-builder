@@ -859,28 +859,31 @@ def _seed_run_from_prior_log(task_json: Path) -> None:
 
 
 def _find_level_top(readme: Path | None) -> Path | None:
-    """Return the nearest README (at or above readme's directory) whose task.json has level: TOP.
+    """Return the topmost README (at or above readme's directory) whose task.json has level: TOP.
 
-    Walks upward through parent directories so that resuming from an INTERNAL
-    task still finds the Level: TOP build-N README that owns the execution log.
+    Walks upward through all parent directories and returns the highest-level
+    match. Walking to the top (not stopping at the first match) ensures that
+    decompose-propagated level=TOP values on child tasks do not shadow the real
+    Level:TOP build-N entry point when resuming from a mid-tree task.
     """
     if not readme:
         return None
     candidate = readme
+    result = None
     while candidate and candidate.exists():
         task_json = candidate.parent / "task.json"
         if task_json.exists():
             try:
                 data = json.loads(task_json.read_text())
                 if data.get("level") == "TOP":
-                    return candidate
+                    result = candidate  # keep walking; a higher ancestor may also match
             except Exception:
                 pass
         parent_readme = candidate.parent.parent / "README.md"
         if parent_readme == candidate:
             break
         candidate = parent_readme
-    return None
+    return result
 
 build_readme = _find_level_top(initial_job_doc)
 top_task_json = build_readme.parent / "task.json" if build_readme else None
@@ -1121,6 +1124,17 @@ while current_role is not None:
             _pending_top_rename = Path(_m.group(1).strip())
 
     next_role = ROUTES.get((current_role, outcome))
+
+    # Record a warning whenever a *_FAIL outcome triggers a retry. This covers
+    # linter failures (POST_DOC_HANDLER_ATOMIC_FAIL / INTEGRATE_FAIL → DOC_ARCHITECT
+    # / DOC_INTEGRATOR) and tester failures (TESTER_TESTS_FAIL → IMPLEMENTOR).
+    # Warnings are written to run_summary in task.json and surfaced in the final
+    # run summary so systematic retry rates don't go unnoticed.
+    if outcome.endswith("_FAIL") and next_role is not None:
+        component = metrics_mod.description_from_job_path(job_doc)
+        warning = f"RETRY: {next_role} on {component} (reason: {outcome})"
+        run.warnings.append(warning)
+        print(f"\n[orchestrator] WARNING: {warning}")
 
     if next_role == current_role:
         role_iteration_counts[current_role] = role_iteration_counts.get(current_role, 0) + 1

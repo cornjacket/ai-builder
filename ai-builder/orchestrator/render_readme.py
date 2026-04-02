@@ -80,6 +80,32 @@ def _render_subtask(data: dict) -> str:
 
     lines = [f"# {title}", ""]
 
+    # Goal — always present for pipeline subtasks (set by decompose.py)
+    goal = data.get("goal", "")
+    if goal:
+        lines += ["## Goal", "", goal, ""]
+
+    # Context — breadcrumb trail set by decompose.py
+    context = data.get("context", "")
+    if context:
+        lines += ["## Context", "", context, ""]
+
+    # Design — written by ARCHITECT on design-ready outcome; already has "## Design" header
+    design = data.get("design", "")
+    if design:
+        lines += [design, ""]
+
+    # Acceptance Criteria — written by ARCHITECT; already has "## Acceptance Criteria" header
+    ac = data.get("acceptance_criteria", "")
+    if ac:
+        lines += [ac, ""]
+
+    # Test Command — written by ARCHITECT
+    tc = data.get("test_command", "")
+    if tc:
+        lines += ["## Test Command", "", "```", tc, "```", ""]
+
+    # Subtask list (composite nodes only)
     subtasks = data.get("subtasks", [])
     if subtasks:
         lines += _render_subtask_list(subtasks)

@@ -40,6 +40,7 @@ class RunData:
     start: datetime
     invocations: list[InvocationRecord] = field(default_factory=list)
     end: datetime | None = None
+    warnings: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +173,7 @@ def write_metrics_to_task_json(task_json_path: Path | None, run: RunData, final:
             "total_tokens_out":    sum(inv.tokens_out    for inv in run.invocations),
             "total_tokens_cached": sum(inv.tokens_cached for inv in run.invocations),
             "invocation_count":    len(run.invocations),
+            "warnings":            list(run.warnings),
         }
 
     try:
@@ -278,6 +280,13 @@ def _build_summary_lines(run: RunData) -> list[str]:
     for agent, count in sorted(agent_counts.items()):
         lines.append(f"| {agent} | {count} |")
     lines.append("")
+
+    # Warnings — only included when there are retries to report
+    if run.warnings:
+        lines += ["## Warnings", ""]
+        for w in run.warnings:
+            lines.append(f"- {w}")
+        lines.append("")
 
     return lines
 

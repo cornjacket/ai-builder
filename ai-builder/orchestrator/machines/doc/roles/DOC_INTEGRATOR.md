@@ -32,17 +32,18 @@ the directory as a whole provides.
      one-line descriptions of each component's responsibility
   4. Links to any synthesis docs you write (data-flow.md, api.md)
 
+- **`data-flow.md`** — always produce at every composite node. Components
+  in the same composite directory share a data path by definition. Must
+  include at least one ASCII diagram showing the flow and a brief description
+  of how data moves between the components.
+
 **Produce when applicable:**
 
-- **`data-flow.md`** — when data moves non-trivially between components (e.g.
-  a request enters handlers, passes through validation, hits the store). Must
-  include at least one ASCII diagram showing the flow. Omit if components are
-  independent with no shared data path.
-
-- **`api.md`** — when this composite exposes an HTTP API and the sub-component
-  docs have not already fully documented the surface. If the sub-components
-  each document their own endpoints completely, a synthesis `api.md` is not
-  needed at this level.
+- **`api.md`** — produce if and only if this composite exposes HTTP routes
+  that are not fully documented within the sub-component docs. "Fully
+  documented" means every route has a companion doc in the relevant
+  sub-component. If the sub-components each document their own endpoints
+  completely, a synthesis `api.md` is not needed at this level.
 
 ### Purpose/Tags header (required on every file)
 

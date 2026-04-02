@@ -109,7 +109,10 @@ class DecomposeAgent:
                         subtask_data["component_type"] = "integrate"
                     if i == len(components) - 1:
                         subtask_data["last-task"] = True
-                        subtask_data["level"]     = parent_level
+                        # Do NOT propagate parent_level to children. level=TOP must
+                        # remain exclusive to the build-N entry point so that
+                        # _find_level_top correctly identifies the root task when
+                        # resuming from a mid-tree job doc.
                     subtask_json.write_text(json.dumps(subtask_data, indent=2) + "\n")
                 except Exception as e:
                     return AgentResult(exit_code=1, response=f"Failed to update subtask task.json for '{comp_name}': {e}")
