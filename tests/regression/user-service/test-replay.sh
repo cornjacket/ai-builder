@@ -85,7 +85,15 @@ print(sum(1 for inv in m.get("invocations", []) if inv.get("ai")))
 PYEOF
 )
 
+TASK_HEX_ID=$(python3 - "$RECORD_DIR/recording.json" <<'PYEOF'
+import json, sys
+m = json.loads(open(sys.argv[1]).read())
+print(m.get("task_hex_id", ""))
+PYEOF
+)
+
 _pass "Recording found (last invocation: $LAST_N, AI invocations: $AI_COUNT)"
+[[ -n "$TASK_HEX_ID" ]] && echo "    task hex ID: $TASK_HEX_ID (pinned)"
 
 # ---------------------------------------------------------------------------
 # 2. Reset workspace
@@ -93,7 +101,11 @@ _pass "Recording found (last invocation: $LAST_N, AI invocations: $AI_COUNT)"
 
 _step "Reset workspace"
 
-bash "$DIR/reset.sh"
+if [[ -n "$TASK_HEX_ID" ]]; then
+    bash "$DIR/reset.sh" --task-id "$TASK_HEX_ID"
+else
+    bash "$DIR/reset.sh"
+fi
 
 _pass "Workspace reset"
 
@@ -171,6 +183,12 @@ _step "Verify output artifacts"
 
 # Compare the working tree against the recording's final snapshot.
 # Exclude volatile files: execution.log and per-role logs.
+# The Level:TOP task.json and README.md contain timestamps and token counts
+# that differ between a live recording and a replay (replay is near-instant
+# with zero tokens). Exclude them by their exact pinned path; all component
+# subtask task.json and README.md files remain in the comparison.
+TOP_TASK_DIR="target/project/tasks/main/in-progress/${TASK_HEX_ID}-user-service/X-${TASK_HEX_ID}-0000-build-1"
+
 python3 "$COMPARE_SNAPSHOT" \
     --recording "$RECORD_DIR" \
     --at        "$LAST_N" \
@@ -179,9 +197,10 @@ python3 "$COMPARE_SNAPSHOT" \
     --exclude   "output/current-job.txt" \
     --exclude   "output/last-job.json" \
     --exclude   "output/handoff-state.json" \
-    --exclude   "target" \
     --exclude   "responses" \
     --exclude   "recording.json" \
+    --exclude   "${TOP_TASK_DIR}/task.json" \
+    --exclude   "${TOP_TASK_DIR}/README.md" \
     && _pass "Output artifacts match recording snapshot" \
     || _fail "Output artifacts differ from recording snapshot (see diff above)"
 

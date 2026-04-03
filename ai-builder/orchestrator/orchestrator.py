@@ -1308,8 +1308,17 @@ if top_task_json is not None:
 # 3. Master index — rebuild combined doc index across the output tree
 build_master_index(OUTPUT_DIR)
 
-# 4. Recording manifest — write after all metrics/README updates so the final
-#    state of the workspace is captured in the last commit.
+# 4. Apply deferred top-level rename (build-N → X-build-N) BEFORE the final
+#    recording commit so the commit captures the fully-complete workspace state.
+#    All in-memory paths that reference the pre-rename directory are no longer
+#    needed at this point (metrics/README writes above are done).
+if _pending_top_rename is not None and _pending_top_rename.exists():
+    _renamed_dir = _pending_top_rename.parent / ("X-" + _pending_top_rename.name)
+    _pending_top_rename.rename(_renamed_dir)
+    print(f"    renamed:       {_pending_top_rename.name} → {_renamed_dir.name}")
+
+# 5. Recording manifest — write after all metrics/README updates AND the
+#    top-level rename so the "pipeline done" commit captures the final state.
 if record_dir is not None:
     if _rec_invocations:
         _sha = recorder_mod.commit(record_dir, _rec_n + 1, "pipeline", "done")
@@ -1320,14 +1329,17 @@ if record_dir is not None:
             "commit": _sha,
             "ai": False,
         })
-    recorder_mod.write_manifest(record_dir, _rec_invocations, ROLE_PROMPTS, REPO_ROOT)
-
-# 5. Apply deferred top-level rename (build-N → X-build-N).
-# This is the last step so that all in-memory paths remain valid for the
-# writes above. advance-pipeline.sh deferred the rename via TOP_RENAME_PENDING.
-if _pending_top_rename is not None and _pending_top_rename.exists():
-    _renamed_dir = _pending_top_rename.parent / ("X-" + _pending_top_rename.name)
-    _pending_top_rename.rename(_renamed_dir)
-    print(f"    renamed:       {_pending_top_rename.name} → {_renamed_dir.name}")
+    # Extract the top-level user task hex ID from the initial job doc path:
+    # .../in-progress/61857e-user-service/61857e-0000-build-1/README.md
+    # user-task dir is two levels up; hex ID is the part before the first '-'.
+    _task_hex_id: str | None = None
+    if TM_MODE:
+        try:
+            _user_task_dir = initial_job_doc.parent.parent
+            _task_hex_id = _user_task_dir.name.split("-")[0]
+        except Exception:
+            pass
+    recorder_mod.write_manifest(record_dir, _rec_invocations, ROLE_PROMPTS, REPO_ROOT,
+                                task_hex_id=_task_hex_id)
 
 print("\n=== Orchestrator: pipeline complete ===")

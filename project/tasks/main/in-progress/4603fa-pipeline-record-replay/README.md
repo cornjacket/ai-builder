@@ -58,9 +58,9 @@ Initial brainstorm: `sandbox/brainstorms/brainstorm-pipeline-stop-and-replay.md`
 - [x] [X-4603fa-0005-write-replay-regression-test](X-4603fa-0005-write-replay-regression-test/)
 - [x] [X-4603fa-0006-write-documentation](X-4603fa-0006-write-documentation/)
 - [x] [X-4603fa-0007-delete-brainstorm](X-4603fa-0007-delete-brainstorm/)
-- [ ] [4603fa-0008-store-hex-id-in-manifest](4603fa-0008-store-hex-id-in-manifest/)
-- [ ] [4603fa-0009-add-id-flag-to-new-user-task](4603fa-0009-add-id-flag-to-new-user-task/)
-- [ ] [4603fa-0010-update-reset-to-pin-task-id](4603fa-0010-update-reset-to-pin-task-id/)
+- [x] [X-4603fa-0008-store-hex-id-in-manifest](X-4603fa-0008-store-hex-id-in-manifest/)
+- [x] [X-4603fa-0009-add-id-flag-to-new-user-task](X-4603fa-0009-add-id-flag-to-new-user-task/)
+- [x] [X-4603fa-0010-update-reset-to-pin-task-id](X-4603fa-0010-update-reset-to-pin-task-id/)
 - [ ] [4603fa-0011-enable-target-snapshot-comparison](4603fa-0011-enable-target-snapshot-comparison/)
 <!-- subtask-list-end -->
 

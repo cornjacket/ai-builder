@@ -97,6 +97,7 @@ def write_manifest(
     invocations: list[dict],
     role_prompts: dict,
     repo_root: Path,
+    task_hex_id: str | None = None,
 ) -> None:
     """Write recording.json manifest to record_dir.
 
@@ -105,6 +106,9 @@ def write_manifest(
         invocations:  Ordered list of {n, role, outcome, commit, ai} dicts.
         role_prompts: ROLE_PROMPTS from orchestrator (role -> Path | None).
         repo_root:    Root of the ai-builder repo (for ai_builder_commit + relative paths).
+        task_hex_id:  6-char hex ID of the top-level user task (e.g. "61857e").
+                      When present, replay tooling passes this to new-user-task.sh
+                      so all task directory names match the recording exactly.
     """
     try:
         ai_builder_commit = _git(repo_root, ["rev-parse", "HEAD"], capture=True).strip()
@@ -121,12 +125,14 @@ def write_manifest(
                 key = str(prompt_path)
             prompt_hashes[key] = f"sha256:{digest}"
 
-    manifest = {
+    manifest: dict = {
         "recorded_at": datetime.now().isoformat(),
         "ai_builder_commit": ai_builder_commit,
-        "prompt_hashes": prompt_hashes,
-        "invocations": invocations,
     }
+    if task_hex_id:
+        manifest["task_hex_id"] = task_hex_id
+    manifest["prompt_hashes"] = prompt_hashes
+    manifest["invocations"] = invocations
     manifest_path = record_dir / "recording.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"[recorder] Manifest written to {manifest_path}")
