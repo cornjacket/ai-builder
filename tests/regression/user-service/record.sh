@@ -45,6 +45,18 @@ if [[ -f "$RECORD_DIR/recording.json" && $FORCE -eq 0 ]]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Wipe any existing recording history
+# ---------------------------------------------------------------------------
+#
+# Always start from a clean git repo so the recording branch contains exactly
+# one run's worth of commits. Old recordings are never replayed once superseded
+# so there is no reason to retain them. recorder.init() returns early if .git
+# exists, which would otherwise append new commits on top of old ones and
+# produce confusing duplicate invocation numbers in the git log.
+
+rm -rf "$RECORD_DIR/.git"
+
+# ---------------------------------------------------------------------------
 # Reset workspace
 # ---------------------------------------------------------------------------
 
