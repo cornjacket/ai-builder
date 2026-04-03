@@ -93,7 +93,12 @@ python3 "$ORCHESTRATOR" \
 echo ""
 echo "=== Pushing recording to remote ==="
 
-git -C "$RECORD_DIR" push --force origin "$BRANCH"
+# Delete the remote branch first so the push creates a clean orphan with no
+# prior history. --force alone would replace the tip but leaves old commits
+# reachable via reflog; deletion + push guarantees a truly fresh branch.
+# The || true handles the first recording where the branch does not exist yet.
+git -C "$RECORD_DIR" push origin --delete "$BRANCH" 2>/dev/null || true
+git -C "$RECORD_DIR" push origin "$BRANCH"
 
 echo ""
 echo "=== Recording complete ==="
