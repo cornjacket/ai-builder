@@ -33,4 +33,5 @@
 - [23450c-unit-test-task-management-scripts](23450c-unit-test-task-management-scripts/)
 - [154422-unit-tests-orchestrator](154422-unit-tests-orchestrator/)
 - [69f69b-github-branch-protection-setup](69f69b-github-branch-protection-setup/)
+- [88ba5d-cleanup-ai-builder-docs-structure](88ba5d-cleanup-ai-builder-docs-structure/)
 <!-- task-list-end -->
