@@ -31,6 +31,20 @@ and should not be modified.
 
 ---
 
+## Tool Usage
+
+Prefer dedicated tools over Bash for file operations — they never require
+permission prompts:
+
+- **Read files** → `Read` tool (not `cat`, `head`, `tail`)
+- **Search content** → `Grep` tool (not `grep`, `rg`)
+- **Find files** → `Glob` tool (not `find`, `ls`)
+
+Reserve `Bash` for operations with no dedicated tool equivalent: running
+tests, git commands, script execution, and similar shell tasks.
+
+---
+
 ## Workflow Guideline
 
 All work in this repository — whether human or AI driven — must be tracked
