@@ -135,7 +135,9 @@ def write_manifest(
     manifest["invocations"] = invocations
     manifest_path = record_dir / "recording.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
-    print(f"[recorder] Manifest written to {manifest_path}")
+    _git(record_dir, ["add", "recording.json"])
+    _git(record_dir, ["commit", "-m", "recording.json"])
+    print(f"[recorder] Manifest written and committed to {manifest_path}")
 
 
 # ---------------------------------------------------------------------------
