@@ -9,4 +9,5 @@
 - [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
 - [8985d4-bug-pipeline-teardown-and-formatting](8985d4-bug-pipeline-teardown-and-formatting/)
 - [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
+- [5a34d0-document-how-to-add-replay-regression](5a34d0-document-how-to-add-replay-regression/)
 <!-- task-list-end -->
