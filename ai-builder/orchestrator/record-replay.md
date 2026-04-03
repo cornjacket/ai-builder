@@ -126,9 +126,13 @@ working tree. Useful for inspecting what a single invocation changed (pass N-1
 and N).
 
 `--exclude PATTERN` — exclude paths from the diff (repeatable). Uses git
-pathspec exclusion. Always exclude `target/` (hex IDs differ between runs),
-`output/execution.log`, `output/logs`, and orchestrator coordination files
-(`output/current-job.txt`, `output/last-job.json`).
+pathspec exclusion. Always exclude `output/execution.log`, `output/logs`,
+and orchestrator coordination files (`output/current-job.txt`,
+`output/last-job.json`). When `task_hex_id` is stored in the manifest and
+passed to `reset.sh` via `--task-id`, task directory paths are identical
+between runs and `target/` can be included in the comparison — only the
+Level:TOP `task.json` and `README.md` need exclusion (they contain
+per-run timestamps and token counts).
 
 Exit codes: `0` = no differences, `1` = differences found, `2` = error.
 
@@ -193,3 +197,8 @@ Each entry has:
 - `ai` — `true` for AI roles (ARCHITECT, IMPLEMENTOR), `false` for internal handlers
 
 AI response files are stored at `<record-dir>/responses/inv-NN-ROLE.txt`.
+
+`task_hex_id` — 6-char hex ID of the top-level user task (e.g. `"274b33"`).
+Stored at record time; passed to `reset.sh --task-id` before replay so all
+task directory names match the recording exactly, enabling `target/` to be
+included in snapshot comparisons.
