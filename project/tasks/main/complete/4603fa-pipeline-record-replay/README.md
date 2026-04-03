@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
@@ -61,7 +61,7 @@ Initial brainstorm: `sandbox/brainstorms/brainstorm-pipeline-stop-and-replay.md`
 - [x] [X-4603fa-0008-store-hex-id-in-manifest](X-4603fa-0008-store-hex-id-in-manifest/)
 - [x] [X-4603fa-0009-add-id-flag-to-new-user-task](X-4603fa-0009-add-id-flag-to-new-user-task/)
 - [x] [X-4603fa-0010-update-reset-to-pin-task-id](X-4603fa-0010-update-reset-to-pin-task-id/)
-- [ ] [4603fa-0011-enable-target-snapshot-comparison](4603fa-0011-enable-target-snapshot-comparison/)
+- [x] [X-4603fa-0011-enable-target-snapshot-comparison](X-4603fa-0011-enable-target-snapshot-comparison/)
 <!-- subtask-list-end -->
 
 ## Notes
