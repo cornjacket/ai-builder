@@ -3,8 +3,9 @@
 ## Recording a regression run
 
 After running `reset.sh` and before starting the pipeline, record the sandbox
-paths and pipeline task ID in the relevant subtask README under a `## Run`
-section:
+paths and pipeline task ID in the **current verification subtask README** (the
+subtask in `project/tasks/` that you are working on to verify this regression)
+under a `## Run` section:
 
 ```markdown
 ## Run
