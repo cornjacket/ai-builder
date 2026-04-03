@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
@@ -57,7 +57,7 @@ Initial brainstorm: `sandbox/brainstorms/brainstorm-pipeline-stop-and-replay.md`
 - [x] [X-4603fa-0004-add-snapshot-comparison-utility](X-4603fa-0004-add-snapshot-comparison-utility/)
 - [x] [X-4603fa-0005-write-replay-regression-test](X-4603fa-0005-write-replay-regression-test/)
 - [x] [X-4603fa-0006-write-documentation](X-4603fa-0006-write-documentation/)
-- [ ] [4603fa-0007-delete-brainstorm](4603fa-0007-delete-brainstorm/)
+- [x] [X-4603fa-0007-delete-brainstorm](X-4603fa-0007-delete-brainstorm/)
 <!-- subtask-list-end -->
 
 ## Notes
