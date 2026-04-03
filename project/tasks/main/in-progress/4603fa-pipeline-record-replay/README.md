@@ -3,11 +3,11 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | complete |
+| Status | in-progress |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
-| Next-subtask-id | 0012 |
+| Next-subtask-id | 0015 |
 
 ## Goal
 
@@ -62,6 +62,8 @@ Initial brainstorm: `sandbox/brainstorms/brainstorm-pipeline-stop-and-replay.md`
 - [x] [X-4603fa-0009-add-id-flag-to-new-user-task](X-4603fa-0009-add-id-flag-to-new-user-task/)
 - [x] [X-4603fa-0010-update-reset-to-pin-task-id](X-4603fa-0010-update-reset-to-pin-task-id/)
 - [x] [X-4603fa-0011-enable-target-snapshot-comparison](X-4603fa-0011-enable-target-snapshot-comparison/)
+- [ ] [4603fa-0012-document-how-to-add-replay-regression](4603fa-0012-document-how-to-add-replay-regression/)
+- [ ] [4603fa-0014-setup-recordings-repo-readme](4603fa-0014-setup-recordings-repo-readme/)
 <!-- subtask-list-end -->
 
 ## Notes

@@ -250,6 +250,15 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 > verification. Move it to `complete/` using `move-task.sh` rather than
 > deleting it. Test tasks serve as living examples of correct usage.
 
+> **Rule:** Every new task must include a final subtask to create or update
+> documentation. Add it as the last NNNN-numbered subtask before beginning any
+> implementation work. A task is not closeable without it.
+
+> **Rule:** Always ask the user before closing (moving to `complete/`) a task
+> or subtask. Do not close tasks unilaterally as part of other work. Wait for
+> explicit confirmation before running `complete-task.sh` or
+> `move-task.sh --to complete`.
+
 ### Task granularity
 
 A top-level task should be completable in a single ARCHITECT → IMPLEMENTOR → TESTER
