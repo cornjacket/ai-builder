@@ -45,4 +45,5 @@
 - [bd3b59-add-timestamps-to-task-metadata](bd3b59-add-timestamps-to-task-metadata/)
 - [71a31f-consolidate-task-scripts-single-source-of-truth](71a31f-consolidate-task-scripts-single-source-of-truth/)
 - [f00df6-unit-smoke-test-script](f00df6-unit-smoke-test-script/)
+- [e94315-regression-run-pointer-guideline](e94315-regression-run-pointer-guideline/)
 <!-- task-list-end -->
