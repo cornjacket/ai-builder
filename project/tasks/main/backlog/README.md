@@ -34,4 +34,5 @@
 - [154422-unit-tests-orchestrator](154422-unit-tests-orchestrator/)
 - [69f69b-github-branch-protection-setup](69f69b-github-branch-protection-setup/)
 - [88ba5d-cleanup-ai-builder-docs-structure](88ba5d-cleanup-ai-builder-docs-structure/)
+- [a13081-bug-pipeline-no-readme-in-cmd-dirs](a13081-bug-pipeline-no-readme-in-cmd-dirs/)
 <!-- task-list-end -->

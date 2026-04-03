@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
-| Next-subtask-id | 0008 |
+| Next-subtask-id | 0009 |
 
 ## Goal
 
@@ -46,9 +46,10 @@ Three symptoms observed:
 - [x] [X-8985d4-0001-investigate-last-subtask-not-marked-complete](X-8985d4-0001-investigate-last-subtask-not-marked-complete/)
 - [x] [X-8985d4-0002-investigate-top-level-readme-formatting](X-8985d4-0002-investigate-top-level-readme-formatting/)
 - [x] [X-8985d4-0003-fix-teardown-and-formatting](X-8985d4-0003-fix-teardown-and-formatting/)
-- [ ] [8985d4-0005-verify-doc-user-service](8985d4-0005-verify-doc-user-service/)
-- [ ] [8985d4-0006-verify-doc-platform-monolith](8985d4-0006-verify-doc-platform-monolith/)
-- [ ] [8985d4-0007-verify-platform-monolith](8985d4-0007-verify-platform-monolith/)
+- [x] [X-8985d4-0005-verify-doc-user-service](X-8985d4-0005-verify-doc-user-service/)
+- [x] [X-8985d4-0006-verify-doc-platform-monolith](X-8985d4-0006-verify-doc-platform-monolith/)
+- [x] [X-8985d4-0007-verify-platform-monolith](X-8985d4-0007-verify-platform-monolith/)
+- [ ] [8985d4-0008-fix-internal-readme-subtask-completion](8985d4-0008-fix-internal-readme-subtask-completion/)
 <!-- subtask-list-end -->
 
 ## Notes
