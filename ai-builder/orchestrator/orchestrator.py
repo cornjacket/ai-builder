@@ -21,6 +21,7 @@ import metrics as metrics_mod
 from metrics import RunData, InvocationRecord, description_from_job_path
 from render_readme import render_task_readme
 from build_master_index import build_master_index
+import recorder as recorder_mod
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +91,53 @@ parser.add_argument(
          "When --resume is passed, handoff-state.json in the output directory is "
          "loaded automatically (this flag is not needed for normal resumes).",
 )
+parser.add_argument(
+    "--halt-after-ai-invocation",
+    type=int,
+    metavar="N",
+    help="Halt cleanly after the Nth AI invocation (ARCHITECT/IMPLEMENTOR/TESTER). "
+         "Non-AI handlers for that cycle complete first; current-job.txt is advanced "
+         "before halting. Used for deterministic resume testing.",
+)
+parser.add_argument(
+    "--record-to",
+    type=Path,
+    metavar="DIR",
+    help="Record mode: commit the regression workspace to a git repo in DIR after "
+         "every invocation and write a recording.json manifest at run end. DIR should "
+         "be the regression workspace root containing both output/ and target/.",
+)
+parser.add_argument(
+    "--record-branch",
+    metavar="BRANCH",
+    help="Orphan branch name for the recording repo (e.g. 'user-service'). "
+         "Used with --record-to when initializing a new recording repo.",
+)
+parser.add_argument(
+    "--record-remote",
+    metavar="URL",
+    help="Remote URL to add as 'origin' in the recording repo (e.g. the "
+         "ai-builder-recordings GitHub repo). Used with --record-to.",
+)
+parser.add_argument(
+    "--replay-from",
+    type=Path,
+    metavar="DIR",
+    help="Replay mode: serve pre-recorded AI responses from DIR instead of calling "
+         "the AI. Non-AI handlers re-run normally. Checks for prompt drift at startup "
+         "and aborts if prompts have changed since the recording was captured.",
+)
+parser.add_argument(
+    "--ignore-prompt-drift",
+    action="store_true",
+    help="In replay mode, continue even if role prompts have changed since the "
+         "recording was captured (prints a warning instead of aborting).",
+)
 args = parser.parse_args()
+
+if args.record_to and args.replay_from:
+    print("[orchestrator] --record-to and --replay-from are mutually exclusive.")
+    sys.exit(1)
 
 if args.clean_resume:
     args.resume = True
@@ -922,6 +969,36 @@ if RUN_DIR != OUTPUT_DIR:
 print(f"    execution log: {EXECUTION_LOG}\n")
 
 last_components: list[dict] = []  # components from most recent ARCHITECT JSON response
+ai_invocation_count = 0           # counts completed AI-role invocations (excludes handlers)
+
+# Recording state
+record_dir: Path | None = args.record_to.resolve() if args.record_to else None
+_rec_n = 0                        # total invocation counter (AI + handlers) for commit sequence
+_rec_invocations: list[dict] = [] # manifest invocation list built during the run
+
+if record_dir is not None:
+    recorder_mod.init(record_dir, branch=args.record_branch, remote_url=args.record_remote)
+
+# Replay state
+replay_dir: Path | None = args.replay_from.resolve() if args.replay_from else None
+_replay_ai_queue: list[tuple[int, str, str]] = []  # (n, role, response_text) for AI invocations
+_replay_ai_idx = 0                                  # index into _replay_ai_queue
+
+if replay_dir is not None:
+    _replay_manifest = recorder_mod.load_manifest(replay_dir)
+    _drift = recorder_mod.check_prompt_drift(_replay_manifest, ROLE_PROMPTS, REPO_ROOT)
+    if _drift and not args.ignore_prompt_drift:
+        print("[orchestrator] Prompt drift detected — these prompts changed since recording:")
+        for _d in _drift:
+            print(f"    {_d}")
+        print("[orchestrator] Use --ignore-prompt-drift to replay anyway.")
+        sys.exit(1)
+    elif _drift:
+        print("[orchestrator] WARNING: prompt drift detected (--ignore-prompt-drift). Continuing.")
+        for _d in _drift:
+            print(f"    {_d}")
+    _replay_ai_queue = recorder_mod.load_ai_responses(replay_dir, _replay_manifest)
+    print(f"[orchestrator] Replay mode: {len(_replay_ai_queue)} AI invocation(s) queued from {replay_dir}")
 
 # Deferred top-level rename: set when advance-pipeline.sh emits TOP_RENAME_PENDING.
 # The orchestrator renames build-N → X-build-N only AFTER all metrics/README writes
@@ -936,6 +1013,16 @@ while current_role is not None:
     if agent is None:
         print(f"[orchestrator] No agent configured for role {current_role}. Halting.")
         sys.exit(1)
+
+    # Halt after N AI invocations (--halt-after-ai-invocation). Fires just before
+    # the (N+1)th AI role — after all handlers from the Nth cycle have completed
+    # and current-job.txt is already advanced to the next task.
+    if (agent != "internal"
+            and args.halt_after_ai_invocation is not None
+            and ai_invocation_count >= args.halt_after_ai_invocation):
+        print(f"\n[orchestrator] Halting after {ai_invocation_count} AI invocation(s) "
+              f"(--halt-after-ai-invocation {args.halt_after_ai_invocation}).")
+        sys.exit(0)
 
     # Derive per-task output dir from in-memory task_state (falls back to OUTPUT_DIR)
     task_output_dir = OUTPUT_DIR
@@ -983,9 +1070,39 @@ while current_role is not None:
     if agent == "internal":
         result: AgentResult = run_internal_agent(current_role, task_output_dir, job_doc,
                                                   last_components if current_role == "DECOMPOSE_HANDLER" else None)
+    elif replay_dir is not None:
+        # Replay mode: serve the next pre-recorded response instead of calling the AI.
+        if _replay_ai_idx >= len(_replay_ai_queue):
+            print(f"\n[orchestrator] Replay exhausted: no recorded response for {current_role} "
+                  f"(used all {len(_replay_ai_queue)} queued response(s)).")
+            sys.exit(1)
+        _rep_n, _rep_role, _rep_response = _replay_ai_queue[_replay_ai_idx]
+        if _rep_role != current_role:
+            print(f"\n[orchestrator] Replay role mismatch at queue index {_replay_ai_idx}: "
+                  f"recording expected {_rep_role}, orchestrator dispatched {current_role}. "
+                  f"Routing has diverged from the recording.")
+            sys.exit(1)
+        print(f"[orchestrator] Replaying inv-{_rep_n:02d} {current_role} (pre-recorded)")
+        result = AgentResult(exit_code=0, response=_rep_response)
+        _replay_ai_idx += 1
+        ai_invocation_count += 1
+        # Restore output/ from the recording snapshot so subsequent handlers
+        # see the files the AI actually wrote. Skip for ARCHITECT — it writes
+        # to target/ via orchestrator-side parsing, not to output/.
+        # Exclude orchestrator coordination files so live-run state (paths
+        # with the current hex IDs) is not overwritten with recording-era values.
+        if current_role != "ARCHITECT":
+            recorder_mod.restore_output(replay_dir, _rep_n, exclude=[
+                "output/current-job.txt",
+                "output/last-job.json",
+                "output/execution.log",
+                "output/handoff-state.json",
+                "output/logs",
+            ])
     else:
         prompt = build_prompt(current_role, job_doc, task_output_dir, handoff_history, agent)
         result = run_agent(agent, TIMEOUT_MINUTES, current_role, prompt, OUTPUT_DIR)
+        ai_invocation_count += 1
     inv_end = datetime.now()
 
     if result.exit_code == 2:
@@ -1133,6 +1250,21 @@ while current_role is not None:
         if _m:
             _pending_top_rename = Path(_m.group(1).strip())
 
+    # Commit regression workspace snapshot (record mode).
+    if record_dir is not None:
+        _rec_n += 1
+        _sha = recorder_mod.commit(
+            record_dir, _rec_n, current_role, outcome,
+            response=result.response if agent != "internal" else None,
+        )
+        _rec_invocations.append({
+            "n": _rec_n,
+            "role": current_role,
+            "outcome": outcome,
+            "commit": _sha,
+            "ai": agent != "internal",
+        })
+
     next_role = ROUTES.get((current_role, outcome))
 
     # Record a warning whenever a *_FAIL outcome triggers a retry. This covers
@@ -1176,7 +1308,21 @@ if top_task_json is not None:
 # 3. Master index — rebuild combined doc index across the output tree
 build_master_index(OUTPUT_DIR)
 
-# 4. Apply deferred top-level rename (build-N → X-build-N).
+# 4. Recording manifest — write after all metrics/README updates so the final
+#    state of the workspace is captured in the last commit.
+if record_dir is not None:
+    if _rec_invocations:
+        _sha = recorder_mod.commit(record_dir, _rec_n + 1, "pipeline", "done")
+        _rec_invocations.append({
+            "n": _rec_n + 1,
+            "role": "pipeline",
+            "outcome": "done",
+            "commit": _sha,
+            "ai": False,
+        })
+    recorder_mod.write_manifest(record_dir, _rec_invocations, ROLE_PROMPTS, REPO_ROOT)
+
+# 5. Apply deferred top-level rename (build-N → X-build-N).
 # This is the last step so that all in-memory paths remain valid for the
 # writes above. advance-pipeline.sh deferred the rename via TOP_RENAME_PENDING.
 if _pending_top_rename is not None and _pending_top_rename.exists():
