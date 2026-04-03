@@ -78,7 +78,7 @@ elif [[ -f "$PARENT_README" ]]; then
     NEXT_ID="$(get_next_subtask_id "$PARENT_README")"
     if [[ -z "$NEXT_ID" ]]; then
         NEXT_ID="0000"
-        sed -i '' "s/| Priority *|[^|]*|/&\n| Next-subtask-id | 0000               |/" "$PARENT_README"
+        _sed_i "s/| Priority *|[^|]*|/&\n| Next-subtask-id | 0000               |/" "$PARENT_README"
     fi
     increment_subtask_id "$PARENT_README"
     PARENT_HAS_JSON=false
@@ -140,7 +140,7 @@ if [[ "$PARENT_HAS_JSON" == true ]]; then
     UPDATED="$PARENT_JSON"
 else
     if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
-        sed -i '' "s|<!-- subtask-list-end -->|- [ ] [$DIRNAME]($DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
+        _sed_i "s|<!-- subtask-list-end -->|- [ ] [$DIRNAME]($DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
     fi
     UPDATED="$PARENT_README"
 fi

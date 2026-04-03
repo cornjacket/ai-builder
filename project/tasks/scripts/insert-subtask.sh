@@ -156,7 +156,7 @@ if [[ ${#TO_SHIFT[@]} -gt 0 ]]; then
             new_dirname="${x_prefix}${pid}-${new_num}-${sname}"
             mv "$PARENT_DIR/$old_dirname" "$PARENT_DIR/$new_dirname"
             # Update parent README
-            sed -i '' "s|$old_dirname|$new_dirname|g" "$PARENT_README"
+            _sed_i "s|$old_dirname|$new_dirname|g" "$PARENT_README"
             echo "  $old_dirname → $new_dirname"
         fi
     done
@@ -183,7 +183,7 @@ sed \
 # ---------------------------------------------------------------------------
 
 if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
-    sed -i '' "s|<!-- subtask-list-end -->|- [ ] [$NEW_DIRNAME]($NEW_DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
+    _sed_i "s|<!-- subtask-list-end -->|- [ ] [$NEW_DIRNAME]($NEW_DIRNAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
 else
     echo "Warning: no subtask list markers found in $PARENT_README — add the entry manually."
 fi
@@ -238,7 +238,7 @@ CURRENT_NEXT="$(get_next_subtask_id "$PARENT_README")"
 if [[ -n "$CURRENT_NEXT" ]]; then
     NEW_NEXT="$(printf '%04d' $(( 10#$CURRENT_NEXT + ${#TO_SHIFT[@]} )))"
     if [[ "$NEW_NEXT" != "$CURRENT_NEXT" ]]; then
-        sed -i '' "s/| Next-subtask-id *|[^|]*|/| Next-subtask-id | $NEW_NEXT |/" "$PARENT_README"
+        _sed_i "s/| Next-subtask-id *|[^|]*|/| Next-subtask-id | $NEW_NEXT |/" "$PARENT_README"
         echo "Bumped Next-subtask-id: $CURRENT_NEXT → $NEW_NEXT"
     fi
 fi

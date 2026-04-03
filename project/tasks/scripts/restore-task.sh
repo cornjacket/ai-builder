@@ -17,6 +17,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -86,9 +88,9 @@ mv "$HIDDEN_DIR" "$TASK_DIR"
 # Use whichever marker is present. Subtask lists get a checkbox entry;
 # task lists get a plain link entry.
 if grep -q "<!-- subtask-list-end -->" "$PARENT_README"; then
-    sed -i '' "s|<!-- subtask-list-end -->|- [ ] [$NAME]($NAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
+    _sed_i "s|<!-- subtask-list-end -->|- [ ] [$NAME]($NAME/)\n<!-- subtask-list-end -->|" "$PARENT_README"
 elif grep -q "<!-- task-list-end -->" "$PARENT_README"; then
-    sed -i '' "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$PARENT_README"
+    _sed_i "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$PARENT_README"
 else
     echo "Warning: no task list markers found in $PARENT_README — add the entry manually."
 fi

@@ -95,9 +95,9 @@ fi
 
 # Remove entry from parent README — match by original name or X-prefixed name
 if grep -q "\[$NAME\]" "$PARENT_README"; then
-    sed -i '' "/\[$NAME\]/d" "$PARENT_README"
+    _sed_i "/\[$NAME\]/d" "$PARENT_README"
 elif grep -q "\[X-$NAME\]" "$PARENT_README"; then
-    sed -i '' "/\[X-$NAME\]/d" "$PARENT_README"
+    _sed_i "/\[X-$NAME\]/d" "$PARENT_README"
 else
     echo "Warning: no entry for '$NAME' found in $PARENT_README — skipping README update."
 fi

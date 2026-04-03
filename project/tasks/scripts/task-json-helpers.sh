@@ -16,6 +16,16 @@
 #   json_subtasks_complete <json-file>                   — exit 0 if all complete
 #   get_parent_short_id <dir>                            — extracts 6-char hex prefix from basename
 
+# Cross-platform in-place sed. BSD sed (macOS) requires an empty-string argument
+# after -i; GNU sed (Linux) does not. Use this wrapper instead of `sed -i ''`.
+_sed_i() {
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 # Returns 0 if the given directory contains a task.json (i.e. it's a pipeline task).
 is_pipeline_task() {
     local task_dir="$1"

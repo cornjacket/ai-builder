@@ -31,4 +31,6 @@
 - [9c8add-pipeline-scheduler-with-token-management](9c8add-pipeline-scheduler-with-token-management/)
 - [b48722-fix-pipeline-subtask-readme-rendering](b48722-fix-pipeline-subtask-readme-rendering/)
 - [23450c-unit-test-task-management-scripts](23450c-unit-test-task-management-scripts/)
+- [154422-unit-tests-orchestrator](154422-unit-tests-orchestrator/)
+- [69f69b-github-branch-protection-setup](69f69b-github-branch-protection-setup/)
 <!-- task-list-end -->

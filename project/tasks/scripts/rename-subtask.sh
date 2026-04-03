@@ -108,7 +108,7 @@ echo "Renamed: $OLD_DIRNAME"
 echo "     to: $NEW_DIRNAME"
 
 # Update parent README subtask list
-sed -i '' "s|$OLD_DIRNAME|$NEW_DIRNAME|g" "$PARENT_README"
+_sed_i "s|$OLD_DIRNAME|$NEW_DIRNAME|g" "$PARENT_README"
 echo "Updated: $(basename "$PARENT_README") (subtask list)"
 
 # ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ echo "Updated: $(basename "$PARENT_README") (subtask list)"
 CURRENT_NEXT="$(get_next_subtask_id "$PARENT_README")"
 if [[ -n "$CURRENT_NEXT" ]] && (( 10#$NEW_ID_PADDED >= 10#$CURRENT_NEXT )); then
     NEW_NEXT="$(printf '%04d' $(( 10#$NEW_ID_PADDED + 1 )))"
-    sed -i '' "s/| Next-subtask-id *|[^|]*|/| Next-subtask-id | $NEW_NEXT |/" "$PARENT_README"
+    _sed_i "s/| Next-subtask-id *|[^|]*|/| Next-subtask-id | $NEW_NEXT |/" "$PARENT_README"
     echo "Bumped Next-subtask-id: $CURRENT_NEXT → $NEW_NEXT"
 fi
 

@@ -7,6 +7,16 @@
 #   get_next_subtask_id <parent-readme>     — reads Next-subtask-id field value
 #   increment_subtask_id <parent-readme>    — increments Next-subtask-id in place
 
+# Cross-platform in-place sed. BSD sed (macOS) requires an empty-string argument
+# after -i; GNU sed (Linux) does not. Use this wrapper instead of `sed -i ''`.
+_sed_i() {
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 # Extract the short ID (first dash-delimited segment) from a directory basename.
 # Works for both top-level tasks (6abc12-name) and subtasks (6abc12-0001-name).
 get_parent_short_id() {
@@ -30,7 +40,7 @@ increment_subtask_id() {
     local current next
     current="$(get_next_subtask_id "$readme")"
     next="$(printf '%04d' $(( 10#$current + 1 )))"
-    sed -i '' "s/| Next-subtask-id *|[^|]*|/| Next-subtask-id | $next |/" "$readme"
+    _sed_i "s/| Next-subtask-id *|[^|]*|/| Next-subtask-id | $next |/" "$readme"
 }
 
 # Resolve a subtask directory, accounting for the X- completion prefix.

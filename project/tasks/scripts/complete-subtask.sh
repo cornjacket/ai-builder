@@ -18,6 +18,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -72,9 +74,9 @@ if [[ "$UNDO" == true ]]; then
         echo "Subtask '$NAME' is not marked complete in $PARENT_README"
         exit 1
     fi
-    sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
+    _sed_i "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
     # Restore status to folder name
-    sed -i '' "s/| Status *|[^|]*|/| Status | $FOLDER |/" "$SUBTASK_README"
+    _sed_i "s/| Status *|[^|]*|/| Status | $FOLDER |/" "$SUBTASK_README"
     echo "Marked incomplete: $NAME"
 else
     # [ ] → [x]
@@ -82,8 +84,8 @@ else
         echo "Subtask '$NAME' not found or already complete in $PARENT_README"
         exit 1
     fi
-    sed -i '' "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
+    _sed_i "s|- \[ \] \[$NAME\](\(.*\))|- [x] [$NAME](\1)|" "$PARENT_README"
     # Update status to complete
-    sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_README"
+    _sed_i "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_README"
     echo "Marked complete: $NAME"
 fi

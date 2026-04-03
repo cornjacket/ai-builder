@@ -2,11 +2,13 @@
 sandbox/*
 !sandbox/README.md
 
+# Python bytecode
+**/__pycache__/
+**/*.pyc
+
 # ai-builder runtime artifacts
 ai-builder/logs/
 ai-builder/execution.log
-ai-builder/**/__pycache__/
-ai-builder/**/*.pyc
 ai-builder/TASK-*.md
 !ai-builder/TASK-TEMPLATE.md
 

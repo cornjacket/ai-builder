@@ -61,18 +61,18 @@ SUBTASK_README="$SUBTASK_DIR/README.md"
 # Set Status to wont-do in subtask README
 # ---------------------------------------------------------------------------
 
-sed -i '' "s/| Status *|[^|]*|/| Status | wont-do |/" "$SUBTASK_README"
+_sed_i "s/| Status *|[^|]*|/| Status | wont-do |/" "$SUBTASK_README"
 
 # ---------------------------------------------------------------------------
 # Remove entry from parent README subtask list (any format, any check state)
 # ---------------------------------------------------------------------------
 
 # Linked format: - [ ] [NAME](NAME/)  or  - [x] [X-NAME](X-NAME/)
-sed -i '' "/- \[.\] \[$NAME\]($NAME\/)/d" "$PARENT_README"
-sed -i '' "/- \[.\] \[X-$NAME\](X-$NAME\/)/d" "$PARENT_README"
+_sed_i "/- \[.\] \[$NAME\]($NAME\/)/d" "$PARENT_README"
+_sed_i "/- \[.\] \[X-$NAME\](X-$NAME\/)/d" "$PARENT_README"
 # Plain format:   - [ ] NAME  or  - [x] X-NAME
-sed -i '' "/- \[.\] $NAME$/d" "$PARENT_README"
-sed -i '' "/- \[.\] X-$NAME$/d" "$PARENT_README"
+_sed_i "/- \[.\] $NAME$/d" "$PARENT_README"
+_sed_i "/- \[.\] X-$NAME$/d" "$PARENT_README"
 
 echo "Marked wont-do: $NAME"
 echo "Updated:        $PARENT_README"

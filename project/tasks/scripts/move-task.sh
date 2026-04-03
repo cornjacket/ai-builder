@@ -73,7 +73,7 @@ mv "$SRC_DIR" "$DST_DIR"
 # pipeline task READMEs have no metadata table so the sed is a no-op)
 # ---------------------------------------------------------------------------
 
-sed -i '' "s/| Status *|[^|]*|/| Status | $TO |/" "$TASK_README"
+_sed_i "s/| Status *|[^|]*|/| Status | $TO |/" "$TASK_README"
 
 # For pipeline tasks, status lives in task.json
 if is_pipeline_task "$DST_DIR"; then
@@ -85,7 +85,7 @@ fi
 # ---------------------------------------------------------------------------
 
 if [[ -f "$SRC_README" ]]; then
-    sed -i '' "/^\- \[$NAME\]/d" "$SRC_README"
+    _sed_i "/^\- \[$NAME\]/d" "$SRC_README"
 fi
 
 # ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ if [[ ! -f "$DST_README" ]]; then
 EOF
 fi
 
-sed -i '' "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$DST_README"
+_sed_i "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$DST_README"
 
 # ---------------------------------------------------------------------------
 # Done

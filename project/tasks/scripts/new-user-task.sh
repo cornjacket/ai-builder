@@ -15,6 +15,8 @@ set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+# shellcheck source=task-id-helpers.sh
+source "$SCRIPTS_DIR/task-id-helpers.sh"
 TASK_TEMPLATE="$SCRIPTS_DIR/user-task-template.md"
 
 # ---------------------------------------------------------------------------
@@ -100,7 +102,7 @@ fi
 # ---------------------------------------------------------------------------
 
 if grep -q "<!-- task-list-end -->" "$PARENT_README"; then
-    sed -i '' "s|<!-- task-list-end -->|- [$DIRNAME]($DIRNAME/)\n<!-- task-list-end -->|" "$PARENT_README"
+    _sed_i "s|<!-- task-list-end -->|- [$DIRNAME]($DIRNAME/)\n<!-- task-list-end -->|" "$PARENT_README"
 else
     echo "Warning: no task list markers found in $PARENT_README — add the entry manually."
 fi

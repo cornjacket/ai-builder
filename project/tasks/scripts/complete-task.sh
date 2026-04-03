@@ -180,11 +180,11 @@ PYEOF
             mv "$XSUBTASK_DIR" "$SUBTASK_DIR"
         fi
         # Restore checkbox and link in parent README
-        sed -i '' "s|- \[x\] \[$XNAME\](X-$NAME/)|- [ ] [$NAME]($NAME/)|" "$PARENT_README"
-        sed -i '' "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
-        sed -i '' "s|- \[x\] $NAME$|- [ ] $NAME|" "$PARENT_README"
-        sed -i '' "s/| Status *|[^|]*|/| Status | — |/" "$SUBTASK_README"
-        sed -i '' "s/| Completed *|[^|]*|/| Completed | — |/" "$SUBTASK_README"
+        _sed_i "s|- \[x\] \[$XNAME\](X-$NAME/)|- [ ] [$NAME]($NAME/)|" "$PARENT_README"
+        _sed_i "s|- \[x\] \[$NAME\](\(.*\))|- [ ] [$NAME](\1)|" "$PARENT_README"
+        _sed_i "s|- \[x\] $NAME$|- [ ] $NAME|" "$PARENT_README"
+        _sed_i "s/| Status *|[^|]*|/| Status | — |/" "$SUBTASK_README"
+        _sed_i "s/| Completed *|[^|]*|/| Completed | — |/" "$SUBTASK_README"
         echo "Marked incomplete: $NAME"
     else
         if ! grep -q "\- \[ \].*$NAME" "$PARENT_README"; then
@@ -196,16 +196,16 @@ PYEOF
             mv "$SUBTASK_DIR" "$XSUBTASK_DIR"
         fi
         # Update checkbox and link in parent README
-        sed -i '' "s|- \[ \] \[$NAME\]($NAME/)|- [x] [$XNAME](X-$NAME/)|" "$PARENT_README"
+        _sed_i "s|- \[ \] \[$NAME\]($NAME/)|- [x] [$XNAME](X-$NAME/)|" "$PARENT_README"
         # Handle plain format: - [ ] NAME (no link)
-        sed -i '' "s|- \[ \] $NAME$|- [x] $XNAME|" "$PARENT_README"
+        _sed_i "s|- \[ \] $NAME$|- [x] $XNAME|" "$PARENT_README"
         COMPLETED_DATE="$(date +%Y-%m-%d)"
         if [[ "$SKIP_RENAME" == true ]]; then
-            sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_DIR/README.md"
-            sed -i '' "s/| Completed *|[^|]*|/| Completed | $COMPLETED_DATE |/" "$SUBTASK_DIR/README.md"
+            _sed_i "s/| Status *|[^|]*|/| Status | complete |/" "$SUBTASK_DIR/README.md"
+            _sed_i "s/| Completed *|[^|]*|/| Completed | $COMPLETED_DATE |/" "$SUBTASK_DIR/README.md"
         else
-            sed -i '' "s/| Status *|[^|]*|/| Status | complete |/" "$XSUBTASK_DIR/README.md"
-            sed -i '' "s/| Completed *|[^|]*|/| Completed | $COMPLETED_DATE |/" "$XSUBTASK_DIR/README.md"
+            _sed_i "s/| Status *|[^|]*|/| Status | complete |/" "$XSUBTASK_DIR/README.md"
+            _sed_i "s/| Completed *|[^|]*|/| Completed | $COMPLETED_DATE |/" "$XSUBTASK_DIR/README.md"
         fi
         echo "Marked complete: $NAME"
     fi
@@ -250,11 +250,11 @@ mv "$SRC_DIR" "$DST_DIR"
 
 # Update task README Status field (for user tasks that have a metadata table)
 if [[ -f "$DST_DIR/README.md" ]]; then
-    sed -i '' "s/| Status *|[^|]*|/| Status | $TO |/" "$DST_DIR/README.md"
+    _sed_i "s/| Status *|[^|]*|/| Status | $TO |/" "$DST_DIR/README.md"
     if [[ "$UNDO" == true ]]; then
-        sed -i '' "s/| Completed *|[^|]*|/| Completed | — |/" "$DST_DIR/README.md"
+        _sed_i "s/| Completed *|[^|]*|/| Completed | — |/" "$DST_DIR/README.md"
     else
-        sed -i '' "s/| Completed *|[^|]*|/| Completed | $(date +%Y-%m-%d) |/" "$DST_DIR/README.md"
+        _sed_i "s/| Completed *|[^|]*|/| Completed | $(date +%Y-%m-%d) |/" "$DST_DIR/README.md"
     fi
 fi
 
@@ -265,7 +265,7 @@ fi
 
 # Remove from source status README
 if [[ -f "$SRC_STATUS_README" ]]; then
-    sed -i '' "/\[$NAME\]($NAME\/)/d" "$SRC_STATUS_README"
+    _sed_i "/\[$NAME\]($NAME\/)/d" "$SRC_STATUS_README"
 fi
 
 # Add to destination status README (create if needed)
@@ -280,7 +280,7 @@ if [[ ! -f "$DST_STATUS_README" ]]; then
 <!-- task-list-end -->
 EOF
 fi
-sed -i '' "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$DST_STATUS_README"
+_sed_i "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$DST_STATUS_README"
 
 echo "Moved: project/tasks/$EPIC/$FROM/$NAME"
 echo "   ->  project/tasks/$EPIC/$TO/$NAME"
