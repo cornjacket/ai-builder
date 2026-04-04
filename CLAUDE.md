@@ -259,6 +259,12 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 > explicit confirmation before running `complete-task.sh` or
 > `move-task.sh --to complete`.
 
+> **Rule:** Always refer to tasks by their fully-qualified name:
+> `{hex-id}-{task-name}` for top-level tasks (e.g. `4603fa-pipeline-record-replay`),
+> and `{hex-id}-{NNNN}-{subtask-name}` for subtasks (e.g. `4603fa-0012-document-how-to-add-replay-regression`).
+> Never refer to a task by hex ID alone (e.g. `4603fa`) — the name is required
+> for anyone reading the conversation to know what is being discussed.
+
 ### Task granularity
 
 A top-level task should be completable in a single ARCHITECT → IMPLEMENTOR → TESTER
