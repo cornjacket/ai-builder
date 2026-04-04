@@ -21,4 +21,5 @@
 - [3d9f24-parallel-pipeline-via-git-worktrees](3d9f24-parallel-pipeline-via-git-worktrees/)
 - [16e107-write-how-to-create-a-task](16e107-write-how-to-create-a-task/)
 - [b4d83d-design-cross-worktree-memory-sync](b4d83d-design-cross-worktree-memory-sync/)
+- [afed3c-always-on-recording](afed3c-always-on-recording/)
 <!-- task-list-end -->

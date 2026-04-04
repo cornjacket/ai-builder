@@ -45,11 +45,16 @@ history, so each task gets its own namespace. Omit to use the default branch.
 `--record-remote URL` — remote to add as `origin`. Used by `record.sh` to push
 after the run completes. Omit if you only need a local recording.
 
-After a successful run, push the recording to the remote:
+After a successful run, push the recording to the remote. Delete the remote
+branch first so the pushed branch contains only this run's history — no stacked
+commits from prior recordings:
 
 ```bash
-git -C sandbox/regressions/my-task push --force origin my-task
+git -C sandbox/regressions/my-task push origin --delete my-task 2>/dev/null || true
+git -C sandbox/regressions/my-task push origin my-task
 ```
+
+The `|| true` handles the first recording where the branch does not exist yet.
 
 See `tests/regression/user-service/record.sh` for a complete example.
 
