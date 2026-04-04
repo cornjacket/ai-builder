@@ -48,8 +48,6 @@ confirm the correct invocation pattern before running.
 - [ ] [ccf4a4-0000-record-platform-monolith](ccf4a4-0000-record-platform-monolith/)
 - [ ] [ccf4a4-0001-record-doc-platform-monolith](ccf4a4-0001-record-doc-platform-monolith/)
 - [ ] [ccf4a4-0002-record-doc-user-service](ccf4a4-0002-record-doc-user-service/)
-- [ ] [ccf4a4-0003-record-fibonacci](ccf4a4-0003-record-fibonacci/)
-- [ ] [ccf4a4-0004-record-template-setup](ccf4a4-0004-record-template-setup/)
 <!-- subtask-list-end -->
 
 ## Notes

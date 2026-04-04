@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | wont-do |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | ccf4a4-establish-regression-recordings             |
