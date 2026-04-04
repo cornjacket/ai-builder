@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH           |
-| Category    | —                      |
+| Category    | orchestrator-core      |
 | Created     | 2026-04-03            |
 | Completed   | —                      |
 | Next-subtask-id | 0000               |

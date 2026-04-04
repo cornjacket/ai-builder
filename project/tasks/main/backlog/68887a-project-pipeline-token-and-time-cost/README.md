@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
-| Category    | —                      |
+| Category    | orchestrator-core      |
 | Next-subtask-id | 0000               |
 
 ## Goal

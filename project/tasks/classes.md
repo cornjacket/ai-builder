@@ -34,7 +34,7 @@ pipeline scheduler.
 
 **Must start after Class 1 is merged** — both classes touch `orchestrator.py` heavily.
 
-**Tasks:** 720adf, ba683a, aa0f2f, eb5761, 154422, b48722, 9c8add, afed3c, 3d9f24
+**Tasks:** 720adf, ba683a, aa0f2f, eb5761, 154422, b48722, 9c8add, afed3c, 3d9f24, 188227, 68887a, 74d718, e7dce3, f5d07b
 
 ---
 
@@ -46,7 +46,7 @@ pipeline scheduler.
 Adds ACCEPTANCE_SPEC_WRITER stage to anchor the API contract before decomposition.
 Also includes role prompt trimming and ARCHITECT expansion.
 
-**Tasks:** f5f7b8, b71517, 403a88
+**Tasks:** f5f7b8, b71517, 403a88, a13081
 
 ---
 
@@ -71,7 +71,7 @@ Test infrastructure: stale README updates, reorganising component tests into
 stage tests, run-history tracking, gold test budget checks, execution log
 validation, Docker container isolation.
 
-**Tasks:** b13566, 705550, ba2238, 9df5ca, 818b46, 26d8ee, 5aea78
+**Tasks:** b13566, 705550, ba2238, 9df5ca, 818b46, 26d8ee, 5aea78, 5a34d0
 
 ---
 
@@ -107,7 +107,7 @@ task system usage guides.
 Cross-worktree memory sync, regression manager session design, workspace
 CLAUDE.md boundary, GitHub branch protection.
 
-**Tasks:** b4d83d, 15bff5, 3230ef, 69f69b
+**Tasks:** b4d83d, 15bff5, 3230ef, 69f69b, 4a8789
 
 ---
 
