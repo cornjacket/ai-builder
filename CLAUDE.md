@@ -31,6 +31,20 @@ and should not be modified.
 
 ---
 
+## Tool Usage
+
+Prefer dedicated tools over Bash for file operations — they never require
+permission prompts:
+
+- **Read files** → `Read` tool (not `cat`, `head`, `tail`)
+- **Search content** → `Grep` tool (not `grep`, `rg`)
+- **Find files** → `Glob` tool (not `find`, `ls`)
+
+Reserve `Bash` for operations with no dedicated tool equivalent: running
+tests, git commands, script execution, and similar shell tasks.
+
+---
+
 ## Workflow Guideline
 
 All work in this repository — whether human or AI driven — must be tracked
@@ -235,6 +249,21 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 > **Rule:** When testing a new feature, leave the test task in place after
 > verification. Move it to `complete/` using `move-task.sh` rather than
 > deleting it. Test tasks serve as living examples of correct usage.
+
+> **Rule:** Every new task must include a final subtask to create or update
+> documentation. Add it as the last NNNN-numbered subtask before beginning any
+> implementation work. A task is not closeable without it.
+
+> **Rule:** Always ask the user before closing (moving to `complete/`) a task
+> or subtask. Do not close tasks unilaterally as part of other work. Wait for
+> explicit confirmation before running `complete-task.sh` or
+> `move-task.sh --to complete`.
+
+> **Rule:** Always refer to tasks by their fully-qualified name:
+> `{hex-id}-{task-name}` for top-level tasks (e.g. `4603fa-pipeline-record-replay`),
+> and `{hex-id}-{NNNN}-{subtask-name}` for subtasks (e.g. `4603fa-0012-document-how-to-add-replay-regression`).
+> Never refer to a task by hex ID alone (e.g. `4603fa`) — the name is required
+> for anyone reading the conversation to know what is being discussed.
 
 ### Task granularity
 

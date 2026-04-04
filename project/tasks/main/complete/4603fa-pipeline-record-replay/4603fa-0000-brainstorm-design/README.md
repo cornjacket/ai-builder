@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | wont-do |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 4603fa-pipeline-record-replay             |

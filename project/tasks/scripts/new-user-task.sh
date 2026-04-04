@@ -3,13 +3,18 @@
 # Updates the status folder's README.md task list.
 #
 # Usage:
-#   new-user-task.sh --epic <epic> --folder <status> --name <task-name> [--tags <tags>] [--priority <p>]
+#   new-user-task.sh --epic <epic> --folder <status> --name <task-name> [--id HEX] [--tags <tags>] [--priority <p>]
+#
+# --id HEX  Use the given 6-char hex string as the task ID instead of generating
+#           a random one. Intended for replay regression tests that need to
+#           reproduce the exact task directory names from a prior recording.
 #
 # Priority values: CRITICAL, HIGH, MED, LOW (default: —)
 #
 # Examples:
 #   new-user-task.sh --epic main --folder draft --name my-feature
 #   new-user-task.sh --epic main --folder in-progress --name my-feature --priority HIGH
+#   new-user-task.sh --epic main --folder in-progress --name my-feature --id 61857e
 
 set -euo pipefail
 
@@ -28,12 +33,14 @@ FOLDER=""
 NAME=""
 TAGS="—"
 PRIORITY="—"
+FIXED_ID=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --epic)     EPIC="$2";     shift 2 ;;
         --folder)   FOLDER="$2";   shift 2 ;;
         --name)     NAME="$2";     shift 2 ;;
+        --id)       FIXED_ID="$2"; shift 2 ;;
         --tags)     TAGS="$2";     shift 2 ;;
         --priority) PRIORITY="$2"; shift 2 ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
@@ -41,7 +48,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$FOLDER" || -z "$NAME" ]]; then
-    echo "Usage: new-user-task.sh --folder <status> --name <task-name> [--epic <epic>] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
+    echo "Usage: new-user-task.sh --folder <status> --name <task-name> [--epic <epic>] [--id HEX] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
     exit 1
 fi
 
@@ -60,7 +67,11 @@ STATUS="$FOLDER"
 CREATED="$(date +%Y-%m-%d)"
 
 # Generate a short unique ID and build the directory name
-ID="$(openssl rand -hex 3)"
+if [[ -n "$FIXED_ID" ]]; then
+    ID="$FIXED_ID"
+else
+    ID="$(openssl rand -hex 3)"
+fi
 DIRNAME="$ID-$NAME"
 
 TASK_DIR="$STATUS_DIR/$DIRNAME"

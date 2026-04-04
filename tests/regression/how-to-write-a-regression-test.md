@@ -350,6 +350,161 @@ is possible by parsing `execution.log`, but no tooling exists for this yet.
 
 ---
 
+## 10. Adding Replay Support
+
+Replay regression support records a live pipeline run and replays it later
+without any AI calls — serving pre-recorded responses in place of real model
+invocations. This removes the non-deterministic AI partition from the test,
+allowing the deterministic partition (orchestrator logic, handler scripts,
+task management) to be verified in isolation. Tests run in ~1 minute at zero
+token cost.
+
+See [`tests/regression/README.md`](README.md) for when to use replay vs live,
+and [`ai-builder/orchestrator/record-replay.md`](../../ai-builder/orchestrator/record-replay.md)
+for the orchestrator-level reference.
+
+### When to add replay
+
+Add replay support to a regression test when all of the following are true:
+
+- The test is **stable** — it passes consistently on live runs
+- The test exercises **meaningful orchestrator routing** (not just a single
+  ARCHITECT→IMPLEMENTOR→TESTER pass — `fibonacci/` is too trivial to warrant
+  replay)
+- The test is run **frequently** — pre-merge checks, CI, or after every
+  orchestrator change
+- The pipeline behaviour is **unlikely to change** in the near term
+
+A test that is still being designed or frequently re-specced is not worth
+recording yet — wait until it has settled.
+
+### The recordings remote
+
+Recordings live in a separate GitHub repo: `cornjacket/ai-builder-recordings`.
+
+- One **orphan branch** per regression test — the branch shares no history
+  with any other branch in the repo
+- Branch name = test name (e.g. `user-service`, `platform-monolith`)
+- `main` branch holds only a README listing all regression branches
+- See [`ai-builder-recordings/README.md`](https://github.com/cornjacket/ai-builder-recordings)
+  for the branch listing and how to read the commit log
+
+### `record.sh` structure
+
+Model your `record.sh` on [`user-service/record.sh`](user-service/record.sh).
+The script must:
+
+1. **Accept `--force`** — guard against accidental re-records; require the
+   flag if `recording.json` already exists
+2. **Wipe `.git`** — delete `$RECORD_DIR/.git` before the run so each
+   recording starts from a clean history (no stacked runs, no duplicate
+   invocation numbers in the log)
+3. **Reset the workspace** — call `reset.sh` to wipe output and target
+4. **Run the orchestrator with recording flags:**
+   ```bash
+   python3 "$ORCHESTRATOR" \
+       --job           "$JOB_README" \
+       --target-repo   "$TARGET_REPO" \
+       --output-dir    "$OUTPUT_DIR" \
+       --epic          main \
+       --state-machine "$STATE_MACHINE" \
+       --record-to     "$RECORD_DIR" \
+       --record-branch "$BRANCH" \
+       --record-remote "$REMOTE_URL"
+   ```
+5. **Delete the remote branch then push** — delete first so the remote has
+   no prior history, then push the fresh orphan branch:
+   ```bash
+   git -C "$RECORD_DIR" push origin --delete "$BRANCH" 2>/dev/null || true
+   git -C "$RECORD_DIR" push origin "$BRANCH"
+   ```
+   The `|| true` handles the first recording where the branch does not exist yet.
+
+### `test-replay.sh` structure
+
+Model your `test-replay.sh` on [`user-service/test-replay.sh`](user-service/test-replay.sh).
+The script must:
+
+1. **Fetch recording if absent** — clone from `cornjacket/ai-builder-recordings`
+   if `recording.json` is not present locally; `test-replay.sh` must be
+   self-contained and not require a prior `record.sh` run on the same machine
+2. **Pin the task hex ID** — read `task_hex_id` from the manifest and pass
+   `--task-id` to `reset.sh` so all task directory paths match the recording
+   exactly (required for snapshot comparison to include `target/`)
+3. **Replay with `--replay-from`:**
+   ```bash
+   python3 "$ORCHESTRATOR" \
+       --job           "$JOB_README" \
+       --target-repo   "$TARGET_REPO" \
+       --output-dir    "$OUTPUT_DIR" \
+       --epic          main \
+       --state-machine "$STATE_MACHINE" \
+       --replay-from   "$RECORD_DIR"
+   ```
+4. **Verify routing** — parse `execution.log` and compare the role/outcome
+   sequence of AI invocations against the manifest; a mismatch means
+   orchestrator routing changed
+5. **Compare snapshot** — run `compare_snapshot.py` against the recording's
+   final commit, excluding volatile files (`execution.log`, `logs/`,
+   coordination files) and the Level:TOP `task.json`/`README.md` (which
+   contain timestamps and token counts that legitimately differ)
+
+### `reset.sh` — pinned task ID support
+
+`reset.sh` must accept a `--task-id HEX` flag and pass it to `new-user-task.sh
+--id HEX`. This ensures the USER-TASK directory name matches the recording
+exactly, which in turn means all subtask paths under it match. Without this,
+snapshot comparison of `target/` would always fail on path differences alone.
+
+### Taking the first recording
+
+```bash
+bash tests/regression/<test-name>/record.sh
+```
+
+This is the only step that costs AI tokens. After it completes:
+
+1. Verify the recording pushed cleanly — check the branch exists on
+   [`cornjacket/ai-builder-recordings`](https://github.com/cornjacket/ai-builder-recordings)
+2. Run `test-replay.sh` once to confirm the recording replays cleanly:
+   ```bash
+   bash tests/regression/<test-name>/test-replay.sh
+   ```
+3. If replay passes, register the test in the `ai-builder-recordings` README:
+   ```bash
+   bash tests/regression/register-replay-test.sh \
+       --test <test-name> \
+       --description "<one-line description of what the test exercises>"
+   ```
+   This validates the branch exists on the remote, adds a row to the recordings
+   README table, and pushes the update to `main`.
+
+Do not treat a recording as golden until `test-replay.sh` has passed at least once.
+
+### Refreshing a recording
+
+Re-record when:
+
+- **Role prompts changed** — replay will detect drift via `check_prompt_drift`
+  and warn; any prompt change that affects behaviour requires a new recording
+- **Orchestrator behaviour changed** — routing or output artifact changes that
+  are intentional mean the old recording is stale
+- **Replay is failing for the wrong reasons** — if a replay failure is traced
+  to a stale recording rather than a real regression, re-record
+
+To refresh:
+
+```bash
+bash tests/regression/<test-name>/record.sh --force
+```
+
+`--force` is required because `recording.json` already exists. The script
+wipes local `.git`, re-records from scratch, deletes the remote branch, and
+pushes a fresh orphan. After re-recording, run `test-replay.sh` once to
+confirm the new recording is valid before treating it as the new baseline.
+
+---
+
 ## 9. Existing Tests Reference
 
 | Test | Pipeline | Capability exercised |

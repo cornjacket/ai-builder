@@ -25,6 +25,10 @@ document from input to tested implementation through specialist agents.
 | `pipeline-behavior.md` | End-to-end pipeline flow: modes, Level field, tree traversal algorithm |
 | `decomposition.md` | Multi-level decomposition protocol, task tree navigation |
 | `open-questions.md` | Unresolved design questions |
+| `recorder.py` | Record/replay support: git snapshots, manifest writing, drift detection, response loading |
+| `recorder.md` | API reference and design assumptions for `recorder.py` |
+| `compare_snapshot.py` | CLI for diffing a recording snapshot against the working tree |
+| `record-replay.md` | User guide: how to record, replay, halt, compare snapshots, and interpret prompt drift |
 
 ---
 

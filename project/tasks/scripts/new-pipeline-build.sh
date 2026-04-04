@@ -71,8 +71,10 @@ echo "README:                   $README_PATH"
 
 TASK_JSON="$REPO_ROOT/$CREATED_REL/task.json"
 
-# Find the parent task directory. Support both full name (e.g. a3f2c1-foo)
-# and short name (e.g. foo) by trying exact match first, then suffix pattern.
+# Find the parent task directory. Matches both the exact full name (e.g.
+# "a3f2c1-my-task" passed as PARENT) and the suffix pattern (e.g. "my-task"
+# passed as PARENT, matching "a3f2c1-my-task"). Exact match is checked first
+# so a full-name argument always wins over a coincidental suffix match.
 PARENT_DIR=$(find "$REPO_ROOT/project/tasks/$EPIC" -maxdepth 2 -type d \( -name "$PARENT" -o -name "*-$PARENT" \) | head -1)
 PARENT_README=""
 if [[ -n "$PARENT_DIR" ]]; then
