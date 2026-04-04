@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 42997b-adopt-git-worktree-development-workflow             |
 | Priority    | HIGH           |
 | Created     | 2026-04-02            |
-| Completed   | —                      |
+| Completed | 2026-04-03 |
 | Next-subtask-id | 0000               |
 
 ## Goal
@@ -69,3 +69,6 @@ Prerequisite: `0000-implement-bootstrap-scripts` is complete and pushed to remot
 Do not run a full regression test during verification (step 2) — just confirm
 the scripts and orchestrator are reachable and exit cleanly. Full regression
 can follow in a normal session once the workspace is established.
+
+**Migration completed 2026-04-03.** Workspace is live at `ai-builder/main/`.
+All subsequent sessions and regressions have been running from this worktree.

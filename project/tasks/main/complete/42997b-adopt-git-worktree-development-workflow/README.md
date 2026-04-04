@@ -3,12 +3,12 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH           |
 | Created     | 2026-04-02            |
-| Completed   | —                      |
+| Completed | 2026-04-03 |
 | Next-subtask-id | 0002 |
 
 ## Goal
@@ -51,7 +51,7 @@ first step. See brainstorm for full analysis.
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [x] [X-42997b-0000-implement-bootstrap-scripts](X-42997b-0000-implement-bootstrap-scripts/)
-- [ ] [42997b-0001-execute-workspace-migration](42997b-0001-execute-workspace-migration/)
+- [x] [X-42997b-0001-execute-workspace-migration](X-42997b-0001-execute-workspace-migration/)
 <!-- subtask-list-end -->
 
 ## Notes

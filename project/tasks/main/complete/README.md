@@ -47,4 +47,5 @@
 - [f00df6-unit-smoke-test-script](f00df6-unit-smoke-test-script/)
 - [e94315-regression-run-pointer-guideline](e94315-regression-run-pointer-guideline/)
 - [8985d4-bug-pipeline-teardown-and-formatting](8985d4-bug-pipeline-teardown-and-formatting/)
+- [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 <!-- task-list-end -->
