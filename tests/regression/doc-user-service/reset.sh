@@ -23,6 +23,14 @@ OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/doc-user-service/output"
 EPIC="main"
 PARENT_TASK_NAME="doc-user-service"
 ENTRY_TASK_NAME="doc-1"
+TASK_ID=""  # optional pinned hex ID (--task-id HEX); empty = generate randomly
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --task-id) TASK_ID="$2"; shift 2 ;;
+        *) echo "Unknown argument: $1"; exit 1 ;;
+    esac
+done
 
 echo "=== Resetting doc-user-service regression test ==="
 echo ""
@@ -67,7 +75,11 @@ SCRIPTS="$TARGET_REPO/project/tasks/scripts"
 
 echo "[4/5] Creating parent user-task '$PARENT_TASK_NAME' in in-progress/ ..."
 
-"$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME"
+if [[ -n "$TASK_ID" ]]; then
+    "$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME" --id "$TASK_ID"
+else
+    "$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME"
+fi
 
 PARENT_DIR=$(find "$TARGET_REPO/project/tasks/$EPIC/in-progress" -maxdepth 1 -type d -name "*-$PARENT_TASK_NAME" | head -1)
 if [[ -z "$PARENT_DIR" ]]; then
