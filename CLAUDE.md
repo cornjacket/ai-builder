@@ -380,6 +380,9 @@ task:
 
 - Every directory must have a `README.md`. If you create a new directory,
   create its README before moving on.
+- Every `CLAUDE.md` must have a `GEMINI.md` symlink in the same directory.
+  When creating a new `CLAUDE.md`, immediately run `ln -s CLAUDE.md GEMINI.md`
+  in the same directory and include both in the same commit.
 - Every source file should have a companion `.md` (e.g. `foo.py` → `foo.md`).
   Update the companion when the file's observable behaviour changes (inputs,
   outputs, side effects, design assumptions). Internal refactors that preserve
