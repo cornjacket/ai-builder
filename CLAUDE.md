@@ -265,6 +265,11 @@ outstanding or incomplete tasks — it includes `complete/` which adds noise.
 > Never refer to a task by hex ID alone (e.g. `4603fa`) — the name is required
 > for anyone reading the conversation to know what is being discussed.
 
+> **Rule:** Every new USER-TASK must have its `Category:` field set immediately
+> after creation. Assign it the branch name of the matching worktree class from
+> [`project/tasks/classes.md`](project/tasks/classes.md). If no class fits, set
+> it to `unclassified`. Never leave `Category:` as `—` on a USER-TASK.
+
 ### Task granularity
 
 A top-level task should be completable in a single ARCHITECT → IMPLEMENTOR → TESTER
@@ -331,6 +336,30 @@ python3 ai-builder/orchestrator/orchestrator.py \
     --epic        main \
     --state-machine ai-builder/orchestrator/machines/builder/default.json
 ```
+
+---
+
+## Git Commits
+
+Every commit must include task trailers so that commits can be traced back to
+the task that motivated them. Add these as footer lines, after the body and
+before `Co-Authored-By:`:
+
+```
+<subject line>
+
+<optional body>
+
+Task: {hex-id}-{task-name}
+Subtask: {hex-id}-{NNNN}-{subtask-name}   ← include only when a specific subtask drove the commit
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+Use the fully-qualified task name (same convention as the task README heading).
+Omit `Subtask:` for commits that span an entire task or are not tied to a
+specific subtask. This makes `git log --grep="Task: {hex-id}"` an instant
+audit trail for any task.
 
 ---
 
