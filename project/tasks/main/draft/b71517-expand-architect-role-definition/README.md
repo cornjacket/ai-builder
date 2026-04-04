@@ -7,6 +7,7 @@
 | Tags     | orchestrator, roles, architect             |
 | Parent   | —           |
 | Priority | MED         |
+| Category    | acceptance-spec        |
 | Next-subtask-id | 0000               |
 ## Description
 

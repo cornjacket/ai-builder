@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | regression-test, docs |
 | Priority    | MED                   |
+| Category    | regression-infra       |
 | Next-subtask-id | 0000               |
 ## Goal
 

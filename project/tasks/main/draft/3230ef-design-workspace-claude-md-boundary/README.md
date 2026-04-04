@@ -7,6 +7,7 @@
 | Tags     | tooling, claude-md, workspace             |
 | Parent   | —           |
 | Priority | MED         |
+| Category    | workspace-mgmt         |
 | Next-subtask-id | 0000               |
 ## Description
 

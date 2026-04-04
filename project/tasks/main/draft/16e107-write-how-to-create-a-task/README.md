@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
+| Category    | docs                   |
 | Created     | 2026-04-03            |
 | Completed   | —                      |
 | Next-subtask-id | 0002 |

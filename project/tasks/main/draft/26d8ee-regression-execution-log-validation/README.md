@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH        |
+| Category    | regression-infra       |
 | Next-subtask-id | 0000               |
 
 ## Goal

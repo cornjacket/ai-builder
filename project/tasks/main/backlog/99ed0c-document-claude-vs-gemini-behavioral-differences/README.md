@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | gemini, claude, docs, orchestrator               |
 | Priority    | HIGH           |
+| Category    | docs                   |
 | Next-subtask-id | 0000               |
 
 ## Goal

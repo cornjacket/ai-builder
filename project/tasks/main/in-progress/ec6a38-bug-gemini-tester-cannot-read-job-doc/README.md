@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | bug, gemini, tester               |
 | Priority    | HIGH           |
+| Category    | gemini-compat          |
 | Next-subtask-id | 0003 |
 
 ## Goal

@@ -7,9 +7,10 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
+| Category    | workspace-mgmt         |
 | Created     | 2026-04-03            |
 | Completed   | —                      |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0001 |
 
 ## Goal
 
@@ -59,6 +60,7 @@ tested, and merged independently.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [ ] [4a8789-0000-create-class-worktrees](4a8789-0000-create-class-worktrees/)
 <!-- subtask-list-end -->
 
 ## Notes

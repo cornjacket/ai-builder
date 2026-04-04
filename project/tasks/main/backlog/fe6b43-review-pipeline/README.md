@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | pipeline, review               |
 | Priority    | MED           |
+| Category    | new-pipelines          |
 | Next-subtask-id | 0000               |
 
 ## Goal

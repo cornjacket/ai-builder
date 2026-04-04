@@ -7,6 +7,7 @@
 | Epic        | {{EPIC}}               |
 | Tags        | {{TAGS}}               |
 | Priority    | {{PRIORITY}}           |
+| Category    | —                      |
 | Created     | {{CREATED}}            |
 | Completed   | —                      |
 | Next-subtask-id | 0000               |

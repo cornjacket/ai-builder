@@ -7,6 +7,7 @@
 | Tags     | tooling, task-management     |
 | Parent   | —                            |
 | Priority | MED                          |
+| Category    | task-tooling           |
 | Next-subtask-id | 0003               |
 ## Description
 

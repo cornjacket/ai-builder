@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | MED           |
+| Category    | task-tooling           |
 | Created     | 2026-04-02            |
 | Completed   | —                      |
 | Next-subtask-id | 0000               |

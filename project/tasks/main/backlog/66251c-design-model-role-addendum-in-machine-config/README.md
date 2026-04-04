@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | orchestrator, machine-config, design               |
 | Priority    | MED           |
+| Category    | gemini-compat          |
 | Next-subtask-id | 0000               |
 
 ## Goal

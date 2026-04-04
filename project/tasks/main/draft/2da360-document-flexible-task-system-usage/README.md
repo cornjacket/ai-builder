@@ -7,6 +7,7 @@
 | Tags        | documentation, task-management     |
 | Parent      | —                                  |
 | Priority    | HIGH                               |
+| Category    | docs                   |
 | Next-subtask-id | 0000               || Complexity  | —                                  |
 | Stop-after  | false                              |
 | Last-task   | false                              |

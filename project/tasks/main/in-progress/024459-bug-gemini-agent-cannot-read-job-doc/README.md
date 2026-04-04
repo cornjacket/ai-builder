@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | gemini, orchestrator, bug               |
 | Priority    | HIGH           |
+| Category    | gemini-compat          |
 | Next-subtask-id | 0009 |
 
 ## Goal

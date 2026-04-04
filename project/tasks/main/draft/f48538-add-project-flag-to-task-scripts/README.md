@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | MED           |
+| Category    | task-tooling           |
 | Next-subtask-id | 0000               |
 ## Goal
 

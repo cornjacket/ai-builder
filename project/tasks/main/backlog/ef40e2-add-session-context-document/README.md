@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | process, docs           |
 | Priority    | HIGH                    |
+| Category    | task-tooling           |
 | Next-subtask-id | 0000               |
 ## Goal
 

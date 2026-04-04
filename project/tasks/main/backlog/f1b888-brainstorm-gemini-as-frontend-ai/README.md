@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | gemini, oracle, frontend, design               |
 | Priority    | HIGH           |
+| Category    | docs                   |
 | Next-subtask-id | 0000               |
 
 ## Goal

@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | testing, pipeline, orchestrator               |
 | Priority    | MED           |
+| Category    | regression-infra       |
 | Next-subtask-id | 0000               |
 
 ## Goal

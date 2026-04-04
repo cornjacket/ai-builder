@@ -7,6 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
+| Category    | gemini-compat          |
 | Next-subtask-id | 0006 |
 
 ## Goal
