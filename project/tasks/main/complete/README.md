@@ -46,4 +46,5 @@
 - [71a31f-consolidate-task-scripts-single-source-of-truth](71a31f-consolidate-task-scripts-single-source-of-truth/)
 - [f00df6-unit-smoke-test-script](f00df6-unit-smoke-test-script/)
 - [e94315-regression-run-pointer-guideline](e94315-regression-run-pointer-guideline/)
+- [8985d4-bug-pipeline-teardown-and-formatting](8985d4-bug-pipeline-teardown-and-formatting/)
 <!-- task-list-end -->

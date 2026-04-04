@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
@@ -49,7 +49,7 @@ Three symptoms observed:
 - [x] [X-8985d4-0005-verify-doc-user-service](X-8985d4-0005-verify-doc-user-service/)
 - [x] [X-8985d4-0006-verify-doc-platform-monolith](X-8985d4-0006-verify-doc-platform-monolith/)
 - [x] [X-8985d4-0007-verify-platform-monolith](X-8985d4-0007-verify-platform-monolith/)
-- [ ] [8985d4-0008-fix-internal-readme-subtask-completion](8985d4-0008-fix-internal-readme-subtask-completion/)
+- [x] [X-8985d4-0008-fix-internal-readme-subtask-completion](X-8985d4-0008-fix-internal-readme-subtask-completion/)
 <!-- subtask-list-end -->
 
 ## Notes

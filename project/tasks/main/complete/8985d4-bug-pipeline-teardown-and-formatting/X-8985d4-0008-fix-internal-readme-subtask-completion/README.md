@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 8985d4-bug-pipeline-teardown-and-formatting             |
 | Priority    | —           |
 | Created     | 2026-04-03            |
-| Completed   | —                      |
+| Completed | 2026-04-03 |
 | Next-subtask-id | 0000               |
 
 ## Goal
@@ -41,4 +41,12 @@ at every level, not just the TOP level.
 
 ## Notes
 
-_None._
+**Fixed 2026-04-03** — Added a post-LEAF_COMPLETE_HANDLER render pass in
+`orchestrator.py` (lines 1057–1065): after every LCH invocation, walk the TOP
+subtree and call `render_task_readme` for all non-TOP `task.json` files.
+`complete-task.sh` updates their `task.json` via `json_complete_subtask` but
+never re-rendered the README for pipeline tasks.
+
+Verified via `platform-monolith` regression run — `TestSubtasksComplete` passed.
+Residual gold test failures (IAM API) are code-generation quality issues tracked
+under `f5f7b8-pipeline-acceptance-spec-writer`, not teardown bugs.
