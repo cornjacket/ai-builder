@@ -40,4 +40,5 @@
 - [5aea78-regression-run-in-docker](5aea78-regression-run-in-docker/)
 - [dbe26e-evaluate-github-cli-for-claude](dbe26e-evaluate-github-cli-for-claude/)
 - [223838-audit-gemini-md-coverage](223838-audit-gemini-md-coverage/)
+- [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
 <!-- task-list-end -->
