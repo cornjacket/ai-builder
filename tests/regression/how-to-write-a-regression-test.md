@@ -470,9 +470,14 @@ This is the only step that costs AI tokens. After it completes:
    ```bash
    bash tests/regression/<test-name>/test-replay.sh
    ```
-3. If replay passes, the recording is golden. Update the `ai-builder-recordings`
-   README to add the new branch to the table (branch link format:
-   `https://github.com/cornjacket/ai-builder-recordings/commits/<test-name>/`).
+3. If replay passes, register the test in the `ai-builder-recordings` README:
+   ```bash
+   bash tests/regression/register-replay-test.sh \
+       --test <test-name> \
+       --description "<one-line description of what the test exercises>"
+   ```
+   This validates the branch exists on the remote, adds a row to the recordings
+   README table, and pushes the update to `main`.
 
 Do not treat a recording as golden until `test-replay.sh` has passed at least once.
 
