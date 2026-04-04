@@ -87,4 +87,9 @@ Regardless of option, the manager needs to:
 
 ## Notes
 
-_None._
+Brainstorm: [`sandbox/brainstorms/brainstorm-regression-manager-session.md`](../../../../../sandbox/brainstorms/brainstorm-regression-manager-session.md)
+
+Option C (rootless workspace session) is the preferred approach. Key design decisions recorded in the brainstorm:
+- Workspace-level `CLAUDE.md` includes `main/CLAUDE.md` rules plus cross-worktree task management instructions
+- Overlord Claude owns: regression run → task status update → git push → CI verification → PR merge
+- Dev sessions communicate via filesystem queue files; user switches tabs to approve and trigger runs
