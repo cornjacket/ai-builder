@@ -35,4 +35,6 @@
 - [69f69b-github-branch-protection-setup](69f69b-github-branch-protection-setup/)
 - [88ba5d-cleanup-ai-builder-docs-structure](88ba5d-cleanup-ai-builder-docs-structure/)
 - [a13081-bug-pipeline-no-readme-in-cmd-dirs](a13081-bug-pipeline-no-readme-in-cmd-dirs/)
+- [f5d07b-enable-record-replay-for-target-users](f5d07b-enable-record-replay-for-target-users/)
+- [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 <!-- task-list-end -->

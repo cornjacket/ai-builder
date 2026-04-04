@@ -71,8 +71,9 @@ echo "README:                   $README_PATH"
 
 TASK_JSON="$REPO_ROOT/$CREATED_REL/task.json"
 
-# Find the parent task directory (same search the subtask script uses)
-PARENT_DIR=$(find "$REPO_ROOT/project/tasks/$EPIC" -maxdepth 2 -type d -name "*-$PARENT" | head -1)
+# Find the parent task directory. Support both full name (e.g. a3f2c1-foo)
+# and short name (e.g. foo) by trying exact match first, then suffix pattern.
+PARENT_DIR=$(find "$REPO_ROOT/project/tasks/$EPIC" -maxdepth 2 -type d \( -name "$PARENT" -o -name "*-$PARENT" \) | head -1)
 PARENT_README=""
 if [[ -n "$PARENT_DIR" ]]; then
     PARENT_README="$PARENT_DIR/README.md"

@@ -7,7 +7,7 @@
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
-| Next-subtask-id | 0001 |
+| Next-subtask-id | 0002 |
 
 ## Goal
 
@@ -51,6 +51,7 @@ Initial brainstorm: `sandbox/brainstorms/brainstorm-pipeline-stop-and-replay.md`
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [ ] [4603fa-0000-brainstorm-design](4603fa-0000-brainstorm-design/)
+- [ ] [4603fa-0001-document-regression-replay-workflow](4603fa-0001-document-regression-replay-workflow/)
 <!-- subtask-list-end -->
 
 ## Notes

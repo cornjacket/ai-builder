@@ -1054,6 +1054,16 @@ while current_role is not None:
         if active_task_json != top_task_json and active_task_json.exists():
             render_task_readme(active_task_json)
 
+    # After LEAF_COMPLETE_HANDLER, re-render all INTERNAL task READMEs.
+    # complete-task.sh updates their task.json (via json_complete_subtask)
+    # but does not re-render the README. Walk the TOP subtree so every
+    # INTERNAL README reflects the latest subtask completion state.
+    if current_role == "LEAF_COMPLETE_HANDLER" and top_task_json is not None:
+        for _internal_tj in sorted(top_task_json.parent.rglob("task.json")):
+            if _internal_tj == top_task_json:
+                continue  # TOP is already re-rendered above
+            render_task_readme(_internal_tj)
+
     # Update live execution log in the Level:TOP README
     if build_readme is None:
         build_readme = _find_level_top(job_doc)
