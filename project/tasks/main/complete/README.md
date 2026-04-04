@@ -49,4 +49,5 @@
 - [8985d4-bug-pipeline-teardown-and-formatting](8985d4-bug-pipeline-teardown-and-formatting/)
 - [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 - [4603fa-pipeline-record-replay](4603fa-pipeline-record-replay/)
+- [.5a34d0-document-how-to-add-replay-regression](.5a34d0-document-how-to-add-replay-regression/)
 <!-- task-list-end -->

@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
 | Category    | regression-infra       |
 | Created     | 2026-04-03            |
-| Completed   | —                      |
+| Completed | 2026-04-04 |
 | Next-subtask-id | 0000               |
 
 ## Goal
