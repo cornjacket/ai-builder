@@ -24,4 +24,4 @@ for arg in "$@"; do
     [[ "$arg" == "--force" ]] && FORCE=1
 done
 
-source "$DIR/../../lib/record-lib.sh"
+source "$DIR/../lib/record-lib.sh"

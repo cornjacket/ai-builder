@@ -19,4 +19,4 @@ BRANCH="platform-monolith"
 STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
 TOP_TASK_NAME="platform"
 
-source "$DIR/../../lib/replay-lib.sh"
+source "$DIR/../lib/replay-lib.sh"
