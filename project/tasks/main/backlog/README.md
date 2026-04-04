@@ -37,4 +37,5 @@
 - [a13081-bug-pipeline-no-readme-in-cmd-dirs](a13081-bug-pipeline-no-readme-in-cmd-dirs/)
 - [f5d07b-enable-record-replay-for-target-users](f5d07b-enable-record-replay-for-target-users/)
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
+- [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 <!-- task-list-end -->
