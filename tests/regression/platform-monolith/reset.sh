@@ -22,9 +22,14 @@ EPIC="main"
 PARENT_TASK_NAME="platform"
 ENTRY_TASK_NAME="build-1"
 FORCE=false
+TASK_ID=""  # optional pinned hex ID (--task-id HEX); empty = generate randomly
 
-for arg in "$@"; do
-    [[ "$arg" == "--force" ]] && FORCE=true
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --force)   FORCE=true; shift ;;
+        --task-id) TASK_ID="$2"; shift 2 ;;
+        *) echo "Unknown argument: $1"; exit 1 ;;
+    esac
 done
 
 # ---------------------------------------------------------------------------
@@ -214,7 +219,11 @@ SCRIPTS="$TARGET_REPO/project/tasks/scripts"
 
 echo "[3/5] Creating parent user-task 'platform' in in-progress/ ..."
 
-"$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME"
+if [[ -n "$TASK_ID" ]]; then
+    "$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME" --id "$TASK_ID"
+else
+    "$SCRIPTS/new-user-task.sh" --epic "$EPIC" --folder in-progress --name "$PARENT_TASK_NAME"
+fi
 
 PARENT_DIR=$(find "$TARGET_REPO/project/tasks/$EPIC/in-progress" -maxdepth 1 -type d -name "*-$PARENT_TASK_NAME" | head -1)
 if [[ -z "$PARENT_DIR" ]]; then
