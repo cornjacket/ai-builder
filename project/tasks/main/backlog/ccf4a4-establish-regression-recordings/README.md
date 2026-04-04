@@ -10,7 +10,7 @@
 | Category    | regression-infra       |
 | Created     | 2026-04-04            |
 | Completed   | —                      |
-| Next-subtask-id | 0005 |
+| Next-subtask-id | 0010 |
 
 ## Goal
 
@@ -45,9 +45,10 @@ confirm the correct invocation pattern before running.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [ccf4a4-0000-record-platform-monolith](ccf4a4-0000-record-platform-monolith/)
-- [ ] [ccf4a4-0001-record-doc-platform-monolith](ccf4a4-0001-record-doc-platform-monolith/)
-- [ ] [ccf4a4-0002-record-doc-user-service](ccf4a4-0002-record-doc-user-service/)
+- [ ] [ccf4a4-0000-abstract-record-replay-scripts](ccf4a4-0000-abstract-record-replay-scripts/)
+- [ ] [ccf4a4-0001-record-platform-monolith](ccf4a4-0001-record-platform-monolith/)
+- [ ] [ccf4a4-0002-record-doc-platform-monolith](ccf4a4-0002-record-doc-platform-monolith/)
+- [ ] [ccf4a4-0003-record-doc-user-service](ccf4a4-0003-record-doc-user-service/)
 <!-- subtask-list-end -->
 
 ## Notes
