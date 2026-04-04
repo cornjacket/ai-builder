@@ -39,4 +39,5 @@
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 - [5aea78-regression-run-in-docker](5aea78-regression-run-in-docker/)
 - [dbe26e-evaluate-github-cli-for-claude](dbe26e-evaluate-github-cli-for-claude/)
+- [223838-audit-gemini-md-coverage](223838-audit-gemini-md-coverage/)
 <!-- task-list-end -->
