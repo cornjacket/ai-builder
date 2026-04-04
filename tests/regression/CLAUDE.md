@@ -30,25 +30,13 @@ If a replay is available, run it instead — it is zero-cost (no AI invocations,
 no tokens consumed). Live runs are only necessary when no replay exists or when
 the change being verified cannot be validated by replay.
 
-### 2. Create a pipeline-subtask under the feature task
-
-Before running `reset.sh`, create a verification pipeline-subtask under the
-parent USER-TASK that this regression is verifying:
-
-```bash
-README=$(project/tasks/scripts/new-pipeline-build.sh \
-    --epic main --folder in-progress --parent <user-task-name> \
-    | grep "^README:" | awk '{print $2}')
-```
-
-Note the fully-qualified subtask name printed by the script (e.g.
-`aa9b29-0000-build-1`). This is the pipeline task reference used throughout
-the rest of the procedure.
-
-### 3. Record the run in the verification subtask README
+### 2. Record the run in the verification subtask README
 
 After `reset.sh` completes, record the sandbox paths and pipeline task ID in
-the verification subtask README under a `## Run` section:
+the verification subtask README (the subtask in `project/tasks/` tracking this
+regression) under a `## Run` section. `reset.sh` creates the pipeline task
+inside the target repo's own task system and prints the task ID at the end of
+its output:
 
 ```markdown
 ## Run
@@ -61,13 +49,13 @@ the verification subtask README under a `## Run` section:
 | Pipeline task | `<hex-id>-NNNN-<subtask-name>`             |
 ```
 
-### 4. Run the regression
+### 3. Run the regression
 
 ```bash
 bash tests/regression/<name>/run.sh
 ```
 
-### 5. Run gold tests immediately after the pipeline completes
+### 4. Run gold tests immediately after the pipeline completes
 
 Do not defer gold tests. Run them as soon as the pipeline finishes:
 
@@ -77,7 +65,7 @@ cd tests/regression/<name>/gold && go test -v -tags regression ./...
 
 Record the result (pass/fail) before moving on.
 
-### 6. Append a row to run-history.md
+### 5. Append a row to run-history.md
 
 After gold tests complete, append a row to
 `tests/regression/<name>/runs/run-history.md`:
@@ -96,7 +84,7 @@ After gold tests complete, append a row to
 AI-invoked runs only. Recording replays would inflate the run count and
 misrepresent token costs.
 
-### 7. Commit the run-history row
+### 6. Commit the run-history row
 
 Commit `run-history.md` after gold tests have completed — not before. A row
 in the history represents a finished, verified run.
