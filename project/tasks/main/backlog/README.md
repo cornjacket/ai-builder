@@ -40,6 +40,5 @@
 - [5aea78-regression-run-in-docker](5aea78-regression-run-in-docker/)
 - [dbe26e-evaluate-github-cli-for-claude](dbe26e-evaluate-github-cli-for-claude/)
 - [223838-audit-gemini-md-coverage](223838-audit-gemini-md-coverage/)
-- [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
 - [d518c4-rename-fibonacci-to-pipeline-smoke-test](d518c4-rename-fibonacci-to-pipeline-smoke-test/)
 <!-- task-list-end -->
