@@ -38,4 +38,5 @@
 - [f5d07b-enable-record-replay-for-target-users](f5d07b-enable-record-replay-for-target-users/)
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 - [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
+- [5aea78-regression-run-in-docker](5aea78-regression-run-in-docker/)
 <!-- task-list-end -->
