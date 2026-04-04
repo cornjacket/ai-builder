@@ -22,4 +22,5 @@
 - [16e107-write-how-to-create-a-task](16e107-write-how-to-create-a-task/)
 - [b4d83d-design-cross-worktree-memory-sync](b4d83d-design-cross-worktree-memory-sync/)
 - [afed3c-always-on-recording](afed3c-always-on-recording/)
+- [15bff5-regression-manager-session](15bff5-regression-manager-session/)
 <!-- task-list-end -->
