@@ -30,13 +30,14 @@ If a replay is available, run it instead — it is zero-cost (no AI invocations,
 no tokens consumed). Live runs are only necessary when no replay exists or when
 the change being verified cannot be validated by replay.
 
-### 2. Record the run in the verification subtask README
+### 2. Record the run in the verification subtask README (if applicable)
 
-After `reset.sh` completes, record the sandbox paths and pipeline task ID in
-the verification subtask README (the subtask in `project/tasks/` tracking this
-regression) under a `## Run` section. `reset.sh` creates the pipeline task
+If this run is tied to a user task, record the sandbox paths and pipeline task
+ID in the verification subtask README (the subtask in `project/tasks/` tracking
+this regression) under a `## Run` section. `reset.sh` creates the pipeline task
 inside the target repo's own task system and prints the task ID at the end of
-its output:
+its output. Skip this step for runs with no associated task (e.g. routine health
+checks):
 
 ```markdown
 ## Run
@@ -76,9 +77,10 @@ After gold tests complete, append a row to
 
 - **Token counts** come from `run-metrics.json` in the output directory.
 - **Gold column** is `pass` or `fail`.
-- **Notes** must include the fully-qualified pipeline-subtask name (e.g.
-  `8985d4-0007-verify-platform-monolith → aa9b29-0000-build-1`) so the row
-  can be traced back to the task that triggered the run.
+- **Notes** should reference the user task that triggered this run, if one
+  exists (e.g. `8985d4-bug-pipeline-teardown-and-formatting`). If the run was
+  not tied to a specific task — for example a routine health check — write a
+  brief reason instead (e.g. `routine health check`, `weekly baseline`).
 
 **Replay runs are never recorded in run-history.md.** The history tracks live
 AI-invoked runs only. Recording replays would inflate the run count and
@@ -93,8 +95,7 @@ in the history represents a finished, verified run.
 git add tests/regression/<name>/runs/run-history.md
 git commit -m "Record <name> regression run N — gold <pass/fail>
 
-Task: <hex-id>-<task-name>
-Subtask: <hex-id>-NNNN-<subtask-name>
+Task: <hex-id>-<task-name>   ← omit if no associated task (e.g. routine health check)
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 ```
