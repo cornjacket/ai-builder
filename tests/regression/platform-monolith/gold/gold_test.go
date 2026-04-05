@@ -70,6 +70,7 @@ func TestMain(m *testing.M) {
 	cmd := exec.Command(bin)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.WaitDelay = 3 * time.Second
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: could not start binary: %v\n", err)
 		os.Exit(1)
