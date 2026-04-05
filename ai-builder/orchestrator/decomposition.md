@@ -114,7 +114,7 @@ has `name`, `complexity`, `source_dir`, and `description`:
       <description>CRUD operations on users — in-memory map[string]User guarded by sync.RWMutex</description>
     </component>
     <component>
-      <name>integrate</name>
+      <name>integrate-auth</name>
       <complexity>atomic</complexity>
       <source_dir>.</source_dir>
       <description>Wire auth-handler and user-store; return http.Handler for the caller</description>
@@ -126,7 +126,10 @@ has `name`, `complexity`, `source_dir`, and `description`:
 DECOMPOSE_HANDLER parses this array and creates one subtask per entry.
 `Complexity: composite` triggers another decomposition pass on that subtask.
 `Complexity: atomic` proceeds to a design pass. The final entry must always
-be `integrate` — it wires the sibling components together.
+start with `integrate-` — it wires the sibling components together. The
+`integrate-<scope>` naming makes execution logs unambiguous when multiple
+integration steps appear in the same run (e.g. `integrate-iam`,
+`integrate-platform`).
 
 The `source_dir` field drives output directory placement. The description is
 copied verbatim into the component subtask's `goal` field in `task.json` — it

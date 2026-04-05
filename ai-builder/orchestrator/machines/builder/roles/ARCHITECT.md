@@ -48,7 +48,7 @@ Your job:
       <description>one-line responsibility</description>
     </component>
     <component>
-      <name>integrate</name>
+      <name>integrate-myservice</name>
       <complexity>atomic</complexity>
       <source_dir>.</source_dir>
       <description>Wire all components into a cohesive unit and verify this level's acceptance criteria</description>
@@ -68,7 +68,7 @@ Your job:
    land in the same location.
 
    - For regular components: set `source_dir` to the real package path (e.g. `internal/iam/lifecycle`).
-   - For `integrate`: set `source_dir` to `.` — integrate writes to the parent output directory directly.
+   - For `integrate-<scope>`: set `source_dir` to `.` — the integrate step writes to the parent output directory directly.
 
    **Description field requirements:**
 
@@ -95,8 +95,11 @@ Your job:
    - **Composite components**: one line is sufficient — sub-contracts are defined
      when that component is decomposed in a subsequent pass.
 
-   **The final entry must always be `integrate`**, always `atomic`. Its scope
-   depends on the `Level` field (provided in your prompt as `Task Level:`):
+   **The final entry must always start with `integrate-`**, always `atomic`.
+   Name it `integrate-<scope>` where `<scope>` is the short name of the service
+   or composite being wired (e.g. `integrate-platform`, `integrate-iam`,
+   `integrate-user-service`). Its role depends on the `Level` field (provided
+   in your prompt as `Task Level:`):
 
    - **`Level: TOP`** — design the entry point and component wiring (e.g. a
      `main.go`, how it initialises and connects components, what port it listens
@@ -107,8 +110,9 @@ Your job:
 ### Documentation rules (decompose mode)
 
 After identifying components and **before** emitting `<response>`, determine
-the **composite source directory**: the common parent path of all non-`integrate`
-component `source_dir` values.
+the **composite source directory**: the common parent path of all non-integrate
+component `source_dir` values (i.e. all components whose name does not start
+with `integrate-`).
 
 Examples:
 - Components at `internal/iam/store` and `internal/iam/lifecycle`
@@ -131,7 +135,7 @@ then the content body.
   immediately after the heading (blank line between Purpose and Tags is
   mandatory — without it CommonMark renders them on the same line)
 - 1–2 sentence description of what this composite provides
-- Component table listing each non-integrate component, with a Markdown link
+- Component table listing each non-integrate-* component, with a Markdown link
   to its `README.md` (write the link even if the child README does not exist
   yet) and a one-line description of its responsibility
 - A line linking to `theory-of-operation.md`
@@ -257,13 +261,13 @@ When you write a named doc, add a one-line summary and link to it in the
 README's Overview section. Use the same Purpose:/Tags: header format as the README
 (same rules: blank line between Purpose and Tags, present-tense first sentence).
 
-**Special case — `integrate` component:**
+**Special case — `integrate-<scope>` component:**
 
-When the component name is `integrate`, your role is to wire existing
+When the component name starts with `integrate-`, your role is to wire existing
 components together (e.g. write `main.go`, dependency injection, package
 init). You must:
 - Set `documents_written: false` — the parent ARCHITECT already produced
-  documentation covering the full service; `integrate` adds none
+  documentation covering the full service; the integrate step adds none
 - Write wiring code to the output directory directly (same directory as the
   sibling component packages, not a subdirectory)
 - Do **not** write a README.md or any documentation files

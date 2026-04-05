@@ -11,4 +11,5 @@
 - [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 - [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 - [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
+- [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
 <!-- task-list-end -->

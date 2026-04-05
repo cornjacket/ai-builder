@@ -47,7 +47,7 @@ Your job:
       <description>HTTP CRUD handlers wired to the store</description>
     </component>
     <component>
-      <name>integrate</name>
+      <name>integrate-user-service</name>
       <complexity>atomic</complexity>
       <source_dir>.</source_dir>
       <description>Cross-component synthesis: data-flow.md, api.md, and README.md for this directory</description>
@@ -59,14 +59,17 @@ Your job:
 **The `<response>` block must be the final content of your response.**
 
 **`source_dir` field:** path relative to the current output directory. Use
-the actual subdirectory name for components; use `.` for `integrate`.
+the actual subdirectory name for components; use `.` for `integrate-<scope>`.
 
 **`complexity` field:** set based on whether the subdir itself contains further
 subdirectories:
 - `atomic` — the subdir contains only source files (no subdirs)
 - `composite` — the subdir contains further subdirs
 
-**The final entry must always be `integrate`, always `atomic`, `source_dir: "."`.**
+**The final entry must always start with `integrate-`**, always `atomic`,
+`source_dir: "."`. Name it `integrate-<scope>` where `<scope>` is the short
+name of the service or directory being synthesised (e.g. `integrate-iam`,
+`integrate-platform`, `integrate-user-service`).
 The integrate step is handled by DOC_INTEGRATOR — do not describe implementation
 steps in its description, only what synthesis docs it should produce.
 

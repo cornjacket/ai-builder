@@ -40,16 +40,16 @@ handler prompts.
 
 ```
 ARCHITECT (decompose: service)
-    → DECOMPOSE_HANDLER creates [component-A, component-B, integrate]
+    → DECOMPOSE_HANDLER creates [component-A, component-B, integrate-service]
     → component-A: ARCHITECT (decompose: component-A)
-        → DECOMPOSE_HANDLER creates [sub-1, sub-2, integrate-A]
+        → DECOMPOSE_HANDLER creates [sub-1, sub-2, integrate-component-a]
         → sub-1: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
         → sub-2: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
-        → integrate-A: ARCHITECT (design) → IMPLEMENTOR → TESTER
+        → integrate-component-a: ARCHITECT (design) → IMPLEMENTOR → TESTER
             → on-task-complete: last at this level → walk up
             → LEAF_COMPLETE_HANDLER advances to component-B
     → component-B: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
-    → integrate: ARCHITECT (design) → IMPLEMENTOR → TESTER
+    → integrate-service: ARCHITECT (design) → IMPLEMENTOR → TESTER
         → on-task-complete: last at service level, parent is USER-TASK → DONE
 ```
 
@@ -75,7 +75,7 @@ Every pipeline-subtask README has a `Level` field in its metadata table.
 
 ### What It Controls
 
-The ARCHITECT reads the Level field when handling an `integrate` component:
+The ARCHITECT reads the Level field when handling an `integrate-<scope>` component:
 
 - `Level: TOP` → write end-to-end acceptance tests, verify the service is
   runnable and the full use-case works.
@@ -195,7 +195,7 @@ ARCHITECT ───────────────────────�
       │
       ▼
 DECOMPOSE_HANDLER ─────────────────── create subtasks
-  creates: [auth-handler(atomic), user-store(atomic), integrate(TOP,Last-task:true)]
+  creates: [auth-handler(atomic), user-store(atomic), integrate-auth-service(TOP,Last-task:true)]
   current-job.txt → auth-handler
   outcome: HANDLER_SUBTASKS_READY
       │
@@ -218,19 +218,19 @@ ARCHITECT → IMPLEMENTOR → TESTER ─── TESTER_TESTS_PASS (user-store)
       ▼
 LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(user-store)
   → complete user-store [x]
-  → Last-task=false → NEXT integrate
-  current-job.txt → integrate
+  → Last-task=false → NEXT integrate-auth-service
+  current-job.txt → integrate-auth-service
   outcome: HANDLER_SUBTASKS_READY
       │
       ▼
-ARCHITECT (integrate, Level=TOP) ─── design with e2e tests
+ARCHITECT (integrate-auth-service, Level=TOP) ─── design with e2e tests
   outcome: ARCHITECT_DESIGN_READY
       │
-IMPLEMENTOR → TESTER ─────────────── TESTER_TESTS_PASS (integrate)
+IMPLEMENTOR → TESTER ─────────────── TESTER_TESTS_PASS (integrate-auth-service)
       │
       ▼
-LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(integrate)
-  → complete integrate [x]
+LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(integrate-auth-service)
+  → complete integrate-auth-service [x]
   → Last-task=true → walk up
   → parent (auth-service) is USER-TASK → DONE
   outcome: HANDLER_ALL_DONE

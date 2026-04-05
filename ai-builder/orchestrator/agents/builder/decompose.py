@@ -86,7 +86,7 @@ class DecomposeAgent:
             subtask_dirs.append(subtask_dir)
 
             source_dir = component.get("source_dir", "").strip()
-            if comp_name == "integrate" or not source_dir or source_dir == ".":
+            if comp_name.startswith("integrate") or not source_dir or source_dir == ".":
                 comp_output_dir = parent_output_dir
             else:
                 comp_output_dir = parent_output_dir / source_dir
@@ -105,7 +105,7 @@ class DecomposeAgent:
                     subtask_data["goal"]       = description
                     subtask_data["context"]    = child_context
                     subtask_data["output_dir"] = str(comp_output_dir)
-                    if comp_name == "integrate":
+                    if comp_name.startswith("integrate"):
                         subtask_data["component_type"] = "integrate"
                     if i == len(components) - 1:
                         subtask_data["last-task"] = True

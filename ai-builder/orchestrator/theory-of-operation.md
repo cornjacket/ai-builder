@@ -135,10 +135,10 @@ project/tasks/main/in-progress/            sandbox/user-service-output/
       PIPELINE-SUBTASK handlers/             README.md (ARCHITECT)
         task.json  (output_dir:…/handlers)
         README.md                           internal/handlers/
-      PIPELINE-SUBTASK integrate/             handlers.go
+      PIPELINE-SUBTASK integrate-myservice/    handlers.go
         task.json  (last-task:true,           handlers_test.go
                     output_dir:…/build-1)    README.md (ARCHITECT)
-                                           main.go           ← integrate writes here
+                                           main.go           ← integrate-* writes here
                                            go.mod
                                            master-index.md   ← built by DOCUMENTER
                                            README.md         ← rendered from task.json
@@ -148,7 +148,7 @@ Key relationships:
 - Every `PIPELINE-SUBTASK` has an `output_dir` in `task.json` pointing to its
   subtree in the code tree.
 - `source_dir` in ARCHITECT's decompose response drives placement: `store` →
-  `<parent_output_dir>/internal/store`; `integrate` → `<parent_output_dir>` (`.`).
+  `<parent_output_dir>/internal/store`; `integrate-<scope>` → `<parent_output_dir>` (`.`).
 - The task tree and code tree are owned by separate repositories — the task
   system lives in the target repo; generated code lives in the output dir.
 - Completed subtasks are renamed `X-<name>` in the task tree. The code tree
@@ -227,7 +227,7 @@ Key relationships:
   │              <components>                                 │
   │                <component><name>store</name>...</component>│
   │                <component><name>handlers</name>...</component>│
-  │                <component><name>integrate</name>...</component>│
+  │                <component><name>integrate-myservice</name>...</component>│
   │              </components>                               │
   │            </response>                                   │
   └───────────────────────────────────────────────────────────┘
@@ -242,7 +242,7 @@ Key relationships:
     │ set-current-job.sh → points current-job.txt at store/README.md
     │ emits OUTCOME: HANDLER_SUBTASKS_READY
     ▼
-  ┌─── for each component (store, handlers, integrate) ────────┐
+  ┌─── for each component (store, handlers, integrate-myservice) ──┐
   │                                                            │
   │  ARCHITECT (design mode — Complexity: atomic)             │
   │    writes README.md + optional named docs to output_dir   │
@@ -291,24 +291,24 @@ build-1 (TOP, Complexity:—)
   ├── metrics (composite)   ← ARCHITECT decomposes
   │     ├── store (atomic)
   │     ├── handlers (atomic)
-  │     └── integrate (INTERNAL, last-task:true)
+  │     └── integrate-metrics (INTERNAL, last-task:true)
   │
   ├── iam (composite)       ← ARCHITECT decomposes
   │     ├── lifecycle (atomic)
   │     ├── authz (atomic)
-  │     └── integrate (INTERNAL, last-task:true)
+  │     └── integrate-iam (INTERNAL, last-task:true)
   │
-  └── integrate (TOP, last-task:true)
+  └── integrate-platform (TOP, last-task:true)
 ```
 
-Tree traversal proceeds depth-first, left-to-right. When `integrate` at an
-INTERNAL level completes:
+Tree traversal proceeds depth-first, left-to-right. When `integrate-<scope>`
+at an INTERNAL level completes:
 - `advance-pipeline.sh` sees `last-task=true`
 - walks up to the parent (e.g. `iam`)
 - parent is a PIPELINE-SUBTASK → marks it `[x]`, continues up
-- finds next sibling at the grandparent level (`metrics` → done, advance to `integrate`)
+- finds next sibling at the grandparent level (`metrics` → done, advance to `integrate-platform`)
 
-When `integrate` at the TOP level completes:
+When `integrate-<scope>` at the TOP level completes:
 - walks up to the build-1 parent
 - build-1's parent is the USER-TASK (human boundary)
 - emits `TOP_RENAME_PENDING build-1` and `DONE`
