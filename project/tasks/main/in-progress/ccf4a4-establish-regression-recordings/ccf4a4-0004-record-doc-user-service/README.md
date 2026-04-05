@@ -32,4 +32,12 @@ full per-subtask procedure.
 
 ## Notes
 
-_None._
+After pushing the recording for the first time, confirm that the
+ai-builder-recordings main branch README.md Regression tests table has been
+updated with a row for `doc-user-service`. Use:
+
+```bash
+bash tests/regression/lib/add-to-recordings-readme.sh \
+    --name        doc-user-service \
+    --description "<what this regression exercises>"
+```
