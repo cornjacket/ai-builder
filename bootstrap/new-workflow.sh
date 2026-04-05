@@ -104,6 +104,10 @@ if [[ "$CURRENT_FOLDER" != "in-progress" ]]; then
     git -C "$REPO_ROOT" commit -m "Move $TASK_NAME to in-progress
 
 Task: $TASK_NAME"
+
+    echo ""
+    echo "=== Pushing task move to origin ==="
+    git -C "$REPO_ROOT" push
     echo ""
 else
     echo "Task '$TASK_NAME' is already in in-progress — skipping move."
