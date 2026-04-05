@@ -15,7 +15,7 @@ The pipeline operates in three structural modes depending on task complexity.
 The simplest case. A single task is directly implementable.
 
 ```
-Oracle sets current-job.txt → ARCHITECT (design) → IMPLEMENTOR → TESTER → done
+Oracle sets current-job.txt → ACCEPTANCE_SPEC_WRITER → ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER → done
 ```
 
 ### Single-Level Decomposition
@@ -23,10 +23,11 @@ Oracle sets current-job.txt → ARCHITECT (design) → IMPLEMENTOR → TESTER �
 A service is decomposed into components, each implemented in sequence.
 
 ```
-ARCHITECT (decompose)
+ACCEPTANCE_SPEC_WRITER (runs once at TOP level)
+    → ARCHITECT (decompose)
     → DECOMPOSE_HANDLER creates component subtasks
     → for each component:
-        ARCHITECT (design) → IMPLEMENTOR → TESTER
+        ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER
         → LEAF_COMPLETE_HANDLER advances to next component
     → last component done → HANDLER_ALL_DONE
 ```
@@ -39,17 +40,18 @@ the structure — all navigation is handled by `on-task-complete.sh` and the
 handler prompts.
 
 ```
-ARCHITECT (decompose: service)
+ACCEPTANCE_SPEC_WRITER (runs once at TOP level)
+    → ARCHITECT (decompose: service)
     → DECOMPOSE_HANDLER creates [component-A, component-B, integrate-service]
     → component-A: ARCHITECT (decompose: component-A)
         → DECOMPOSE_HANDLER creates [sub-1, sub-2, integrate-component-a]
-        → sub-1: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
-        → sub-2: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
-        → integrate-component-a: ARCHITECT (design) → IMPLEMENTOR → TESTER
+        → sub-1: ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER → LEAF_COMPLETE_HANDLER advances
+        → sub-2: ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER → LEAF_COMPLETE_HANDLER advances
+        → integrate-component-a: ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER
             → on-task-complete: last at this level → walk up
             → LEAF_COMPLETE_HANDLER advances to component-B
-    → component-B: ARCHITECT (design) → IMPLEMENTOR → TESTER → LEAF_COMPLETE_HANDLER advances
-    → integrate-service: ARCHITECT (design) → IMPLEMENTOR → TESTER
+    → component-B: ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER → LEAF_COMPLETE_HANDLER advances
+    → integrate-service: ARCHITECT (design) → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER
         → on-task-complete: last at service level, parent is USER-TASK → DONE
 ```
 
@@ -190,6 +192,11 @@ the orchestrator halts with exit 0, and Oracle must resume manually.
 ```
 Oracle: current-job.txt → auth-service (TOP, Complexity: —)
 
+ACCEPTANCE_SPEC_WRITER ────────────── extract HTTP contract from goal/context
+  outcome: ACCEPTANCE_SPEC_WRITER_DONE
+  writes:  acceptance-spec.md, acceptance-spec.json
+      │
+      ▼
 ARCHITECT ─────────────────────────── decompose
   outcome: ARCHITECT_DECOMPOSITION_READY
       │
@@ -203,7 +210,7 @@ DECOMPOSE_HANDLER ─────────────────── crea
 ARCHITECT ─────────────────────────── design auth-handler (atomic)
   outcome: ARCHITECT_DESIGN_READY
       │
-IMPLEMENTOR → TESTER ─────────────── TESTER_TESTS_PASS
+IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER ─── TESTER_TESTS_PASS
       │
       ▼
 LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(auth-handler)
@@ -213,7 +220,7 @@ LEAF_COMPLETE_HANDLER ─────────────── on-task-comp
   outcome: HANDLER_SUBTASKS_READY
       │
       ▼
-ARCHITECT → IMPLEMENTOR → TESTER ─── TESTER_TESTS_PASS (user-store)
+ARCHITECT → IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER ─── TESTER_TESTS_PASS (user-store)
       │
       ▼
 LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(user-store)
@@ -226,7 +233,7 @@ LEAF_COMPLETE_HANDLER ─────────────── on-task-comp
 ARCHITECT (integrate-auth-service, Level=TOP) ─── design with e2e tests
   outcome: ARCHITECT_DESIGN_READY
       │
-IMPLEMENTOR → TESTER ─────────────── TESTER_TESTS_PASS (integrate-auth-service)
+IMPLEMENTOR → SPEC_COVERAGE_CHECKER → TESTER ─── TESTER_TESTS_PASS (integrate-auth-service)
       │
       ▼
 LEAF_COMPLETE_HANDLER ─────────────── on-task-complete(integrate-auth-service)
