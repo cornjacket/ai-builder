@@ -68,9 +68,8 @@ func TestMain(m *testing.M) {
 	defer os.Remove(bin)
 
 	cmd := exec.Command(bin)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.WaitDelay = 3 * time.Second
+	// Discard binary output — piping to os.Stdout/Stderr causes WaitDelay
+	// timeouts because server goroutines hold the pipes open after SIGKILL.
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: could not start binary: %v\n", err)
 		os.Exit(1)
