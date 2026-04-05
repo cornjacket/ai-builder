@@ -85,6 +85,19 @@ bash tests/regression/lib/update-run-history.sh \
 AI-invoked runs only. Recording replays would inflate the run count and
 misrepresent token costs.
 
+### 4b. First recording only — update ai-builder-recordings README
+
+If this is the first recording for this regression (new branch), add a row
+to the Regression tests table in the ai-builder-recordings main branch:
+
+```bash
+bash tests/regression/lib/add-to-recordings-readme.sh \
+    --name        <test-name> \
+    --description "<what this regression exercises>"
+```
+
+Skip this step for re-records — the table entry is unchanged.
+
 ### 5. Commit the run-history row
 
 Commit `run-history.md` after gold tests have completed — not before. A row

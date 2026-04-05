@@ -10,7 +10,7 @@
 | Category    | acceptance-spec        |
 | Created     | 2026-04-03            |
 | Completed   | —                      |
-| Next-subtask-id | 0021 |
+| Next-subtask-id | 0022 |
 
 ## Goal
 
@@ -92,6 +92,7 @@ The gold tests are the only human-authored tests and caught the failures.
 - [x] [X-f5f7b8-0008-verify-gold-tests](X-f5f7b8-0008-verify-gold-tests/)
 - [ ] [f5f7b8-0009-update-affected-documentation](f5f7b8-0009-update-affected-documentation/)
 - [ ] [f5f7b8-0020-re-record-platform-monolith-regression](f5f7b8-0020-re-record-platform-monolith-regression/)
+- [ ] [f5f7b8-0021-add-regression-to-recordings-readme](f5f7b8-0021-add-regression-to-recordings-readme/)
 <!-- subtask-list-end -->
 
 ## Notes

@@ -90,3 +90,22 @@ bash tests/regression/lib/update-run-history.sh \
 | `--history` | Path to the `run-history.md` file |
 | `--gold` | `pass` or `fail` |
 | `--notes` | Triggering user task name, or a brief reason (e.g. `routine health check`) |
+
+## add-to-recordings-readme.sh
+
+Adds a new row to the Regression tests table in the ai-builder-recordings
+main branch README.md. Run once when a regression's recording is pushed for
+the first time. Re-records do not require a README update.
+
+**Usage:**
+
+```bash
+bash tests/regression/lib/add-to-recordings-readme.sh \
+    --name        <test-name> \
+    --description "<what this regression exercises>"
+```
+
+| Flag | Description |
+|---|---|
+| `--name` | Branch name in `ai-builder-recordings` (matches `tests/regression/<name>/`) |
+| `--description` | One-line description of what the test exercises |
