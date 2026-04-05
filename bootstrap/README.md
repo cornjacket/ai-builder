@@ -15,16 +15,29 @@ One-time setup. Creates the `ai-builder/` workspace with a bare clone and a
 
 See [`README.md`](../README.md) for the exact invocation.
 
-### `new-worktree.sh <branch-name> [--from <base-branch>]`
+### `new-workflow.sh -taskname <task-name> -name <worktree-name> [-epic <epic>]`
 
-Creates a new branch and worktree at `ai-builder/<branch-name>/`.
-Run from inside any existing worktree (e.g., `main/`).
+The standard entry point for starting work on a task. Run from `main/`.
+
+1. Locates the task in `draft/`, `backlog/`, or `in-progress/`
+2. Moves it to `in-progress/` and commits (skips if already there)
+3. Creates a new worktree branched from the current `main` HEAD
+4. Prints next steps
 
 ```bash
-# Create a worktree for a new feature branch
-bash bootstrap/new-worktree.sh feat-x
+bash bootstrap/new-workflow.sh \
+    -taskname f5f7b8-pipeline-acceptance-spec-writer \
+    -name     acceptance-spec
+```
 
-# Create from a specific base branch
+### `new-worktree.sh <branch-name> [--from <base-branch>]`
+
+Low-level primitive — creates a branch and worktree only. Prefer
+`new-workflow.sh` for task-tracked work; use this directly for
+experiments or branches not tied to a task.
+
+```bash
+bash bootstrap/new-worktree.sh feat-x
 bash bootstrap/new-worktree.sh experiment --from main
 ```
 
@@ -56,13 +69,12 @@ ai-builder/
 ## Day-to-day workflow
 
 ```bash
-# Start work on a new feature
-bash main/bootstrap/new-worktree.sh my-feature
-cd my-feature
-# ... do work, commit, push ...
+# Start work on a task (moves task to in-progress, commits, creates worktree)
+bash bootstrap/new-workflow.sh -taskname <hex-id>-<task-name> -name <worktree-name>
+
+# Open a new session in the worktree and do the work
 
 # When done, merge to main and clean up
-cd main
-git merge my-feature
-bash bootstrap/remove-worktree.sh my-feature --delete-branch
+git merge <worktree-name>
+bash bootstrap/remove-worktree.sh <worktree-name> --delete-branch
 ```
