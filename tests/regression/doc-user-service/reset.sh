@@ -36,6 +36,16 @@ echo "=== Resetting doc-user-service regression test ==="
 echo ""
 
 # ---------------------------------------------------------------------------
+# Archive previous run (if any) before wiping.
+# ---------------------------------------------------------------------------
+
+bash "$REPO_ROOT/tests/regression/lib/archive-run.sh" \
+    --target-repo "$TARGET_REPO" \
+    --output-dir  "$OUTPUT_DIR" \
+    --runs-dir    "$DIR/runs" \
+    --format      doc
+
+# ---------------------------------------------------------------------------
 # 1. Copy source template to output dir (strips any existing .md files)
 # ---------------------------------------------------------------------------
 

@@ -18,6 +18,7 @@ REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 RECORD_DIR="$REPO_ROOT/sandbox/regressions/doc-user-service"
 BRANCH="doc-user-service"
 STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/doc/default.json"
+FORMAT="doc"
 FORCE=0
 
 for arg in "$@"; do

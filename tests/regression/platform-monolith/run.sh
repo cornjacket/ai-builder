@@ -23,3 +23,9 @@ python3 "$REPO_ROOT/ai-builder/orchestrator/orchestrator.py" \
     --output-dir    "$OUTPUT_DIR" \
     --epic          main \
     --state-machine "$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
+
+bash "$REPO_ROOT/tests/regression/lib/archive-run.sh" \
+    --target-repo "$TARGET_REPO" \
+    --output-dir  "$OUTPUT_DIR" \
+    --runs-dir    "$DIR/runs" \
+    --format      builder

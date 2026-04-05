@@ -56,6 +56,9 @@ checks):
 bash tests/regression/<name>/run.sh
 ```
 
+`run.sh` calls `archive-run.sh` automatically after the orchestrator exits.
+The new row appears in `run-history.md` immediately — no lag, no manual step.
+
 ### 4. Run gold tests immediately after the pipeline completes
 
 Do not defer gold tests. Run them as soon as the pipeline finishes:
@@ -66,17 +69,19 @@ cd tests/regression/<name>/gold && go test -v -tags regression ./...
 
 Record the result (pass/fail) before moving on.
 
-### 5. Append a row to run-history.md
+### 5. Fill in Gold and Notes on the last run-history row
 
-After gold tests complete, append a row to
-`tests/regression/<name>/runs/run-history.md`:
+`run.sh` appends the row but leaves Gold and Notes blank. After gold tests
+complete, fill them in:
 
-```markdown
-| N | YYYY-MM-DD | Xm Xs | in / out / cached | in / out / cached | in / out / cached | pass/fail | <subtask-name> — <brief note> |
+```bash
+bash tests/regression/lib/update-run-history.sh \
+    --history tests/regression/<name>/runs/run-history.md \
+    --gold    pass|fail \
+    --notes   "<triggering-task-or-reason>"
 ```
 
-- **Token counts** come from `run-metrics.json` in the output directory.
-- **Gold column** is `pass` or `fail`.
+- **Gold** is `pass` or `fail` based on the gold test result.
 - **Notes** should reference the user task that triggered this run, if one
   exists (e.g. `8985d4-bug-pipeline-teardown-and-formatting`). If the run was
   not tied to a specific task — for example a routine health check — write a

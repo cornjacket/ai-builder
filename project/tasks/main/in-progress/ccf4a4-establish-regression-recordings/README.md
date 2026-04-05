@@ -10,7 +10,7 @@
 | Category    | regression-infra       |
 | Created     | 2026-04-04            |
 | Completed   | —                      |
-| Next-subtask-id | 0010 |
+| Next-subtask-id | 0014 |
 
 ## Goal
 
@@ -47,8 +47,9 @@ confirm the correct invocation pattern before running.
 <!-- subtask-list-start -->
 - [x] [X-ccf4a4-0000-abstract-record-replay-scripts](X-ccf4a4-0000-abstract-record-replay-scripts/)
 - [ ] [ccf4a4-0001-record-platform-monolith](ccf4a4-0001-record-platform-monolith/)
-- [ ] [ccf4a4-0002-record-doc-platform-monolith](ccf4a4-0002-record-doc-platform-monolith/)
-- [ ] [ccf4a4-0003-record-doc-user-service](ccf4a4-0003-record-doc-user-service/)
+- [x] [X-ccf4a4-0002-add-update-run-history-script](X-ccf4a4-0002-add-update-run-history-script/)
+- [ ] [ccf4a4-0003-record-doc-platform-monolith](ccf4a4-0003-record-doc-platform-monolith/)
+- [ ] [ccf4a4-0004-record-doc-user-service](ccf4a4-0004-record-doc-user-service/)
 <!-- subtask-list-end -->
 
 ## Notes
