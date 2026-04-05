@@ -55,6 +55,24 @@ echo "Fetching remote state..."
 git -C "$WORKSPACE/main" fetch --prune origin
 
 # ---------------------------------------------------------------------------
+# Guard: main must not have unpushed commits
+#
+# New worktrees branch from local main. If main is ahead of origin/main,
+# the worktree inherits commits that are not yet on the remote, which means
+# collaborators pulling from origin get a different base.
+# ---------------------------------------------------------------------------
+
+UNPUSHED=$(git -C "$WORKSPACE/main" log "origin/main..main" --oneline 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$UNPUSHED" -gt 0 ]]; then
+    echo "ERROR: main has $UNPUSHED unpushed commit(s):"
+    git -C "$WORKSPACE/main" log "origin/main..main" --oneline
+    echo ""
+    echo "Push main before creating a new worktree:"
+    echo "  git -C $WORKSPACE/main push"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
 # Create worktree
 # ---------------------------------------------------------------------------
 
