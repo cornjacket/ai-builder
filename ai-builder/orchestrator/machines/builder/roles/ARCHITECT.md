@@ -263,7 +263,7 @@ README's Overview section. Use the same Purpose:/Tags: header format as the READ
 
 **Special case — `integrate-<scope>` component:**
 
-When the component name starts with `integrate-`, your role is to wire existing
+When `Component Name:` in your prompt starts with `integrate-`, your role is to wire existing
 components together (e.g. write `main.go`, dependency injection, package
 init). You must:
 - Set `documents_written: false` — the parent ARCHITECT already produced

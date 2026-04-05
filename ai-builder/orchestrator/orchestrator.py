@@ -342,10 +342,11 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
         # task.json was loaded into task_state when job_doc was last set —
         # no disk read needed here. Falls back gracefully for edge cases.
         # See: learning/pipeline-extract-dont-delegate.md (Gemini cwd isolation)
-        complexity   = task_state.get("complexity", "—")
-        level        = task_state.get("level", "TOP")
-        goal_text    = task_state.get("goal", "")
-        context_text = task_state.get("context", "")
+        complexity    = task_state.get("complexity", "—")
+        level         = task_state.get("level", "TOP")
+        goal_text     = task_state.get("goal", "")
+        context_text  = task_state.get("context", "")
+        component_name = task_state.get("name", "")
         if complexity == "atomic":
             valid_outcomes = "ARCHITECT_DESIGN_READY | ARCHITECT_NEEDS_REVISION | ARCHITECT_NEED_HELP"
         elif complexity in ("composite", "—"):
@@ -359,10 +360,12 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
             return
         goal_section = f"\n\n## Goal\n\n{goal_text}" if goal_text else ""
         context_section = f"\n\n## Context\n\n{context_text}" if context_text else ""
+        name_line = f"Component Name: {component_name}\n" if component_name else ""
         job_section = (
             f"\nThe shared job document is at: {job_doc}\n"
             f"Task Level: {level}\n"
             f"Complexity: {complexity}\n"
+            f"{name_line}"
             f"\nOutput directory (write all generated files here): {output_dir}\n"
             f"{goal_section}{context_section}\n"
         )
