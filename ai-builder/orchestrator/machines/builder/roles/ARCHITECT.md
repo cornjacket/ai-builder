@@ -81,6 +81,12 @@ Your job:
      codes) plus complete parameter models (request/response field names and
      types). Do not paraphrase or abbreviate field names — copy them exactly.
 
+     **When `Task Level: TOP`**, `acceptance-spec.md` has been written to the
+     output directory by ACCEPTANCE_SPEC_WRITER. Before writing any HTTP
+     component description, read `<output_dir>/acceptance-spec.md` and copy
+     endpoint definitions, field names, and status codes verbatim from it.
+     Do not invent, rename, or omit any endpoint or field that appears there.
+
      Example:
      ```
      POST /users {"username":string,"password":string} → 201 {"id":string,"username":string};
@@ -271,6 +277,17 @@ init). You must:
 - Write wiring code to the output directory directly (same directory as the
   sibling component packages, not a subdirectory)
 - Do **not** write a README.md or any documentation files
+
+**When `Task Level: TOP` and `Component Name:` starts with `integrate-`**,
+before writing acceptance criteria you must reconcile against the spec:
+
+1. Read `<output_dir>/acceptance-spec.md`.
+2. List every endpoint from the spec.
+3. For each endpoint, confirm your acceptance criteria covers it — same method,
+   path, field names, and status codes as the spec. Flag any gap explicitly in
+   your prose before emitting `<response>`.
+4. Your acceptance criteria must cover every endpoint in the spec. Do not omit
+   any endpoint, rename any field, or change any status code.
 
 **Valid outcomes (design mode only — no other outcomes are permitted):**
 - `ARCHITECT_DESIGN_READY` — all design fields present in the `<response>` block
