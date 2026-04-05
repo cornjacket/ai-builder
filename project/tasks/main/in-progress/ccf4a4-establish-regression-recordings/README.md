@@ -46,7 +46,7 @@ confirm the correct invocation pattern before running.
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [x] [X-ccf4a4-0000-abstract-record-replay-scripts](X-ccf4a4-0000-abstract-record-replay-scripts/)
-- [ ] [ccf4a4-0001-record-platform-monolith](ccf4a4-0001-record-platform-monolith/)
+- [x] [X-ccf4a4-0001-record-platform-monolith](X-ccf4a4-0001-record-platform-monolith/)
 - [x] [X-ccf4a4-0002-add-update-run-history-script](X-ccf4a4-0002-add-update-run-history-script/)
 - [ ] [ccf4a4-0003-record-doc-platform-monolith](ccf4a4-0003-record-doc-platform-monolith/)
 - [ ] [ccf4a4-0004-record-doc-user-service](ccf4a4-0004-record-doc-user-service/)
