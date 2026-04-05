@@ -36,7 +36,6 @@
 - [88ba5d-cleanup-ai-builder-docs-structure](88ba5d-cleanup-ai-builder-docs-structure/)
 - [a13081-bug-pipeline-no-readme-in-cmd-dirs](a13081-bug-pipeline-no-readme-in-cmd-dirs/)
 - [f5d07b-enable-record-replay-for-target-users](f5d07b-enable-record-replay-for-target-users/)
-- [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 - [5aea78-regression-run-in-docker](5aea78-regression-run-in-docker/)
 - [dbe26e-evaluate-github-cli-for-claude](dbe26e-evaluate-github-cli-for-claude/)
 - [223838-audit-gemini-md-coverage](223838-audit-gemini-md-coverage/)
