@@ -349,10 +349,14 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
     role_instructions = role_file.read_text() if role_file.exists() \
         else "Complete the work described in the job document."
     if role == "ACCEPTANCE_SPEC_WRITER":
-        valid_outcomes = "ACCEPTANCE_SPEC_WRITER_DONE | ACCEPTANCE_SPEC_WRITER_UNSUPPORTED_INTERFACE"
+        valid_outcomes = "ACCEPTANCE_SPEC_WRITER_DONE | ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC | ACCEPTANCE_SPEC_WRITER_UNSUPPORTED_INTERFACE"
+        goal_text    = task_state.get("goal", "")
+        context_text = task_state.get("context", "")
+        goal_section    = f"\n\n## Goal\n\n{goal_text}"    if goal_text    else ""
+        context_section = f"\n\n## Context\n\n{context_text}" if context_text else ""
         job_section = (
-            f"\nThe shared job document is at: {job_doc}\n"
             f"\nOutput directory (write both output files here): {output_dir}\n"
+            f"{goal_section}{context_section}\n"
         )
     elif role == "ARCHITECT":
         # Read complexity, level, goal, context from in-memory task_state.

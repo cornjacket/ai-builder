@@ -16,6 +16,7 @@ anchor the API contract for all downstream agents.
 | Outcome | Meaning |
 |---------|---------|
 | `ACCEPTANCE_SPEC_WRITER_DONE` | Files written. Pipeline proceeds to ARCHITECT. |
+| `ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC` | No endpoints found — spec is empty, placeholder, or HTTP but unreadable. Pipeline halts. |
 | `ACCEPTANCE_SPEC_WRITER_UNSUPPORTED_INTERFACE` | Build spec contains a non-HTTP interface. Pipeline halts. |
 
 ## Role prompt

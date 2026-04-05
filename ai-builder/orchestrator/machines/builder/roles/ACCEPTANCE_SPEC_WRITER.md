@@ -13,10 +13,17 @@ downstream ARCHITECT and the spec coverage checker will reference them.
 
 ## Instructions
 
-1. **Read the job document** at the path provided in your prompt.
+1. **Identify all interfaces** described in the `## Goal` and `## Context`
+   sections provided inline in your prompt.
 
-2. **Identify all interfaces** described in the `## Goal` and `## Context`
-   sections.
+2. **If no interfaces are described** — the sections are empty, missing, or
+   contain only placeholder text — stop immediately. Do not write any files.
+   Emit:
+
+   ```
+   OUTCOME: ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC
+   HANDOFF: No API contract found in the build spec. The ## Goal and ## Context sections appear empty or unpopulated. The build spec must be authored before this pipeline stage can proceed.
+   ```
 
 3. **If any non-HTTP interface is present** (CLI commands, message queues,
    gRPC, library APIs, workers, etc.), stop immediately. Do not write any
@@ -63,7 +70,15 @@ downstream ARCHITECT and the spec coverage checker will reference them.
    `/` and match the build spec exactly. `status_codes` must include every
    status code mentioned for that endpoint — both success and error codes.
 
-7. **Emit the outcome:**
+7. **If zero endpoints were extracted** from an otherwise valid HTTP spec, stop.
+   Do not write any files. Emit:
+
+   ```
+   OUTCOME: ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC
+   HANDOFF: The build spec appears to be HTTP but no endpoints could be extracted. Ensure the spec explicitly lists HTTP methods, paths, and status codes.
+   ```
+
+8. **Emit the outcome:**
 
    ```
    OUTCOME: ACCEPTANCE_SPEC_WRITER_DONE

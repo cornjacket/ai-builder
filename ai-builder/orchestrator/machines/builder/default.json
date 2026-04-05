@@ -14,6 +14,7 @@
   "transitions": {
     "ACCEPTANCE_SPEC_WRITER": {
       "ACCEPTANCE_SPEC_WRITER_DONE":                   "ARCHITECT",
+      "ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC":             null,
       "ACCEPTANCE_SPEC_WRITER_UNSUPPORTED_INTERFACE":  null
     },
     "ARCHITECT": {
