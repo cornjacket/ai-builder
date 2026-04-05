@@ -382,12 +382,45 @@ recording yet — wait until it has settled.
 
 Recordings live in a separate GitHub repo: `cornjacket/ai-builder-recordings`.
 
-- One **orphan branch** per regression test — the branch shares no history
-  with any other branch in the repo
+- One **orphan branch** per regression test — no shared history with any other branch
 - Branch name = test name (e.g. `user-service`, `platform-monolith`)
-- `main` branch holds only a README listing all regression branches
-- See [`ai-builder-recordings/README.md`](https://github.com/cornjacket/ai-builder-recordings)
-  for the branch listing and how to read the commit log
+- `main` branch holds only a README — it is not a recording branch
+
+**`ai-builder-recordings` main README** (`https://github.com/cornjacket/ai-builder-recordings`)
+is the index of all regression tests. It contains a table listing every
+recording branch, a link to its commit log, and a one-line description of what
+the test exercises. This is the first place to look when you want to know what
+regressions exist and what each one covers. `run.sh` keeps this table
+up-to-date automatically — it adds a row on the first push and is a no-op on
+re-records.
+
+### How a recording is made
+
+When the orchestrator runs with `--record-to DIR`, it:
+
+1. Initialises a git repo in `DIR` (called the recording repo)
+2. After each agent invocation, commits the full state of `output/` and
+   `target/` to the recording repo — one commit per invocation
+3. For each AI invocation, saves the raw model response to
+   `responses/inv-NN-ROLE.txt` inside the commit
+4. On pipeline completion, writes `recording.json` — the manifest — and
+   commits it as the final entry
+
+The commit log in `ai-builder-recordings` therefore looks like:
+
+```
+recording.json                              ← manifest (always last)
+inv-21 pipeline done
+inv-20 LEAF_COMPLETE_HANDLER HANDLER_ALL_DONE
+inv-19 TESTER TESTER_TESTS_PASS
+...
+inv-01 ACCEPTANCE_SPEC_WRITER ACCEPTANCE_SPEC_WRITER_DONE   ← root commit
+```
+
+Each commit is a snapshot of exactly what the workspace looked like after that
+invocation. During replay, the orchestrator serves the pre-recorded AI responses
+instead of calling the model, then verifies the resulting workspace matches the
+recorded snapshot.
 
 ### `run.sh` structure
 
@@ -501,16 +534,29 @@ Do not treat a recording as golden until `test-replay.sh` has passed at least on
 
 ### Refreshing a recording
 
-Re-record when:
+A recording captures the pipeline's behaviour at a point in time. When that
+behaviour intentionally changes — most commonly because a role prompt was
+updated — the old recording is no longer valid and must be replaced.
 
-- **Role prompts changed** — replay will detect drift via `check_prompt_drift`
-  and warn; any prompt change that affects behaviour requires a new recording
-- **Orchestrator behaviour changed** — routing or output artifact changes that
-  are intentional mean the old recording is stale
-- **Replay is failing for the wrong reasons** — if a replay failure is traced
-  to a stale recording rather than a real regression, re-record
+**Re-record when:**
 
-To refresh:
+- **Role prompts changed** — `recording.json` stores a SHA-256 hash of every
+  role prompt at record time. On replay, `check_prompt_drift` compares these
+  hashes against the current prompt files. If any hash differs, replay warns
+  (or aborts, depending on mode). A prompt change that affects agent behaviour
+  requires a new recording that captures what the updated prompt produces.
+- **Orchestrator routing changed** — if a new pipeline stage was added, a
+  transition was modified, or a handler's outcome tokens changed, the recorded
+  routing sequence no longer matches what the orchestrator will produce.
+- **Replay is failing for the wrong reason** — if a replay failure is traced
+  to a stale recording rather than a real regression, re-record rather than
+  patching around it.
+
+**Do not** re-record to paper over a genuine regression. If replay fails
+because the orchestrator now behaves differently than expected, investigate
+whether the change was intentional before re-recording.
+
+To refresh — this replaces the old recording entirely:
 
 ```bash
 bash tests/regression/<test-name>/run.sh --force
@@ -518,8 +564,9 @@ bash tests/regression/<test-name>/run.sh --force
 
 `--force` is required because `recording.json` already exists. The script
 wipes local `.git`, re-records from scratch, deletes the remote branch, and
-pushes a fresh orphan. After re-recording, run `test-replay.sh` once to
-confirm the new recording is valid before treating it as the new baseline.
+pushes a fresh orphan with no prior history. After re-recording, run
+`test-replay.sh` once to confirm the new recording is valid before treating
+it as the new baseline.
 
 ---
 
