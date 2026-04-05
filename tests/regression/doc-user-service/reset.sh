@@ -51,7 +51,8 @@ bash "$REPO_ROOT/tests/regression/lib/archive-run.sh" \
 
 echo "[1/5] Copying source template to $OUTPUT_DIR ..."
 rm -rf "$OUTPUT_DIR"
-cp -r "$SOURCE_TEMPLATE" "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
+cp -r "$SOURCE_TEMPLATE/." "$OUTPUT_DIR"
 
 # Sanity check: no .md files should be in the template
 if find "$OUTPUT_DIR" -name "*.md" | grep -q .; then
