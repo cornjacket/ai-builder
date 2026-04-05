@@ -56,10 +56,24 @@ the stalled run's metrics.
 | Artifact | Behaviour on resume |
 |----------|---------------------|
 | `current-job.txt` | read at startup — points to the interrupted job |
+| `task.json` `active_role` field | read at startup — restores the role that was running when the pipeline stalled (see §Active Role Persistence) |
 | `execution.log` | **appended to** — entries from both runs are present; run boundaries are marked by the `=== Orchestrator: starting ===` header line |
 | Level:TOP README `## Execution Log` table | **overwritten** — shows only the resumed run's invocations (starting from #1) |
 | `run-metrics.json` | written on normal completion of the resumed portion only |
 | `run-summary.md` | written on normal completion of the resumed portion only |
+
+### Active Role Persistence
+
+Before invoking each agent, the orchestrator writes the current role name to
+the `active_role` field in `task.json` (the Level:TOP pipeline-subtask's
+`task.json`). On resume, the orchestrator reads `active_role` from `task.json`
+and uses it as `start_state` instead of the machine's default `start_state`.
+
+This matters because the machine's `start_state` is `ACCEPTANCE_SPEC_WRITER`,
+a one-shot stage that runs once at the beginning of a pipeline. Without
+`active_role` persistence, every resume would re-run ACCEPTANCE_SPEC_WRITER
+regardless of where the pipeline actually stalled. With it, a pipeline that
+stalled mid-IMPLEMENTOR resumes at IMPLEMENTOR.
 
 ### Preserving the stalled run's execution log table
 

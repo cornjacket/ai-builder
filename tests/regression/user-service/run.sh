@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Record a reference run of the doc-platform-monolith regression test.
+# Record a reference run of the user-service regression test.
 #
 # This script makes real AI calls and incurs token cost. Run it once to
 # establish a baseline recording, then use test-replay.sh for all
@@ -15,10 +15,11 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
-RECORD_DIR="$REPO_ROOT/sandbox/regressions/doc-platform-monolith"
-BRANCH="doc-platform-monolith"
-STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/doc/default.json"
-FORMAT="doc"
+RECORD_DIR="$REPO_ROOT/sandbox/regressions/user-service"
+BRANCH="user-service"
+DESCRIPTION="TM single-level decomposition — service decomposed into 3 components"
+STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
+FORMAT="builder"
 FORCE=0
 
 for arg in "$@"; do

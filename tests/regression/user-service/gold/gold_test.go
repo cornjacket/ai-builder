@@ -32,7 +32,7 @@ func init() {
 	}
 	root := filepath.Clean(filepath.Join(wd, "../../../../"))
 	outputDir = filepath.Join(root, "sandbox/regressions/user-service/output")
-	targetDir = filepath.Join(root, "sandbox/user-service-target")
+	targetDir = filepath.Join(root, "sandbox/regressions/user-service/target")
 	binaryPath = filepath.Join(root, "sandbox/user-service-bin")
 }
 

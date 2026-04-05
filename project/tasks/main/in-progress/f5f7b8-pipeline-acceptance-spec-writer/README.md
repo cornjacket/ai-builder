@@ -10,7 +10,7 @@
 | Category    | acceptance-spec        |
 | Created     | 2026-04-03            |
 | Completed   | —                      |
-| Next-subtask-id | 0001 |
+| Next-subtask-id | 0022 |
 
 ## Goal
 
@@ -41,7 +41,7 @@ The gold tests are the only human-authored tests and caught the failures.
 
 **Proposed solution — ACCEPTANCE_SPEC_WRITER stage:**
 
-1. **New state: `ACCEPTANCE_SPEC_WRITER`** — runs once, immediately after the
+1. **New state: `ACCEPTANCE_SPEC_WRITER`** — runs once, immediately before the
    initial TOP ARCHITECT decompose. Reads the `## Goal` and `## Context` from
    the build spec and writes two files to the output dir:
    - `acceptance-spec.md` — human-readable, all endpoints with exact field
@@ -82,7 +82,17 @@ The gold tests are the only human-authored tests and caught the failures.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [f5f7b8-0000-update-affected-documentation](f5f7b8-0000-update-affected-documentation/)
+- [x] [X-f5f7b8-0001-define-acceptance-spec-format](X-f5f7b8-0001-define-acceptance-spec-format/)
+- [x] [X-f5f7b8-0002-add-acceptance-spec-writer-agent](X-f5f7b8-0002-add-acceptance-spec-writer-agent/)
+- [x] [X-f5f7b8-0003-update-state-machine](X-f5f7b8-0003-update-state-machine/)
+- [x] [X-f5f7b8-0004-persist-active-role-for-resume](X-f5f7b8-0004-persist-active-role-for-resume/)
+- [x] [X-f5f7b8-0005-update-architect-prompts](X-f5f7b8-0005-update-architect-prompts/)
+- [x] [X-f5f7b8-0006-add-spec-coverage-checker](X-f5f7b8-0006-add-spec-coverage-checker/)
+- [x] [X-f5f7b8-0007-re-record-user-service-regression](X-f5f7b8-0007-re-record-user-service-regression/)
+- [x] [X-f5f7b8-0008-verify-gold-tests](X-f5f7b8-0008-verify-gold-tests/)
+- [ ] [f5f7b8-0009-update-affected-documentation](f5f7b8-0009-update-affected-documentation/)
+- [ ] [f5f7b8-0020-re-record-platform-monolith-regression](f5f7b8-0020-re-record-platform-monolith-regression/)
+- [ ] [f5f7b8-0021-add-regression-to-recordings-readme](f5f7b8-0021-add-regression-to-recordings-readme/)
 <!-- subtask-list-end -->
 
 ## Notes

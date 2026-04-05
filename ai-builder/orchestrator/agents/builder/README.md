@@ -10,6 +10,7 @@ pipeline roles defined in the builder machine configurations
 
 | File | Description |
 |------|-------------|
+| `spec_coverage_checker.py` | `SpecCoverageCheckerAgent` — verifies that every endpoint in `acceptance-spec.json` is covered by at least one test file |
 | `tester.py` | `TesterAgent` — runs `test_command` from `task.json` |
 | `documenter.py` | `DocumenterAgent` — scans output dir for `.md` files; rebuilds README documentation index |
 | `decompose.py` | `DecomposeAgent` — creates pipeline subtask directories from ARCHITECT's components list |
@@ -21,6 +22,7 @@ pipeline roles defined in the builder machine configurations
 
 | Agent | Requires `AgentContext`? |
 |-------|--------------------------|
+| `SpecCoverageCheckerAgent` | Yes |
 | `TesterAgent` | No |
 | `DocumenterAgent` | No |
 | `DecomposeAgent` | Yes |
@@ -35,6 +37,7 @@ See [`../context.py`](../context.md) for `AgentContext` field definitions.
 ## Machine JSON configuration
 
 ```json
+"SPEC_COVERAGE_CHECKER":      { "agent": "internal", "impl": "agents.builder.spec_coverage_checker.SpecCoverageCheckerAgent", "prompt": null },
 "TESTER":                     { "agent": "internal", "impl": "agents.builder.tester.TesterAgent",        "prompt": null },
 "DECOMPOSE_HANDLER":          { "agent": "internal", "impl": "agents.builder.decompose.DecomposeAgent",  "prompt": null },
 "LEAF_COMPLETE_HANDLER":      { "agent": "internal", "impl": "agents.builder.lch.LCHAgent",              "prompt": null },

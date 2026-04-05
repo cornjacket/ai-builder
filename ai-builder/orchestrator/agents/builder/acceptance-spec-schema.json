@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "acceptance-spec-schema.json",
+  "title": "AcceptanceSpec",
+  "description": "Machine-readable acceptance spec produced by ACCEPTANCE_SPEC_WRITER. Version 1 supports HTTP endpoints only.",
+  "type": "object",
+  "required": ["version", "endpoints"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Currently always 1."
+    },
+    "endpoints": {
+      "type": "array",
+      "description": "All HTTP endpoints that must be covered by acceptance tests.",
+      "items": {
+        "type": "object",
+        "required": ["method", "path", "status_codes"],
+        "additionalProperties": false,
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+            "description": "HTTP method, uppercase."
+          },
+          "path": {
+            "type": "string",
+            "description": "URL path, e.g. /roles or /roles/{id}. Must match the build spec exactly.",
+            "pattern": "^/"
+          },
+          "status_codes": {
+            "type": "array",
+            "description": "Expected HTTP status codes for this endpoint (success and notable error codes).",
+            "items": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            "minItems": 1
+          }
+        }
+      }
+    }
+  }
+}

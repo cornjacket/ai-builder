@@ -1,15 +1,22 @@
 {
-  "start_state": "ARCHITECT",
+  "start_state": "ACCEPTANCE_SPEC_WRITER",
   "roles": {
+    "ACCEPTANCE_SPEC_WRITER":     { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/builder/roles/ACCEPTANCE_SPEC_WRITER.md", "no_history": true },
     "ARCHITECT":                  { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/builder/roles/ARCHITECT.md",   "no_history": false },
     "IMPLEMENTOR":                { "agent": "claude",   "prompt": "ai-builder/orchestrator/machines/builder/roles/IMPLEMENTOR.md", "no_history": false },
     "TESTER":                     { "agent": "internal", "impl": "agents.builder.tester.TesterAgent",       "prompt": null },
     "DECOMPOSE_HANDLER":          { "agent": "internal", "impl": "agents.builder.decompose.DecomposeAgent",  "prompt": null },
     "LEAF_COMPLETE_HANDLER":      { "agent": "internal", "impl": "agents.builder.lch.LCHAgent",              "prompt": null },
     "DOCUMENTER_POST_ARCHITECT":  { "agent": "internal", "impl": "agents.builder.documenter.DocumenterAgent","prompt": null },
-    "DOCUMENTER_POST_IMPLEMENTOR":{ "agent": "internal", "impl": "agents.builder.documenter.DocumenterAgent","prompt": null }
+    "DOCUMENTER_POST_IMPLEMENTOR":{ "agent": "internal", "impl": "agents.builder.documenter.DocumenterAgent","prompt": null },
+    "SPEC_COVERAGE_CHECKER":      { "agent": "internal", "impl": "agents.builder.spec_coverage_checker.SpecCoverageCheckerAgent", "prompt": null }
   },
   "transitions": {
+    "ACCEPTANCE_SPEC_WRITER": {
+      "ACCEPTANCE_SPEC_WRITER_DONE":                   "ARCHITECT",
+      "ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC":             null,
+      "ACCEPTANCE_SPEC_WRITER_UNSUPPORTED_INTERFACE":  null
+    },
     "ARCHITECT": {
       "ARCHITECT_DESIGN_READY":        "DOCUMENTER_POST_ARCHITECT",
       "ARCHITECT_DECOMPOSITION_READY": "DECOMPOSE_HANDLER",
@@ -25,7 +32,11 @@
       "IMPLEMENTOR_NEED_HELP":           null
     },
     "DOCUMENTER_POST_IMPLEMENTOR": {
-      "DOCUMENTER_DONE": "TESTER"
+      "DOCUMENTER_DONE": "SPEC_COVERAGE_CHECKER"
+    },
+    "SPEC_COVERAGE_CHECKER": {
+      "SPEC_COVERAGE_CHECKER_PASS": "TESTER",
+      "SPEC_COVERAGE_CHECKER_FAIL": null
     },
     "TESTER": {
       "TESTER_TESTS_PASS": "LEAF_COMPLETE_HANDLER",

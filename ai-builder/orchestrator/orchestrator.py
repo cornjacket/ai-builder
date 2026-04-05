@@ -194,6 +194,17 @@ if TM_MODE:
         except Exception as e:
             print(f"[orchestrator] ERROR: failed to read {LAST_JOB_FILE}: {e}")
             sys.exit(1)
+        # Override start_state with the role that was active when interrupted,
+        # if it was persisted to task.json.
+        try:
+            _resume_tj = initial_job_doc.parent / "task.json"
+            if _resume_tj.exists():
+                _resume_role = json.loads(_resume_tj.read_text()).get("active_role")
+                if _resume_role:
+                    _start_state = _resume_role
+                    print(f"[orchestrator] Resume: restoring active role '{_resume_role}' from task.json")
+        except Exception as e:
+            print(f"[orchestrator] Warning: could not read active_role from task.json on resume: {e}")
     else:
         print("[orchestrator] --job is required in TM mode (or use --resume with a prior last-job.json)")
         sys.exit(1)
@@ -337,7 +348,17 @@ def build_prompt(role: str, job_doc: Path | None, output_dir: Path, handoff_hist
     role_file = ROLE_PROMPTS.get(role) or (ROLES_DIR / f"{role}.md")
     role_instructions = role_file.read_text() if role_file.exists() \
         else "Complete the work described in the job document."
-    if role == "ARCHITECT":
+    if role == "ACCEPTANCE_SPEC_WRITER":
+        valid_outcomes = "ACCEPTANCE_SPEC_WRITER_DONE | ACCEPTANCE_SPEC_WRITER_EMPTY_SPEC | ACCEPTANCE_SPEC_WRITER_UNSUPPORTED_INTERFACE"
+        goal_text    = task_state.get("goal", "")
+        context_text = task_state.get("context", "")
+        goal_section    = f"\n\n## Goal\n\n{goal_text}"    if goal_text    else ""
+        context_section = f"\n\n## Context\n\n{context_text}" if context_text else ""
+        job_section = (
+            f"\nOutput directory (write both output files here): {output_dir}\n"
+            f"{goal_section}{context_section}\n"
+        )
+    elif role == "ARCHITECT":
         # Read complexity, level, goal, context from in-memory task_state.
         # task.json was loaded into task_state when job_doc was last set —
         # no disk read needed here. Falls back gracefully for edge cases.
@@ -1016,6 +1037,18 @@ while current_role is not None:
     if agent is None:
         print(f"[orchestrator] No agent configured for role {current_role}. Halting.")
         sys.exit(1)
+
+    # Persist active_role to task.json so --resume can restart from this role
+    # rather than always re-entering from start_state.
+    if job_doc:
+        _active_tj = job_doc.parent / "task.json"
+        if _active_tj.exists():
+            try:
+                _tj_data = json.loads(_active_tj.read_text())
+                _tj_data["active_role"] = current_role
+                _active_tj.write_text(json.dumps(_tj_data, indent=2) + "\n")
+            except Exception as e:
+                print(f"[orchestrator] Warning: could not persist active_role to task.json: {e}")
 
     # Halt after N AI invocations (--halt-after-ai-invocation). Fires just before
     # the (N+1)th AI role — after all handlers from the Nth cycle have completed

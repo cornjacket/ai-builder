@@ -1,31 +1,29 @@
 #!/usr/bin/env bash
-# Run the builder pipeline against the platform-monolith target repo.
-# Run reset.sh first to set up the sandbox.
+# Record a reference run of the platform-monolith regression test.
+#
+# This script makes real AI calls and incurs token cost. Run it once to
+# establish a baseline recording, then use test-replay.sh for all
+# subsequent regression runs.
+#
+# Usage:
+#   bash record.sh [--force]
+#
+#   --force   Overwrite an existing recording without prompting.
 
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
-TARGET_REPO="$REPO_ROOT/sandbox/regressions/platform-monolith/target"
-OUTPUT_DIR="$REPO_ROOT/sandbox/regressions/platform-monolith/output"
+RECORD_DIR="$REPO_ROOT/sandbox/regressions/platform-monolith"
+BRANCH="platform-monolith"
+DESCRIPTION="TM two-level decomposition — IAM + metrics services in one monolith"
+STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
+FORMAT="builder"
+FORCE=0
 
-if [[ ! -f "$OUTPUT_DIR/current-job.txt" ]]; then
-    echo "ERROR: $OUTPUT_DIR/current-job.txt not found — run reset.sh first"
-    exit 1
-fi
+for arg in "$@"; do
+    [[ "$arg" == "--force" ]] && FORCE=1
+done
 
-JOB=$(cat "$OUTPUT_DIR/current-job.txt")
-
-python3 "$REPO_ROOT/ai-builder/orchestrator/orchestrator.py" \
-    --job           "$JOB" \
-    --target-repo   "$TARGET_REPO" \
-    --output-dir    "$OUTPUT_DIR" \
-    --epic          main \
-    --state-machine "$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
-
-bash "$REPO_ROOT/tests/regression/lib/archive-run.sh" \
-    --target-repo "$TARGET_REPO" \
-    --output-dir  "$OUTPUT_DIR" \
-    --runs-dir    "$DIR/runs" \
-    --format      builder
+source "$DIR/../lib/record-lib.sh"

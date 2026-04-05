@@ -2,13 +2,14 @@
 # Shared recording logic for regression tests.
 #
 # Source this file after setting the required variables. The caller's
-# record.sh is responsible for argument parsing and setting:
+# run.sh is responsible for argument parsing and setting:
 #
 #   Required:
 #     DIR           — absolute path to the test directory (for reset.sh)
 #     REPO_ROOT     — absolute path to the repo root
 #     RECORD_DIR    — sandbox directory for recording output
 #     BRANCH        — recording branch name in ai-builder-recordings
+#     DESCRIPTION   — one-line description of what this regression exercises
 #     STATE_MACHINE — path to the orchestrator state machine JSON
 #     FORMAT        — builder or doc (passed to archive-run.sh and run-history.md)
 #     FORCE         — 0 (default) or 1 (set by --force flag)
@@ -101,7 +102,7 @@ echo ""
 if ! cd "$DIR/gold" && go test -tags regression ./...; then
     echo ""
     echo "ERROR: Gold tests failed — recording NOT pushed to remote."
-    echo "Fix the issue and re-run with: bash $DIR/record.sh --force"
+    echo "Fix the issue and re-run with: bash $DIR/run.sh --force"
     exit 1
 fi
 
@@ -121,6 +122,17 @@ echo "=== Pushing recording to remote ==="
 
 git -C "$RECORD_DIR" push origin --delete "$BRANCH" 2>/dev/null || true
 git -C "$RECORD_DIR" push origin "$BRANCH"
+
+# ---------------------------------------------------------------------------
+# Update ai-builder-recordings README (idempotent — no-op if already present)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Updating ai-builder-recordings README ==="
+
+bash "$REPO_ROOT/tests/regression/lib/add-to-recordings-readme.sh" \
+    --name        "$BRANCH" \
+    --description "${DESCRIPTION:-$BRANCH regression}"
 
 echo ""
 echo "=== Recording complete ==="
