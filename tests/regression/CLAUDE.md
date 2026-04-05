@@ -53,19 +53,19 @@ checks):
 ### 3. Run the regression
 
 ```bash
-bash tests/regression/<name>/record.sh [--force]
+bash tests/regression/<name>/run.sh [--force]
 ```
 
-`record.sh` is the only way to run a full regression. It handles reset,
-pipeline execution (with recording), archiving, gold tests, and push to
-`ai-builder-recordings` in one shot. The run-history row is appended
-automatically — but Gold and Notes are left blank for you to fill in.
+`run.sh` always records. It handles reset, pipeline execution with
+`--record-to`, archiving, gold tests, and push to `ai-builder-recordings`
+in one shot. The run-history row is appended automatically — but Gold and
+Notes are left blank for you to fill in.
 
-Pass `--force` when re-recording over an existing run.
+Pass `--force` when overwriting an existing recording.
 
 ### 4. Fill in Gold and Notes on the last run-history row
 
-`record.sh` appends the row but leaves Gold and Notes blank. After it
+`run.sh` appends the row but leaves Gold and Notes blank. After it
 completes, fill them in:
 
 ```bash
@@ -107,8 +107,8 @@ Each regression test lives in its own subdirectory:
 
 ```
 tests/regression/<name>/
-    record.sh         — full regression run: reset + pipeline + archive + gold + push
-    reset.sh          — archives prior runs, sets up a fresh target repo (called by record.sh)
+    run.sh         — full regression run: reset + pipeline + archive + gold + push
+    reset.sh          — archives prior runs, sets up a fresh target repo (called by run.sh)
     test-replay.sh    — zero-cost replay of a previously recorded run
     gold/             — Go regression tests that validate the output
     runs/

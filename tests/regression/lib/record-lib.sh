@@ -2,7 +2,7 @@
 # Shared recording logic for regression tests.
 #
 # Source this file after setting the required variables. The caller's
-# record.sh is responsible for argument parsing and setting:
+# run.sh is responsible for argument parsing and setting:
 #
 #   Required:
 #     DIR           — absolute path to the test directory (for reset.sh)
@@ -101,7 +101,7 @@ echo ""
 if ! cd "$DIR/gold" && go test -tags regression ./...; then
     echo ""
     echo "ERROR: Gold tests failed — recording NOT pushed to remote."
-    echo "Fix the issue and re-run with: bash $DIR/record.sh --force"
+    echo "Fix the issue and re-run with: bash $DIR/run.sh --force"
     exit 1
 fi
 
