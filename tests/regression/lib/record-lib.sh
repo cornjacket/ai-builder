@@ -9,6 +9,7 @@
 #     REPO_ROOT     — absolute path to the repo root
 #     RECORD_DIR    — sandbox directory for recording output
 #     BRANCH        — recording branch name in ai-builder-recordings
+#     DESCRIPTION   — one-line description of what this regression exercises
 #     STATE_MACHINE — path to the orchestrator state machine JSON
 #     FORMAT        — builder or doc (passed to archive-run.sh and run-history.md)
 #     FORCE         — 0 (default) or 1 (set by --force flag)
@@ -122,6 +123,17 @@ echo "=== Pushing recording to remote ==="
 git -C "$RECORD_DIR" push origin --delete "$BRANCH" 2>/dev/null || true
 git -C "$RECORD_DIR" push origin "$BRANCH"
 
+# ---------------------------------------------------------------------------
+# Update ai-builder-recordings README (idempotent — no-op if already present)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Updating ai-builder-recordings README ==="
+
+bash "$REPO_ROOT/tests/regression/lib/add-to-recordings-readme.sh" \
+    --name        "$BRANCH" \
+    --description "${DESCRIPTION:-$BRANCH regression}"
+
 echo ""
 echo "=== Recording complete ==="
 echo ""
@@ -136,7 +148,3 @@ echo "           --gold    pass \\"
 echo "           --notes   \"<triggering-task>\""
 echo "  2. Commit run-history.md"
 echo "  3. Run the replay test to verify: bash $DIR/test-replay.sh"
-echo "  4. First recording for this regression? Add it to the ai-builder-recordings README:"
-echo "       bash tests/regression/lib/add-to-recordings-readme.sh \\"
-echo "           --name        $BRANCH \\"
-echo "           --description \"<what this regression exercises>\""

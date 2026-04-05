@@ -17,6 +17,7 @@ REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
 RECORD_DIR="$REPO_ROOT/sandbox/regressions/user-service"
 BRANCH="user-service"
+DESCRIPTION="TM single-level decomposition — service decomposed into 3 components"
 STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
 FORMAT="builder"
 FORCE=0

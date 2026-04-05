@@ -46,10 +46,10 @@ git clone --depth 1 --branch main "$REMOTE_URL" "$TMPDIR/repo" 2>&1 | grep -v "^
 
 README="$TMPDIR/repo/README.md"
 
-# Check the entry doesn't already exist
+# No-op if already present (idempotent — safe to call on every run)
 if grep -qF "| ${NAME} |" "$README"; then
-    echo "ERROR: '${NAME}' is already in the table."
-    exit 1
+    echo "'${NAME}' already in the table — nothing to do."
+    exit 0
 fi
 
 # Append the new row after the last existing table data row.

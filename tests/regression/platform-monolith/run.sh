@@ -17,6 +17,7 @@ REPO_ROOT="$(cd "$DIR/../../.." && pwd)"
 
 RECORD_DIR="$REPO_ROOT/sandbox/regressions/platform-monolith"
 BRANCH="platform-monolith"
+DESCRIPTION="TM two-level decomposition — IAM + metrics services in one monolith"
 STATE_MACHINE="$REPO_ROOT/ai-builder/orchestrator/machines/builder/default.json"
 FORMAT="builder"
 FORCE=0
