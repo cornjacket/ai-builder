@@ -11,8 +11,5 @@
 - [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 - [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 - [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
-- [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
-- [4d6757-harden-worktree-scripts](4d6757-harden-worktree-scripts/)
-- [e7b46d-require-task-complete-before-worktree-removal](e7b46d-require-task-complete-before-worktree-removal/)
 <!-- task-list-end -->

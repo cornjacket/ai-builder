@@ -50,4 +50,7 @@
 - [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 - [4603fa-pipeline-record-replay](4603fa-pipeline-record-replay/)
 - [.5a34d0-document-how-to-add-replay-regression](.5a34d0-document-how-to-add-replay-regression/)
+- [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
+- [4d6757-harden-worktree-scripts](4d6757-harden-worktree-scripts/)
+- [e7b46d-require-task-complete-before-worktree-removal](e7b46d-require-task-complete-before-worktree-removal/)
 <!-- task-list-end -->

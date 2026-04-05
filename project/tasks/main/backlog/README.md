@@ -43,4 +43,6 @@
 - [384245-add-retry-count-to-run-summary](384245-add-retry-count-to-run-summary/)
 - [d68b6e-document-installation-dependencies](d68b6e-document-installation-dependencies/)
 - [9c5254-migrate-worktree-state-on-removal](9c5254-migrate-worktree-state-on-removal/)
+- [b03610-track-worktree-assignment-on-tasks](b03610-track-worktree-assignment-on-tasks/)
+- [7bc5f1-enforce-task-close-before-commit](7bc5f1-enforce-task-close-before-commit/)
 <!-- task-list-end -->
