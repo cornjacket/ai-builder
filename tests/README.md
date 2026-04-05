@@ -35,11 +35,9 @@ when to use each.
 bash tests/regression/<name>/test-replay.sh
 ```
 
-**Full live run:**
+**Full live run (always records):**
 ```bash
-bash tests/regression/<name>/reset.sh
-# ... then run the orchestrator (see each test's README)
-cd tests/regression/<name>/gold && go test -tags regression ./...
+bash tests/regression/<name>/run.sh [--force]
 ```
 
 See [`regression/how-to-write-a-regression-test.md`](regression/how-to-write-a-regression-test.md)

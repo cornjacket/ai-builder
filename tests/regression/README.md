@@ -42,7 +42,7 @@ handlers see the same files they saw during recording.
 ### Live (re-record — use sparingly)
 
 ```bash
-bash tests/regression/<name>/record.sh [--force]
+bash tests/regression/<name>/run.sh [--force]
 ```
 
 Runs the full pipeline with real AI calls, captures a new recording, and
@@ -72,19 +72,24 @@ failing replay.
 ```
                     ┌─── orchestrator ──────────────────────────────────┐
                     │                                                    │
-job doc ──────────► │  inv-01  ARCHITECT/claude ──────────────────────► │ ──► AI call
+job doc ──────────► │  inv-01  ACCEPTANCE_SPEC_WRITER/claude ─────────► │ ──► AI call
                     │                                        response    │
                     │  [recorder] git commit inv-01 ◄─────────────────  │
-                    │            saves response to responses/inv-01-ARCHITECT.txt
+                    │            saves response to responses/inv-01-ACCEPTANCE_SPEC_WRITER.txt
                     │                                                    │
-                    │  inv-02  DECOMPOSE_HANDLER/internal ─────────────► │ (no AI)
-                    │                                                    │
-                    │  [recorder] git commit inv-02                      │
-                    │                                                    │
-                    │  inv-03  ARCHITECT/claude ──────────────────────► │ ──► AI call
+                    │  inv-02  ARCHITECT/claude ──────────────────────► │ ──► AI call
                     │                                        response    │
+                    │  [recorder] git commit inv-02                      │
+                    │            saves response to responses/inv-02-ARCHITECT.txt
+                    │                                                    │
+                    │  inv-03  DECOMPOSE_HANDLER/internal ─────────────► │ (no AI)
+                    │                                                    │
                     │  [recorder] git commit inv-03                      │
-                    │            saves response to responses/inv-03-ARCHITECT.txt
+                    │                                                    │
+                    │  inv-04  ARCHITECT/claude ──────────────────────► │ ──► AI call
+                    │                                        response    │
+                    │  [recorder] git commit inv-04                      │
+                    │            saves response to responses/inv-04-ARCHITECT.txt
                     │  ...                                               │
                     │  [recorder] write recording.json manifest          │
                     └────────────────────────────────────────────────────┘
@@ -105,24 +110,30 @@ Recording repo (sandbox/regressions/<name>/):
                     ┌─── orchestrator ──────────────────────────────────┐
 recording.json ───► │  loads manifest, queues AI responses              │
                     │                                                    │
-                    │  inv-01  ARCHITECT/claude                          │
-                    │  ← serves responses/inv-01-ARCHITECT.txt          │  no AI call
+                    │  inv-01  ACCEPTANCE_SPEC_WRITER/claude             │
+                    │  ← serves responses/inv-01-ACCEPTANCE_SPEC_WRITER.txt  no AI call
                     │                                                    │
-                    │  inv-02  DECOMPOSE_HANDLER/internal ─────────────► │  runs live
+                    │  inv-02  ARCHITECT/claude                          │
+                    │  ← serves responses/inv-02-ARCHITECT.txt          │  no AI call
+                    │                                                    │
+                    │  inv-03  DECOMPOSE_HANDLER/internal ─────────────► │  runs live
                     │          creates subtask dirs in target/           │
                     │                                                    │
-                    │  inv-03  ARCHITECT/claude                          │
-                    │  ← serves responses/inv-03-ARCHITECT.txt          │  no AI call
+                    │  inv-04  ARCHITECT/claude                          │
+                    │  ← serves responses/inv-04-ARCHITECT.txt          │  no AI call
                     │                                                    │
-                    │  inv-04  DOCUMENTER_POST_ARCHITECT/internal ──────► │  runs live
+                    │  inv-05  DOCUMENTER_POST_ARCHITECT/internal ──────► │  runs live
                     │                                                    │
-                    │  inv-05  IMPLEMENTOR/claude                        │
-                    │  ← serves responses/inv-05-IMPLEMENTOR.txt        │  no AI call
-                    │  [recorder] git checkout inv-05 -- output/        │
+                    │  inv-06  IMPLEMENTOR/claude                        │
+                    │  ← serves responses/inv-06-IMPLEMENTOR.txt        │  no AI call
+                    │  [recorder] git checkout inv-06 -- output/        │
                     │            restores Go source files IMPLEMENTOR   │
                     │            wrote so TESTER can find them          │
                     │                                                    │
-                    │  inv-06  TESTER/internal ────────────────────────► │  runs live
+                    │  inv-07  SPEC_COVERAGE_CHECKER/internal ──────────► │  runs live
+                    │          verifies test coverage of acceptance-spec │
+                    │                                                    │
+                    │  inv-08  TESTER/internal ────────────────────────► │  runs live
                     │          builds and tests restored source files    │
                     │  ...                                               │
                     └────────────────────────────────────────────────────┘
@@ -149,8 +160,10 @@ and token counts that are always different.
 | Test | Pipeline mode | What it exercises |
 |------|--------------|-------------------|
 | [fibonacci](fibonacci/) | Simple (non-TM) | Single atomic job: ARCHITECT → IMPLEMENTOR → TESTER |
-| [user-service](user-service/) | TM decomposition | Single-level decompose: one service into atomic components |
-| [platform-monolith](platform-monolith/) | TM multi-level | Multi-level decompose: platform → two services → sub-components |
+| [user-service](user-service/) | TM builder | Single-level decompose: one service into atomic components |
+| [platform-monolith](platform-monolith/) | TM builder | Multi-level decompose: platform → two services → sub-components |
+| [doc-user-service](doc-user-service/) | TM doc | Doc pipeline: 2-level decomposition, atomic leaf documentation |
+| [doc-platform-monolith](doc-platform-monolith/) | TM doc | Doc pipeline: 3-level decomposition, integrate nodes |
 
 Each test has its own `README.md` with full specification, run instructions,
 and expected pipeline routing.
