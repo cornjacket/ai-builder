@@ -40,4 +40,5 @@
 - [dbe26e-evaluate-github-cli-for-claude](dbe26e-evaluate-github-cli-for-claude/)
 - [223838-audit-gemini-md-coverage](223838-audit-gemini-md-coverage/)
 - [d518c4-rename-fibonacci-to-pipeline-smoke-test](d518c4-rename-fibonacci-to-pipeline-smoke-test/)
+- [384245-add-retry-count-to-run-summary](384245-add-retry-count-to-run-summary/)
 <!-- task-list-end -->
