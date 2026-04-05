@@ -12,15 +12,18 @@ ai-builder/          ← workspace root (not a working tree itself)
     <branch>/        ← ephemeral worktrees for feature branches
 ```
 
+**All workflow scripts must be run from the `main/` worktree.** Each script
+enforces this with a guard and fetches remote state before acting.
+
 **Starting work on a task (move to in-progress + create worktree):**
 ```bash
 bash bootstrap/new-workflow.sh -taskname <hex-id>-<task-name> -name <worktree-name>
 # Moves task to in-progress, commits, creates ai-builder/<worktree-name>/
 ```
 
-**Removing a worktree after merging:**
+**Removing a worktree after merging (atomic — verifies merged PR via gh first):**
 ```bash
-bash bootstrap/remove-worktree.sh <worktree-name> --delete-branch
+bash bootstrap/remove-worktree.sh <worktree-name>
 ```
 
 Each worktree has its own `sandbox/` — regression runs in different worktrees

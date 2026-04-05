@@ -4,6 +4,10 @@ Scripts for setting up and managing the ai-builder git worktree workspace.
 
 See the top-level [`README.md`](../README.md) for the full bootstrap procedure.
 
+> **Rule:** `new-workflow.sh`, `new-worktree.sh`, and `remove-worktree.sh` must
+> always be run from the **main worktree** (`ai-builder/main/`). Each script
+> enforces this with a guard and fetches remote state before taking any action.
+
 ---
 
 ## Scripts
@@ -41,17 +45,15 @@ bash bootstrap/new-worktree.sh feat-x
 bash bootstrap/new-worktree.sh experiment --from main
 ```
 
-### `remove-worktree.sh <branch-name> [--delete-branch]`
+### `remove-worktree.sh <branch-name>`
 
-Removes a worktree. Refuses to remove `main`. Use `--delete-branch` to also
-delete the branch (safe delete — refuses if unmerged).
+Removes a worktree and its branch atomically. Refuses to remove `main` or any
+branch that does not have a confirmed merged PR. Uses `gh pr list --state merged`
+as the primary merge check (reliable for squash/rebase PRs), with remote branch
+absence as a fallback when `gh` is unavailable.
 
 ```bash
-# Remove the worktree, keep the branch
 bash bootstrap/remove-worktree.sh feat-x
-
-# Remove the worktree and delete the branch
-bash bootstrap/remove-worktree.sh feat-x --delete-branch
 ```
 
 ---
@@ -68,13 +70,16 @@ ai-builder/
 
 ## Day-to-day workflow
 
+All commands run from `ai-builder/main/`.
+
 ```bash
 # Start work on a task (moves task to in-progress, commits, creates worktree)
 bash bootstrap/new-workflow.sh -taskname <hex-id>-<task-name> -name <worktree-name>
 
 # Open a new session in the worktree and do the work
 
-# When done, merge to main and clean up
-git merge <worktree-name>
-bash bootstrap/remove-worktree.sh <worktree-name> --delete-branch
+# When done, open a PR on GitHub and merge it
+
+# Remove the worktree (verifies merged via gh before deleting)
+bash bootstrap/remove-worktree.sh <worktree-name>
 ```

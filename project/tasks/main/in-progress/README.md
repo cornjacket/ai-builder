@@ -13,4 +13,5 @@
 - [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
 - [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
+- [4d6757-harden-worktree-scripts](4d6757-harden-worktree-scripts/)
 <!-- task-list-end -->

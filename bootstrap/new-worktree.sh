@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Create a new git worktree for a branch.
-# Run from inside any existing worktree (e.g., main/).
+#
+# Must be run from the main worktree. Fetches remote state before acting.
 #
 # Usage:
 #   new-worktree.sh <branch-name> [--from <base-branch>]
@@ -33,6 +34,29 @@ if [[ -z "$BRANCH" ]]; then
     echo "Usage: new-worktree.sh <branch-name> [--from <base-branch>]"
     exit 1
 fi
+
+# ---------------------------------------------------------------------------
+# Guard: must be run from the main worktree
+# ---------------------------------------------------------------------------
+
+CURRENT_BRANCH=$(git -C "$WORKSPACE/main" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+    echo "ERROR: workflow scripts must be run from the 'main' worktree."
+    echo "       The main worktree is currently on branch '$CURRENT_BRANCH'."
+    echo "       Switch to main: git -C $WORKSPACE/main checkout main"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Fetch remote state
+# ---------------------------------------------------------------------------
+
+echo "Fetching remote state..."
+git -C "$WORKSPACE/main" fetch --prune origin
+
+# ---------------------------------------------------------------------------
+# Create worktree
+# ---------------------------------------------------------------------------
 
 TARGET="$WORKSPACE/$BRANCH"
 

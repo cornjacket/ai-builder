@@ -1,33 +1,25 @@
 #!/usr/bin/env bash
-# Remove a git worktree and optionally clean up its branch.
+# Remove a git worktree and its branch atomically.
 #
-# What this script does:
-#   1. Verifies the branch has no unpushed commits — aborts if local commits
-#      exist that are not on the remote, preventing accidental data loss.
-#      Pass --skip-push-check to bypass this guard (e.g. for branches that
-#      were never intended to be pushed).
-#   2. Removes the worktree directory (git worktree remove).
-#   3. If --delete-branch is passed:
-#        a. Deletes the local branch (safe delete — refuses if unmerged into
-#           the current HEAD).
-#        b. Deletes the remote branch on origin, if one exists.
+# Must be run from the main worktree. Fetches remote state before acting.
 #
-# Run from inside any existing worktree (e.g., main/).
+# Before removing, verifies that the branch has been merged by checking:
+#   1. gh pr list --state merged --head <branch>  (primary — works for squash/rebase PRs)
+#   2. Absence of origin/<branch> after git fetch --prune  (fallback when gh unavailable)
+#
+# If neither check can confirm the branch is merged, the operation is refused.
+# This prevents data loss from accidentally removing unmerged work.
+#
+# Both the worktree directory and the local branch are always removed together
+# (atomic — no partial state). The remote branch is also deleted if it still exists.
+#
+# Run from inside the main worktree (e.g., main/).
 #
 # Usage:
-#   remove-worktree.sh <branch-name> [--delete-branch] [--skip-push-check]
+#   remove-worktree.sh <branch-name>
 #
-# Options:
-#   --delete-branch     Delete the local branch and its remote counterpart
-#                       after removing the worktree. Safe-delete only —
-#                       refuses if the branch is not fully merged.
-#   --skip-push-check   Skip the unpushed-commits guard. Use when the branch
-#                       was never pushed (e.g. local-only experiments).
-#
-# Examples:
+# Example:
 #   remove-worktree.sh feat-x
-#   remove-worktree.sh feat-x --delete-branch
-#   remove-worktree.sh feat-x --delete-branch --skip-push-check
 
 set -euo pipefail
 
@@ -35,20 +27,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 BRANCH=""
-DELETE_BRANCH=false
-SKIP_PUSH_CHECK=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --delete-branch)    DELETE_BRANCH=true;    shift ;;
-        --skip-push-check)  SKIP_PUSH_CHECK=true;  shift ;;
         -*) echo "Unknown flag: $1"; exit 1 ;;
         *)  BRANCH="$1"; shift ;;
     esac
 done
 
 if [[ -z "$BRANCH" ]]; then
-    echo "Usage: remove-worktree.sh <branch-name> [--delete-branch] [--skip-push-check]"
+    echo "Usage: remove-worktree.sh <branch-name>"
     exit 1
 fi
 
@@ -56,6 +44,29 @@ if [[ "$BRANCH" == "main" ]]; then
     echo "ERROR: cannot remove the main worktree."
     exit 1
 fi
+
+# ---------------------------------------------------------------------------
+# Guard: must be run from the main worktree
+# ---------------------------------------------------------------------------
+
+CURRENT_BRANCH=$(git -C "$WORKSPACE/main" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+    echo "ERROR: workflow scripts must be run from the 'main' worktree."
+    echo "       The main worktree is currently on branch '$CURRENT_BRANCH'."
+    echo "       Switch to main: git -C $WORKSPACE/main checkout main"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Fetch remote state (also prunes stale remote-tracking refs)
+# ---------------------------------------------------------------------------
+
+echo "Fetching remote state..."
+git -C "$WORKSPACE/main" fetch --prune origin
+
+# ---------------------------------------------------------------------------
+# Verify worktree exists
+# ---------------------------------------------------------------------------
 
 TARGET="$WORKSPACE/$BRANCH"
 
@@ -65,52 +76,49 @@ if [[ ! -d "$TARGET" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Guard: abort if the branch has unpushed commits
+# Verify the branch is merged before removing anything
 # ---------------------------------------------------------------------------
 
-if [[ "$SKIP_PUSH_CHECK" == false ]]; then
-    GIT="git -C $WORKSPACE/main"
+MERGED=false
 
-    # Check whether a remote tracking branch exists at all
-    if $GIT rev-parse --verify "origin/$BRANCH" &>/dev/null; then
-        UNPUSHED=$($GIT log "origin/$BRANCH..$BRANCH" --oneline 2>/dev/null | wc -l | tr -d ' ')
-        if [[ "$UNPUSHED" -gt 0 ]]; then
-            echo "ERROR: branch '$BRANCH' has $UNPUSHED unpushed commit(s):"
-            $GIT log "origin/$BRANCH..$BRANCH" --oneline
-            echo ""
-            echo "Push the branch (or open a PR) before removing the worktree."
-            echo "To bypass this check: add --skip-push-check"
-            exit 1
-        fi
+if command -v gh &>/dev/null; then
+    # Primary: check whether a merged PR exists for this branch
+    MERGED_COUNT=$(gh pr list --state merged --head "$BRANCH" --json number --jq 'length' 2>/dev/null || echo "0")
+    if [[ "$MERGED_COUNT" -gt 0 ]]; then
+        MERGED=true
     else
-        echo "WARNING: branch '$BRANCH' has no remote tracking ref — it has never been pushed."
-        echo "If this is intentional, re-run with --skip-push-check."
+        echo "ERROR: no merged PR found for branch '$BRANCH' (checked via gh)."
+        echo "       Merge the branch first, then re-run this script."
+        exit 1
+    fi
+else
+    # Fallback: remote branch absence after fetch --prune implies it was merged
+    # and deleted on the remote. Use only when gh is unavailable.
+    if ! git -C "$WORKSPACE/main" show-ref --quiet "refs/remotes/origin/$BRANCH"; then
+        echo "WARNING: gh CLI not available; inferring merge from remote branch absence."
+        MERGED=true
+    else
+        echo "ERROR: cannot verify branch '$BRANCH' is merged."
+        echo "       Install gh (GitHub CLI) for reliable merge detection, or"
+        echo "       merge the branch and ensure the remote branch is deleted."
         exit 1
     fi
 fi
 
 # ---------------------------------------------------------------------------
-# Remove worktree
+# Remove worktree and branch atomically
 # ---------------------------------------------------------------------------
 
-echo "Removing worktree '$BRANCH'..."
+echo "Branch '$BRANCH' confirmed merged — removing worktree and branch..."
+
 git -C "$WORKSPACE/main" worktree remove "$TARGET"
+git -C "$WORKSPACE/main" branch -D "$BRANCH"
 
-# ---------------------------------------------------------------------------
-# Optionally delete local and remote branch
-# ---------------------------------------------------------------------------
-
-if [[ "$DELETE_BRANCH" == true ]]; then
-    echo "Deleting local branch '$BRANCH'..."
-    git -C "$WORKSPACE/main" branch -d "$BRANCH"
-
-    if git -C "$WORKSPACE/main" ls-remote --exit-code origin "$BRANCH" &>/dev/null; then
-        echo "Deleting remote branch 'origin/$BRANCH'..."
-        git -C "$WORKSPACE/main" push origin --delete "$BRANCH"
-    else
-        echo "No remote branch to delete."
-    fi
+if git -C "$WORKSPACE/main" show-ref --quiet "refs/remotes/origin/$BRANCH"; then
+    echo "Deleting remote branch 'origin/$BRANCH'..."
+    git -C "$WORKSPACE/main" push origin --delete "$BRANCH"
 fi
 
 echo ""
-echo "Removed worktree: $TARGET"
+echo "Removed worktree : $TARGET"
+echo "Deleted branch   : $BRANCH"

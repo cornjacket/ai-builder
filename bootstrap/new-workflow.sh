@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start a new feature workflow: move task to in-progress, commit, create worktree.
 #
-# Run from inside any existing worktree (e.g., main/).
+# Must be run from the main worktree. Fetches remote state before acting.
 #
 # Usage:
 #   new-workflow.sh -taskname <task-name> -name <worktree-name> [-epic <epic>]
@@ -12,10 +12,11 @@
 #   -epic       epic name (default: main)
 #
 # What this does:
-#   1. Locates the task in draft, backlog, or in-progress
-#   2. Moves it to in-progress (if not already there) and commits
-#   3. Creates a new worktree branched from the current HEAD
-#   4. Prints next steps
+#   1. Verifies it is running from the main worktree and fetches remote state
+#   2. Locates the task in draft, backlog, or in-progress
+#   3. Moves it to in-progress (if not already there) and commits
+#   4. Creates a new worktree branched from the current HEAD
+#   5. Prints next steps
 
 set -euo pipefail
 
@@ -47,12 +48,30 @@ if [[ -z "$TASK_NAME" || -z "$WORKTREE_NAME" ]]; then
     exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# Guard: must be run from the main worktree
+# ---------------------------------------------------------------------------
+
+CURRENT_BRANCH=$(git -C "$WORKSPACE/main" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+    echo "ERROR: workflow scripts must be run from the 'main' worktree."
+    echo "       The main worktree is currently on branch '$CURRENT_BRANCH'."
+    echo "       Switch to main: git -C $WORKSPACE/main checkout main"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Fetch remote state
+# ---------------------------------------------------------------------------
+
+echo "Fetching remote state..."
+git -C "$WORKSPACE/main" fetch --prune origin
+
+# ---------------------------------------------------------------------------
+# Locate the task
+# ---------------------------------------------------------------------------
+
 TASKS_ROOT="$REPO_ROOT/project/tasks/$EPIC"
-
-# ---------------------------------------------------------------------------
-# 1. Locate the task
-# ---------------------------------------------------------------------------
-
 CURRENT_FOLDER=""
 for folder in draft backlog in-progress; do
     if [[ -d "$TASKS_ROOT/$folder/$TASK_NAME" ]]; then
@@ -67,10 +86,11 @@ if [[ -z "$CURRENT_FOLDER" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 2. Move to in-progress and commit (skip if already there)
+# Move to in-progress and commit (skip if already there)
 # ---------------------------------------------------------------------------
 
 if [[ "$CURRENT_FOLDER" != "in-progress" ]]; then
+    echo ""
     echo "=== Moving $TASK_NAME to in-progress ==="
     bash "$REPO_ROOT/project/tasks/scripts/move-task.sh" \
         --epic "$EPIC" \
@@ -91,14 +111,14 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 3. Create the worktree (branches from current HEAD, which has the move)
+# Create the worktree (branches from current HEAD, which has the move)
 # ---------------------------------------------------------------------------
 
 echo "=== Creating worktree '$WORKTREE_NAME' ==="
 bash "$SCRIPT_DIR/new-worktree.sh" "$WORKTREE_NAME"
 
 # ---------------------------------------------------------------------------
-# 4. Next steps
+# Next steps
 # ---------------------------------------------------------------------------
 
 echo ""
@@ -113,9 +133,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Open a new session pointed at: $WORKSPACE/$WORKTREE_NAME"
 echo "  2. Implement $TASK_NAME in that worktree"
-echo "  3. When done, merge back to main:"
-echo "       cd $REPO_ROOT"
-echo "       git merge $WORKTREE_NAME"
-echo "  4. Remove the worktree:"
-echo "       bash bootstrap/remove-worktree.sh $WORKTREE_NAME --delete-branch"
+echo "  3. When done, open a PR and merge to main"
+echo "  4. Remove the worktree (after merge):"
+echo "       bash bootstrap/remove-worktree.sh $WORKTREE_NAME"
 echo ""
