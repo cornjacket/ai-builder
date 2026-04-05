@@ -14,4 +14,5 @@
 - [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 - [4d6757-harden-worktree-scripts](4d6757-harden-worktree-scripts/)
+- [e7b46d-require-task-complete-before-worktree-removal](e7b46d-require-task-complete-before-worktree-removal/)
 <!-- task-list-end -->

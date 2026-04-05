@@ -47,10 +47,14 @@ bash bootstrap/new-worktree.sh experiment --from main
 
 ### `remove-worktree.sh <branch-name>`
 
-Removes a worktree and its branch atomically. Refuses to remove `main` or any
-branch that does not have a confirmed merged PR. Uses `gh pr list --state merged`
-as the primary merge check (reliable for squash/rebase PRs), with remote branch
-absence as a fallback when `gh` is unavailable.
+Removes a worktree and its branch atomically. Before removing, it:
+
+1. Verifies the associated task and all its subtasks are complete (searches
+   `project/tasks/main/` for a task matching the branch name). Refuses if
+   any task or subtask is incomplete.
+2. Verifies the branch has a confirmed merged PR via `gh pr list --state merged`
+   (reliable for squash/rebase PRs), with remote branch absence as a fallback
+   when `gh` is unavailable.
 
 ```bash
 bash bootstrap/remove-worktree.sh feat-x

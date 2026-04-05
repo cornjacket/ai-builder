@@ -76,6 +76,34 @@ if [[ ! -d "$TARGET" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Verify the associated task (and all its subtasks) are complete
+#
+# Exit codes from check-task-complete.py:
+#   0 — task complete, proceed
+#   1 — task or subtasks incomplete, refuse
+#   2 — no task found for this branch (warn but allow, for experiment branches)
+# ---------------------------------------------------------------------------
+
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+TASKS_ROOT="$REPO_ROOT/project/tasks/main"
+
+TASK_CHECK_OUTPUT=$(python3 "$SCRIPT_DIR/check-task-complete.py" "$TASKS_ROOT" "$BRANCH")
+TASK_CHECK_EXIT=$?
+
+echo "$TASK_CHECK_OUTPUT"
+
+if [[ "$TASK_CHECK_EXIT" -eq 1 ]]; then
+    exit 1
+elif [[ "$TASK_CHECK_EXIT" -eq 2 ]]; then
+    echo ""
+    read -r -p "No associated task found. Remove worktree anyway? [y/N] " CONFIRM
+    if [[ "${CONFIRM,,}" != "y" ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Verify the branch is merged before removing anything
 # ---------------------------------------------------------------------------
 

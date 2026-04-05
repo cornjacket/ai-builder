@@ -21,7 +21,7 @@ bash bootstrap/new-workflow.sh -taskname <hex-id>-<task-name> -name <worktree-na
 # Moves task to in-progress, commits, creates ai-builder/<worktree-name>/
 ```
 
-**Removing a worktree after merging (atomic — verifies merged PR via gh first):**
+**Removing a worktree after merging (atomic — verifies task complete and merged PR):**
 ```bash
 bash bootstrap/remove-worktree.sh <worktree-name>
 ```
