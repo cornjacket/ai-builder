@@ -53,26 +53,20 @@ checks):
 ### 3. Run the regression
 
 ```bash
-bash tests/regression/<name>/run.sh
+bash tests/regression/<name>/record.sh [--force]
 ```
 
-`run.sh` calls `archive-run.sh` automatically after the orchestrator exits.
-The new row appears in `run-history.md` immediately — no lag, no manual step.
+`record.sh` is the only way to run a full regression. It handles reset,
+pipeline execution (with recording), archiving, gold tests, and push to
+`ai-builder-recordings` in one shot. The run-history row is appended
+automatically — but Gold and Notes are left blank for you to fill in.
 
-### 4. Run gold tests immediately after the pipeline completes
+Pass `--force` when re-recording over an existing run.
 
-Do not defer gold tests. Run them as soon as the pipeline finishes:
+### 4. Fill in Gold and Notes on the last run-history row
 
-```bash
-cd tests/regression/<name>/gold && go test -v -tags regression ./...
-```
-
-Record the result (pass/fail) before moving on.
-
-### 5. Fill in Gold and Notes on the last run-history row
-
-`run.sh` appends the row but leaves Gold and Notes blank. After gold tests
-complete, fill them in:
+`record.sh` appends the row but leaves Gold and Notes blank. After it
+completes, fill them in:
 
 ```bash
 bash tests/regression/lib/update-run-history.sh \
@@ -91,7 +85,7 @@ bash tests/regression/lib/update-run-history.sh \
 AI-invoked runs only. Recording replays would inflate the run count and
 misrepresent token costs.
 
-### 6. Commit the run-history row
+### 5. Commit the run-history row
 
 Commit `run-history.md` after gold tests have completed — not before. A row
 in the history represents a finished, verified run.
@@ -113,8 +107,9 @@ Each regression test lives in its own subdirectory:
 
 ```
 tests/regression/<name>/
-    reset.sh          — archives prior runs, sets up a fresh target repo
-    run.sh            — invokes the orchestrator
+    record.sh         — full regression run: reset + pipeline + archive + gold + push
+    reset.sh          — archives prior runs, sets up a fresh target repo (called by record.sh)
+    test-replay.sh    — zero-cost replay of a previously recorded run
     gold/             — Go regression tests that validate the output
     runs/
         run-history.md — one row per live AI run (never replay runs)

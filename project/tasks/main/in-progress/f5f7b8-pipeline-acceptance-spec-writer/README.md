@@ -10,7 +10,7 @@
 | Category    | acceptance-spec        |
 | Created     | 2026-04-03            |
 | Completed   | —                      |
-| Next-subtask-id | 0020 |
+| Next-subtask-id | 0021 |
 
 ## Goal
 
@@ -88,9 +88,10 @@ The gold tests are the only human-authored tests and caught the failures.
 - [x] [X-f5f7b8-0004-persist-active-role-for-resume](X-f5f7b8-0004-persist-active-role-for-resume/)
 - [x] [X-f5f7b8-0005-update-architect-prompts](X-f5f7b8-0005-update-architect-prompts/)
 - [x] [X-f5f7b8-0006-add-spec-coverage-checker](X-f5f7b8-0006-add-spec-coverage-checker/)
-- [ ] [f5f7b8-0007-re-record-user-service-regression](f5f7b8-0007-re-record-user-service-regression/)
-- [ ] [f5f7b8-0008-verify-gold-tests](f5f7b8-0008-verify-gold-tests/)
+- [x] [X-f5f7b8-0007-re-record-user-service-regression](X-f5f7b8-0007-re-record-user-service-regression/)
+- [x] [X-f5f7b8-0008-verify-gold-tests](X-f5f7b8-0008-verify-gold-tests/)
 - [ ] [f5f7b8-0009-update-affected-documentation](f5f7b8-0009-update-affected-documentation/)
+- [ ] [f5f7b8-0020-re-record-platform-monolith-regression](f5f7b8-0020-re-record-platform-monolith-regression/)
 <!-- subtask-list-end -->
 
 ## Notes
