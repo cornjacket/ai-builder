@@ -53,4 +53,5 @@
 - [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
 - [4d6757-harden-worktree-scripts](4d6757-harden-worktree-scripts/)
 - [e7b46d-require-task-complete-before-worktree-removal](e7b46d-require-task-complete-before-worktree-removal/)
+- [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
 <!-- task-list-end -->
