@@ -12,9 +12,17 @@
 
 ## Goal
 
-Add an optional `"model"` field to the machine JSON role config so that each
-role can specify which model to use, independently of the agent. Omitting the
-field falls back to the CLI default (current behaviour).
+Add a **required** `"model"` field to the machine JSON role config so that each
+role explicitly pins the model to use. Machine files without a `"model"` field
+on every AI role are rejected at load time.
+
+**Design constraint: model versions must be pinned.**
+Every pipeline invocation must use exactly the model specified in the machine
+file. Implicit defaults (CLI defaults that change as providers update) and
+auto-routing (Gemini's `auto-gemini-3` per-turn router) are both disallowed in
+machine files — they introduce variability across invocations, making regression
+comparisons and debugging unreliable. Auto-routing is only permitted via CLI
+override for manual experimentation.
 
 **Reference:** [`learning/agent-model-selection.md`](../../../../../learning/agent-model-selection.md)
 
@@ -24,11 +32,14 @@ Both Claude and Gemini CLIs support `--model <id>`. Currently the pipeline
 passes no `--model` flag to either, so both use their CLI defaults
 (Claude: `claude-sonnet-4-6`; Gemini: `auto-gemini-3` per-turn router).
 
-Per-role model selection enables:
-- Pinning expensive roles (ARCHITECT) to a capable model while using a cheaper
-  model for TESTER
-- Pinning Gemini to a specific model for reproducible benchmarks instead of
-  auto-routing
+If the `"model"` field were optional, runs would default to whatever the CLI's
+current default is — which changes as providers update. Two runs of the same
+machine file against the same input could silently use different models, making
+regressions unreliable and cost comparisons meaningless.
+
+Per-role model pinning enables:
+- Reproducible runs: same machine file always invokes the same models
+- Cost control: expensive roles (ARCHITECT) pinned to capable models; cheap roles (TESTER) to efficient models
 - Mixing agents and models across roles in a single pipeline run
 
 **Machine JSON change:**
@@ -37,21 +48,25 @@ Per-role model selection enables:
 "roles": {
   "ARCHITECT":   { "agent": "claude",  "model": "claude-opus-4-6",       ... },
   "IMPLEMENTOR": { "agent": "gemini",  "model": "gemini-3-flash-preview", ... },
-  "TESTER":      { "agent": "gemini",  "model": "auto-gemini-3",          ... }
+  "TESTER":      { "agent": "claude",  "model": "claude-haiku-4-5",       ... }
 }
 ```
 
+`auto-gemini-3` is **not a valid value** in machine files. The schema validator
+must reject it with a clear error message directing the user to pin a specific
+model ID.
+
 **`agent_wrapper.py` change:**
 
-`_build_command(agent, prompt)` gains an optional `model` parameter. When
-provided, appends `--model <model>` to the CLI command. The orchestrator passes
-the `model` value from the machine JSON role config through to `run_agent`.
+`_build_command(agent, prompt)` gains a required `model` parameter. Always
+appends `--model <model>` to the CLI command. The orchestrator passes the
+`model` value from the machine JSON role config through to `run_agent`.
 
 **Behavioural notes (Claude vs Gemini):**
 
 - Claude: `--model` is a hard pin — one model for the entire invocation
-- Gemini: `--model` with a specific ID is a hard pin; `auto-gemini-3` or
-  omitted keeps the per-turn router active
+- Gemini: `--model` with a specific ID is a hard pin (desired); `auto-gemini-3`
+  or omitted keeps the per-turn router active (disallowed in machine files)
 - See `learning/agent-model-selection.md` for full details
 
 ## Subtasks
@@ -62,13 +77,14 @@ the `model` value from the machine JSON role config through to `run_agent`.
 
 ## Notes
 
-### Machine file defaults vs CLI overrides
+### Machine file pinning vs CLI overrides
 
-The `"model"` field in the machine JSON defines the **default model for
-standard operation**. Machine files encode the intended configuration for
-normal pipeline runs — the model choices that are known-good and repeatable.
+The `"model"` field in the machine JSON is **required** and defines the pinned
+model for every production run. Machine files encode the exact configuration —
+agent and model — that is known-good and reproducible.
 
-CLI overrides are for **testing specific cases** without creating new files:
+CLI overrides are the **only sanctioned way** to deviate from pinned models,
+intended for testing a new model without editing machine files:
 
 ```bash
 # Standard run — uses model from machine JSON
@@ -114,7 +130,7 @@ The metrics schema needs to be extended to capture:
 {
   "role": "IMPLEMENTOR",
   "agent": "gemini",
-  "model": "auto-gemini-3",
+  "model": "gemini-3-flash-preview",
   "tokens_in": 37454,
   "tokens_out": 2179,
   "tokens_cached": 77465,
@@ -141,7 +157,8 @@ carry this data from the result event through to `metrics.py`.
 ### Documentation requirement
 
 `machines/README.md` must be updated as part of this task to document:
-- The `"model"` field in the role config and its default-vs-override semantics
-- Claude hard-pin vs Gemini auto-routing behaviour
-- The CLI override flags (once designed)
-- Guidance: machine files for standard configs, overrides for testing
+- The `"model"` field as required — what happens if it is missing or set to an
+  auto-routing value (schema validation error)
+- Claude hard-pin vs Gemini pinned-model behaviour
+- The CLI override flags and that they are the only sanctioned escape hatch
+- The pinning design principle: machine files must be fully reproducible
