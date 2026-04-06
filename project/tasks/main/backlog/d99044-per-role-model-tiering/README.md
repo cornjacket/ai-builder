@@ -6,7 +6,7 @@
 | Status      | backlog             |
 | Epic        | main               |
 | Tags        | —               |
-| Priority    | —           |
+| Priority    | HIGH        |
 | Category    | gemini-compat          |
 | Next-subtask-id | 0000               |
 
