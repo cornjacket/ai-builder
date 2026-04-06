@@ -87,8 +87,8 @@ fi
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TASKS_ROOT="$REPO_ROOT/project/tasks/main"
 
-TASK_CHECK_OUTPUT=$(python3 "$SCRIPT_DIR/check-task-complete.py" "$TASKS_ROOT" "$BRANCH")
-TASK_CHECK_EXIT=$?
+TASK_CHECK_EXIT=0
+TASK_CHECK_OUTPUT=$(python3 "$SCRIPT_DIR/check-task-complete.py" "$TASKS_ROOT" "$BRANCH") || TASK_CHECK_EXIT=$?
 
 echo "$TASK_CHECK_OUTPUT"
 
