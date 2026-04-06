@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | f5f7b8-pipeline-acceptance-spec-writer             |
 | Priority    | —           |
 | Created     | 2026-04-05            |
-| Completed   | —                      |
+| Completed | 2026-04-05 |
 | Next-subtask-id | 0000               |
 
 ## Goal

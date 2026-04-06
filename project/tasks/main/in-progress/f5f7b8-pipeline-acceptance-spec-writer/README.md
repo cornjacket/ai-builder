@@ -91,8 +91,8 @@ The gold tests are the only human-authored tests and caught the failures.
 - [x] [X-f5f7b8-0007-re-record-user-service-regression](X-f5f7b8-0007-re-record-user-service-regression/)
 - [x] [X-f5f7b8-0008-verify-gold-tests](X-f5f7b8-0008-verify-gold-tests/)
 - [ ] [f5f7b8-0009-update-affected-documentation](f5f7b8-0009-update-affected-documentation/)
-- [ ] [f5f7b8-0020-re-record-platform-monolith-regression](f5f7b8-0020-re-record-platform-monolith-regression/)
-- [ ] [f5f7b8-0021-add-regression-to-recordings-readme](f5f7b8-0021-add-regression-to-recordings-readme/)
+- [x] [X-f5f7b8-0020-re-record-platform-monolith-regression](X-f5f7b8-0020-re-record-platform-monolith-regression/)
+- [x] [X-f5f7b8-0021-add-regression-to-recordings-readme](X-f5f7b8-0021-add-regression-to-recordings-readme/)
 <!-- subtask-list-end -->
 
 ## Notes

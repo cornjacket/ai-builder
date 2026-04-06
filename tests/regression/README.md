@@ -155,6 +155,19 @@ and token counts that are always different.
 
 ---
 
+## Recording Status
+
+To check which regressions have a recording in ai-builder-recordings:
+
+```bash
+bash tests/regression/check-recordings-status.sh
+```
+
+Queries the remote repo via `gh api` — no local clone required. Exits
+non-zero if any recordings are missing.
+
+---
+
 ## Tests
 
 | Test | Pipeline mode | What it exercises |

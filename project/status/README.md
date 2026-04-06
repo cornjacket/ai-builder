@@ -13,6 +13,7 @@ next up, and key decisions made.
 
 | Date | Summary |
 |------|---------|
+| [2026-04-05](2026-04-05.md) | Established recordings for all four full-pipeline regressions; fixed doc reset.sh cp bug; added check-recordings-status.sh; PR #3 open and clean |
 | [2026-03-18](2026-03-18.md) | Token optimization: handler no-history, frame_stack, cwd=/tmp, TESTER no-history, Test Command, LCH internal agent; run 8+9 baselines recorded; run 11 pending |
 | [2026-03-17](2026-03-17.md) | Split TASK_MANAGER into DECOMPOSE_HANDLER/LEAF_COMPLETE_HANDLER; added --state-machine/--start-state flags; all three regression tests fixed and passing; platform-monolith build metrics recorded |
 | [2026-03-16](2026-03-16.md) | Completed tm-tree-traversal (advance-pipeline, on-task-complete, Level field, TM prompt fixes); platform-monolith regression test scaffolded and run twice; ARCHITECT.md contract propagation fix; regression test SOP written |

@@ -51,7 +51,8 @@ bash "$REPO_ROOT/tests/regression/lib/archive-run.sh" \
 
 echo "[1/5] Copying source template to $OUTPUT_DIR ..."
 rm -rf "$OUTPUT_DIR"
-cp -r "$SOURCE_TEMPLATE" "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
+cp -r "$SOURCE_TEMPLATE/." "$OUTPUT_DIR"
 
 # Sanity: exactly internal/iam/README.md and internal/metrics/README.md must exist
 EXPECTED_MDS=(

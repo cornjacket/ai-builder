@@ -3,14 +3,14 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
 | Category    | regression-infra       |
 | Created     | 2026-04-04            |
 | Completed   | —                      |
-| Next-subtask-id | 0014 |
+| Next-subtask-id | 0015 |
 
 ## Goal
 
@@ -46,10 +46,11 @@ confirm the correct invocation pattern before running.
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [x] [X-ccf4a4-0000-abstract-record-replay-scripts](X-ccf4a4-0000-abstract-record-replay-scripts/)
-- [ ] [ccf4a4-0001-record-platform-monolith](ccf4a4-0001-record-platform-monolith/)
+- [x] [X-ccf4a4-0001-record-platform-monolith](X-ccf4a4-0001-record-platform-monolith/)
 - [x] [X-ccf4a4-0002-add-update-run-history-script](X-ccf4a4-0002-add-update-run-history-script/)
-- [ ] [ccf4a4-0003-record-doc-platform-monolith](ccf4a4-0003-record-doc-platform-monolith/)
-- [ ] [ccf4a4-0004-record-doc-user-service](ccf4a4-0004-record-doc-user-service/)
+- [x] [X-ccf4a4-0003-record-doc-platform-monolith](X-ccf4a4-0003-record-doc-platform-monolith/)
+- [x] [X-ccf4a4-0004-record-doc-user-service](X-ccf4a4-0004-record-doc-user-service/)
+- [x] [X-ccf4a4-0014-add-recordings-status-check-script](X-ccf4a4-0014-add-recordings-status-check-script/)
 <!-- subtask-list-end -->
 
 ## Notes
