@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | ccf4a4-establish-regression-recordings             |
 | Priority    | —           |
 | Created     | 2026-04-04            |
-| Completed   | —                      |
+| Completed | 2026-04-05 |
 | Next-subtask-id | 0000               |
 
 ## Goal

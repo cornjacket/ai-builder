@@ -48,8 +48,8 @@ confirm the correct invocation pattern before running.
 - [x] [X-ccf4a4-0000-abstract-record-replay-scripts](X-ccf4a4-0000-abstract-record-replay-scripts/)
 - [x] [X-ccf4a4-0001-record-platform-monolith](X-ccf4a4-0001-record-platform-monolith/)
 - [x] [X-ccf4a4-0002-add-update-run-history-script](X-ccf4a4-0002-add-update-run-history-script/)
-- [ ] [ccf4a4-0003-record-doc-platform-monolith](ccf4a4-0003-record-doc-platform-monolith/)
-- [ ] [ccf4a4-0004-record-doc-user-service](ccf4a4-0004-record-doc-user-service/)
+- [x] [X-ccf4a4-0003-record-doc-platform-monolith](X-ccf4a4-0003-record-doc-platform-monolith/)
+- [x] [X-ccf4a4-0004-record-doc-user-service](X-ccf4a4-0004-record-doc-user-service/)
 - [ ] [ccf4a4-0014-add-recordings-status-check-script](ccf4a4-0014-add-recordings-status-check-script/)
 <!-- subtask-list-end -->
 
