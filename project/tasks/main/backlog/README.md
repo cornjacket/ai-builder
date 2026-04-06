@@ -45,4 +45,5 @@
 - [9c5254-migrate-worktree-state-on-removal](9c5254-migrate-worktree-state-on-removal/)
 - [b03610-track-worktree-assignment-on-tasks](b03610-track-worktree-assignment-on-tasks/)
 - [7bc5f1-enforce-task-close-before-commit](7bc5f1-enforce-task-close-before-commit/)
+- [7502e8-add-task-breakdown-field-and-script](7502e8-add-task-breakdown-field-and-script/)
 <!-- task-list-end -->
