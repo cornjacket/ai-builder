@@ -60,7 +60,7 @@ tested, and merged independently.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [4a8789-0000-add-category-flag-to-new-user-task](4a8789-0000-add-category-flag-to-new-user-task/)
+- [x] [X-4a8789-0000-add-category-flag-to-new-user-task](X-4a8789-0000-add-category-flag-to-new-user-task/)
 - [ ] [4a8789-0001-create-class-worktrees](4a8789-0001-create-class-worktrees/)
 <!-- subtask-list-end -->
 

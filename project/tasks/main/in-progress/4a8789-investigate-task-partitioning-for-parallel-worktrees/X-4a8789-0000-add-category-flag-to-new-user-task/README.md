@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 4a8789-investigate-task-partitioning-for-parallel-worktrees             |
 | Priority    | —           |
 | Created     | 2026-04-30            |
-| Completed   | —                      |
+| Completed | 2026-04-30 |
 | Next-subtask-id | 0000               |
 
 ## Goal
