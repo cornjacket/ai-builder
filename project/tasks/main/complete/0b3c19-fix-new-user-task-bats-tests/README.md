@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH           |
 | Category    | task-tooling           |
 | Created     | 2026-04-30            |
-| Completed   | —                      |
+| Completed | 2026-04-30 |
 | Next-subtask-id | 0000               |
 
 ## Goal

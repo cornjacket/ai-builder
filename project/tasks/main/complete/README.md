@@ -56,4 +56,5 @@
 - [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
 - [14fb29-add-work-log-mechanism](14fb29-add-work-log-mechanism/)
 - [837574-test-category-flag](837574-test-category-flag/)
+- [0b3c19-fix-new-user-task-bats-tests](0b3c19-fix-new-user-task-bats-tests/)
 <!-- task-list-end -->
