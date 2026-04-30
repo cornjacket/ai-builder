@@ -303,7 +303,7 @@ linearly, TESTER can verify in one pass.
 Run from the repo root:
 
 ```bash
-project/tasks/scripts/new-user-task.sh        --epic main --folder draft --name <task>
+project/tasks/scripts/new-user-task.sh        --epic main --folder draft --name <task> --category <branch-from-classes.md>
 project/tasks/scripts/new-user-subtask.sh     --epic main --folder <status> --parent <task> --name <subtask>
 project/tasks/scripts/new-pipeline-build.sh   --epic main --folder <status> --parent <task> [--name <name>]
 project/tasks/scripts/new-pipeline-subtask.sh --epic main --folder <status> --parent <task> --name <subtask>

@@ -229,8 +229,10 @@ All scripts are in `project/tasks/scripts/` and should be run from the
 **repo root**.
 
 ```bash
-# Create a new top-level user-task
-project/tasks/scripts/new-user-task.sh --epic main --folder draft --name my-project
+# Create a new top-level user-task. --category is required and must match a
+# worktree branch name in classes.md (or `unclassified`).
+project/tasks/scripts/new-user-task.sh --epic main --folder draft \
+    --name my-project --category task-tooling
 
 # Create a human-owned subtask (review, planning step, etc.)
 project/tasks/scripts/new-user-subtask.sh --epic main --folder in-progress \

@@ -55,4 +55,5 @@
 - [e7b46d-require-task-complete-before-worktree-removal](e7b46d-require-task-complete-before-worktree-removal/)
 - [ccf4a4-establish-regression-recordings](ccf4a4-establish-regression-recordings/)
 - [14fb29-add-work-log-mechanism](14fb29-add-work-log-mechanism/)
+- [837574-test-category-flag](837574-test-category-flag/)
 <!-- task-list-end -->
