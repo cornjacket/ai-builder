@@ -415,6 +415,11 @@ Include `Subtask:` only when the entry is subtask-scoped.
 >
 > If unsure whether the latest message starts a new task or continues an
 > existing one, ask before writing the entry.
+>
+> **Whenever Claude edits `log.md`** (whether appending a new entry or
+> back-filling a hash), Claude must announce it in the conversation with the
+> literal string `📝 log.md updated` on its own line, so the user can scan
+> transcripts for log activity at a glance.
 
 ---
 

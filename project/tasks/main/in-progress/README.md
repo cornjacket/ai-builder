@@ -8,4 +8,5 @@
 - [42997b-adopt-git-worktree-development-workflow](42997b-adopt-git-worktree-development-workflow/)
 - [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 - [803d73-rename-integrate-to-integrate-scope](803d73-rename-integrate-to-integrate-scope/)
+- [8312a3-port-log-md-update-emoji-rule](8312a3-port-log-md-update-emoji-rule/)
 <!-- task-list-end -->
