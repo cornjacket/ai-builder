@@ -19,6 +19,9 @@ setup() {
     mkdir -p "$TEST_DIR/project/tasks/scripts"
     ln -s "$SCRIPTS_DIR"/*.sh "$TEST_DIR/project/tasks/scripts/"
     ln -s "$SCRIPTS_DIR"/*.md "$TEST_DIR/project/tasks/scripts/" 2>/dev/null || true
+    # new-user-task.sh validates --category against project/tasks/classes.md,
+    # which lives one level up from the scripts directory in the real repo.
+    ln -s "$SCRIPTS_DIR/../classes.md" "$TEST_DIR/project/tasks/classes.md"
     PATCHED_SCRIPT="$TEST_DIR/project/tasks/scripts/new-user-task.sh"
 }
 
@@ -27,7 +30,7 @@ teardown() {
 }
 
 @test "creates task directory in the specified folder" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name my-feature
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name my-feature --category task-tooling
     [ "$status" -eq 0 ]
     # Should have created exactly one directory matching the pattern
     count="$(ls "$TEST_DIR/project/tasks/main/draft/" | grep -c "my-feature" || true)"
@@ -35,7 +38,7 @@ teardown() {
 }
 
 @test "created README.md contains the task name" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name check-name
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name check-name --category task-tooling
     [ "$status" -eq 0 ]
     dir="$(ls "$TEST_DIR/project/tasks/main/draft/" | grep "check-name")"
     readme="$TEST_DIR/project/tasks/main/draft/$dir/README.md"
@@ -43,7 +46,7 @@ teardown() {
 }
 
 @test "created README.md has correct Status field" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder backlog --name status-test
+    run bash "$PATCHED_SCRIPT" --epic main --folder backlog --name status-test --category task-tooling
     [ "$status" -eq 0 ]
     dir="$(ls "$TEST_DIR/project/tasks/main/backlog/" | grep "status-test")"
     readme="$TEST_DIR/project/tasks/main/backlog/$dir/README.md"
@@ -51,7 +54,7 @@ teardown() {
 }
 
 @test "created README.md has correct Priority field when supplied" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name priority-test --priority HIGH
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name priority-test --priority HIGH --category task-tooling
     [ "$status" -eq 0 ]
     dir="$(ls "$TEST_DIR/project/tasks/main/draft/" | grep "priority-test")"
     readme="$TEST_DIR/project/tasks/main/draft/$dir/README.md"
@@ -59,22 +62,37 @@ teardown() {
 }
 
 @test "appends entry to folder README" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name index-test
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name index-test --category task-tooling
     [ "$status" -eq 0 ]
     grep -q "index-test" "$TEST_DIR/project/tasks/main/draft/README.md"
 }
 
 @test "fails when --folder is missing" {
-    run bash "$PATCHED_SCRIPT" --epic main --name no-folder
+    run bash "$PATCHED_SCRIPT" --epic main --name no-folder --category task-tooling
     [ "$status" -ne 0 ]
 }
 
 @test "fails when --name is missing" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder draft
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --category task-tooling
     [ "$status" -ne 0 ]
 }
 
+@test "fails when --category is missing" {
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name no-category
+    [ "$status" -ne 0 ]
+}
+
+@test "fails when --category is not a known class" {
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name bad-cat --category not-a-real-class
+    [ "$status" -ne 0 ]
+}
+
+@test "accepts unclassified as a category" {
+    run bash "$PATCHED_SCRIPT" --epic main --folder draft --name unclassified-test --category unclassified
+    [ "$status" -eq 0 ]
+}
+
 @test "fails when folder directory does not exist" {
-    run bash "$PATCHED_SCRIPT" --epic main --folder nonexistent --name x
+    run bash "$PATCHED_SCRIPT" --epic main --folder nonexistent --name x --category task-tooling
     [ "$status" -ne 0 ]
 }
