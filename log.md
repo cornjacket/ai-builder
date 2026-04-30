@@ -35,4 +35,4 @@ just to back-fill the hash** — two commits per task is a smell.
 ## Entries
 
 - **2026-04-30** — Introduced `log.md`, the enforcing CLAUDE.md `## Work Log` rule, and `project/scripts/log-add.sh` for adding entries and back-filling commit hashes. Task: `14fb29-add-work-log-mechanism`. Commit: `69acb01`.
-- **2026-04-30** — Relocated the work-log helper from top-level `scripts/` to `project/scripts/`, sibling of `project/tasks/scripts/`, keeping `bootstrap/` strictly about workspace setup. Task: `14fb29-add-work-log-mechanism`. Subtask: `14fb29-0004-relocate-scripts-to-project-scripts`. Commit: `_pending_`.
+- **2026-04-30** — Relocated the work-log helper from top-level `scripts/` to `project/scripts/`, sibling of `project/tasks/scripts/`, keeping `bootstrap/` strictly about workspace setup. Task: `14fb29-add-work-log-mechanism`. Subtask: `14fb29-0004-relocate-scripts-to-project-scripts`. Commit: `7eb9115`.
