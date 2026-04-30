@@ -50,4 +50,5 @@
 - [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
 - [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 - [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
+- [6d4102-post-push-ci-check](6d4102-post-push-ci-check/)
 <!-- task-list-end -->
