@@ -23,6 +23,7 @@ ai-builder/         Orchestrator, state machines, role prompts, companion docs
 ai-builder/orchestrator/machines/builder/  Builder pipeline machine + role prompts
 ai-builder/orchestrator/machines/doc/      Doc pipeline machine + role prompts
 bootstrap/          Workspace setup and worktree management scripts
+scripts/            General-purpose repo scripts (e.g. log-add.sh)
 target/             Bootstrap scripts for setting up a target repository
 tests/
     regression/     Gold tests for full pipeline runs; infra smoke test
@@ -30,6 +31,7 @@ tests/
 project/            Task management system for this repo's own development
 sandbox/            Untracked scratch space for pipeline runs and experiments
 docs/               Design notes and reference documents
+log.md              Date-ordered work log indexed by short commit hash
 ```
 
 ---
@@ -186,6 +188,7 @@ for instructions on adding a new regression test.
 | [`ai-builder/orchestrator/monitoring.md`](ai-builder/orchestrator/monitoring.md) | Metrics architecture, live execution log, end-of-run outputs |
 | [`ai-builder/orchestrator/routing.md`](ai-builder/orchestrator/routing.md) | ROUTES table, outcome values, DOCUMENTER hook |
 | [`CLAUDE.md`](CLAUDE.md) | Instructions for AI agents working in this repository |
+| [`log.md`](log.md) | Date-ordered work log at task granularity, indexed by commit hash |
 
 ---
 

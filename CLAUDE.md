@@ -364,6 +364,58 @@ Omit `Subtask:` for commits that span an entire task or are not tied to a
 specific subtask. This makes `git log --grep="Task: {hex-id}"` an instant
 audit trail for any task.
 
+The short commit hash also feeds the [Work Log](#work-log) — every commit
+that delivers a task entry is back-filled into `log.md`.
+
+---
+
+## Work Log
+
+The repo-root [`log.md`](log.md) is a date-ordered record of work at
+**task / question / concept** granularity, indexed by short commit hash. It
+exists to bridge the gap between `git log` (too granular to skim) and
+conversation transcripts (not searchable, decay over time). Background:
+[`ai-builder-lessons/lessons/038-work-log-at-task-granularity.md`](../../ai-builder-lessons/lessons/038-work-log-at-task-granularity.md).
+
+**Entry format:**
+
+```
+- **YYYY-MM-DD** — <one or two sentences>. Task: `<hex-id>-<task-name>`. [Subtask: `<hex-id>-<NNNN>-<subtask-name>`.] Commit: `<short-hash>`.
+```
+
+Use the fully-qualified task name (same convention as commit trailers).
+Include `Subtask:` only when the entry is subtask-scoped.
+
+**Workflow:**
+
+1. Append the entry with a `_pending_` hash placeholder:
+   ```bash
+   scripts/log-add.sh --task <task-name> [--subtask <subtask-name>] -- <description>
+   ```
+2. Stage and commit `log.md` alongside the work it describes (normal commit
+   with task trailers — no special wrapper).
+3. Back-fill the hash:
+   ```bash
+   scripts/log-add.sh --backfill
+   ```
+   This leaves `log.md` dirty; the change rides into the next task's commit.
+
+> **Rule:** Every task that produces a commit must add exactly one `log.md`
+> entry. Two failure modes to avoid:
+>
+> 1. **Entries-per-prompt** — multiple prompts inside the same task share a
+>    single entry. Open a new entry only when the focus changes (new task,
+>    substantively different question, or meaningfully new concept).
+> 2. **Tasks-without-entries** — a task that ships a commit but adds no log
+>    entry. The log is only useful if every task is represented.
+>
+> Every entry must end with the short commit hash that delivered the work
+> (or `_pending_` until back-filled). **Never create a dedicated commit just
+> to back-fill a hash** — back-fills ride into the next task's commit.
+>
+> If unsure whether the latest message starts a new task or continues an
+> existing one, ask before writing the entry.
+
 ---
 
 ## Brainstorming
