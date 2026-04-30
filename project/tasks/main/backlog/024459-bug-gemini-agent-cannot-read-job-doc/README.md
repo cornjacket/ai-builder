@@ -3,7 +3,7 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | backlog |
 | Epic        | main               |
 | Tags        | gemini, orchestrator, bug               |
 | Priority    | HIGH           |

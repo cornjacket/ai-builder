@@ -46,4 +46,8 @@
 - [b03610-track-worktree-assignment-on-tasks](b03610-track-worktree-assignment-on-tasks/)
 - [7bc5f1-enforce-task-close-before-commit](7bc5f1-enforce-task-close-before-commit/)
 - [7502e8-add-task-breakdown-field-and-script](7502e8-add-task-breakdown-field-and-script/)
+- [ec6a38-bug-gemini-tester-cannot-read-job-doc](ec6a38-bug-gemini-tester-cannot-read-job-doc/)
+- [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
+- [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
+- [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
 <!-- task-list-end -->
