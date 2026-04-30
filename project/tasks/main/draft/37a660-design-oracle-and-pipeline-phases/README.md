@@ -22,7 +22,7 @@ The N-phase model replaces the fixed 2-phase design with a flexible graph of
 phases (Discovery, Planning, Implementation, Documentation, Review, Re-planning) connected
 through the task system and `project/reviews/`.
 
-**Reference:** `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`
+**Reference:** `sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`
 
 ## Documentation
 

@@ -20,7 +20,7 @@ in place + per-level update summary docs as a permanent audit trail.
 
 ## Context
 
-Brainstorm: `sandbox/brainstorm-pipeline-repurposing.md`
+Brainstorm: `sandbox/brainstorms/brainstorm-pipeline-repurposing.md`
 
 Uses the same orchestrator infrastructure as the build pipeline. New elements:
 

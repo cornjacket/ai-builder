@@ -29,7 +29,7 @@ The 6 phases:
 6. Re-planning — Oracle + ARCHITECT + TM, pipeline run (revise existing task tree)
 
 Source: "Phase Types" section of
-`sandbox/brainstorm-oracle-and-n-phase-pipeline.md`.
+`sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`.
 
 ## Notes
 

@@ -41,7 +41,7 @@ receives the command inline and never calls a file read tool.
 This fix is correct for both Claude and Gemini — it removes an unnecessary
 file read tool call regardless of agent.
 
-**Reference:** `sandbox/brainstorm-claude-vs-gemini-behavioral-differences.md`
+**Reference:** `sandbox/brainstorms/brainstorm-claude-vs-gemini-behavioral-differences.md`
 (Difference 1)
 
 ## Subtasks

@@ -40,4 +40,4 @@ Write the Oracle role definition and the ai-builder workflow document.
 
 ## Notes
 
-Reference: `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`
+Reference: `sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`

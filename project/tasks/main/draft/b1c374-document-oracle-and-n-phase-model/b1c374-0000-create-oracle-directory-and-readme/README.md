@@ -23,7 +23,7 @@ The README should cover:
 - File index for the `oracle/` directory
 
 Source: "Core Architecture" and "The N-Phase Model" sections of
-`sandbox/brainstorm-oracle-and-n-phase-pipeline.md`.
+`sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`.
 
 ## Notes
 

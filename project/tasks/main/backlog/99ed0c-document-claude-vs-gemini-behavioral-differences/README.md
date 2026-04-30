@@ -20,7 +20,7 @@ brainstorm into the `learning/` library and update `agent_wrapper.md`.
 ## Context
 
 The brainstorm document capturing all known differences lives at:
-[`sandbox/brainstorm-claude-vs-gemini-behavioral-differences.md`](../../../../../sandbox/brainstorm-claude-vs-gemini-behavioral-differences.md)
+[`sandbox/brainstorms/brainstorm-claude-vs-gemini-behavioral-differences.md`](../../../../../sandbox/brainstorms/brainstorm-claude-vs-gemini-behavioral-differences.md)
 
 That document covers seven confirmed differences discovered through regression
 testing:

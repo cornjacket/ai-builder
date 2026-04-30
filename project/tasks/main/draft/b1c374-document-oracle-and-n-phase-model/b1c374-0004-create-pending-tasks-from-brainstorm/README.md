@@ -11,7 +11,7 @@
 ## Description
 
 Create tasks for items in the "Pending Tasks to Create" section of
-`sandbox/brainstorm-oracle-and-n-phase-pipeline.md`, then delete the
+`sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`, then delete the
 brainstorm once all content is confirmed absorbed.
 
 Tasks to create (check for existing task before creating each):
@@ -26,7 +26,7 @@ Tasks already covered (skip):
   `7e7184-design-decomposition-protocol`
 
 After all content from the brainstorm is confirmed captured in documentation
-or tasks, delete `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`.
+or tasks, delete `sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`.
 
 ## Notes
 

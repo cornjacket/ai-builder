@@ -34,7 +34,7 @@ Mark as **DRAFT** — open question #1 (does Oracle need this file, or is it
 fully defined by the target repo's CLAUDE.md?) is not yet resolved.
 
 Source: "Core Architecture", "Role Definitions", and phase transition content
-in `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`.
+in `sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`.
 
 ## Notes
 

@@ -32,7 +32,7 @@ This insight emerged during design discussions around composite decomposition
 and the separation of human task artifacts from pipeline job documents. Full
 context in:
 
-- `sandbox/brainstorm-composite-decomposition-gap.md`
+- `sandbox/brainstorms/brainstorm-composite-decomposition-gap.md`
   (section: "⚠️ IMPORTANT: The filesystem is the implementation")
 
 ## Description

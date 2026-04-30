@@ -43,7 +43,7 @@ after human review sessions. It is consulted by:
 
 ## Notes
 
-Reference: `sandbox/brainstorm-oracle-and-n-phase-pipeline.md`
+Reference: `sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`
 
 **Review process does not use the pipeline.** It is a human judgment
 checkpoint, not an implementation task. Running review through the full

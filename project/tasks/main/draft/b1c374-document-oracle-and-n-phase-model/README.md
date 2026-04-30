@@ -12,7 +12,7 @@
 
 Create the `ai-builder/oracle/` documentation directory and `roles/ORACLE.md`,
 capturing all settled Oracle and N-phase model decisions from the brainstorm
-`sandbox/brainstorm-oracle-and-n-phase-pipeline.md`.
+`sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md`.
 
 The Oracle is the human-facing coordinator that sits above the pipeline. It
 drives phase transitions, manages the human review loop, maintains continuity
@@ -24,7 +24,7 @@ The N-phase model describes the pipeline as a graph of phase invocations
 through the task system and `project/reviews/`. This task captures that model
 in navigable documentation.
 
-**Source:** `sandbox/brainstorm-oracle-and-n-phase-pipeline.md` — absorb all
+**Source:** `sandbox/brainstorms/brainstorm-oracle-and-n-phase-pipeline.md` — absorb all
 settled content; move open questions to `oracle/open-questions.md`; delete
 the brainstorm once fully absorbed.
 

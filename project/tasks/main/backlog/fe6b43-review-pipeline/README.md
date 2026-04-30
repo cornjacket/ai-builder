@@ -20,7 +20,7 @@ directory level; source tree is clean when complete.
 
 ## Context
 
-Brainstorm: `sandbox/brainstorm-pipeline-repurposing.md`
+Brainstorm: `sandbox/brainstorms/brainstorm-pipeline-repurposing.md`
 
 Uses the same orchestrator infrastructure as the build pipeline. New elements:
 

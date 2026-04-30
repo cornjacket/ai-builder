@@ -14,7 +14,7 @@ Distil the existing `/sandbox` brainstorm files into official, version-controlle
 documentation following the structure agreed in `design-documentation-structure`.
 
 Source brainstorms to draw from:
-- `sandbox/brainstorm-agentic-platform-builder-orchestration.md` — pipeline
+- `sandbox/brainstorms/brainstorm-agentic-platform-builder-orchestration.md` — pipeline
   design, roles, configuration, rate limiting, token usage
 - Any other relevant files under `sandbox/`
 
