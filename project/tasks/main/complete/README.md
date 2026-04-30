@@ -58,4 +58,5 @@
 - [837574-test-category-flag](837574-test-category-flag/)
 - [0b3c19-fix-new-user-task-bats-tests](0b3c19-fix-new-user-task-bats-tests/)
 - [8312a3-port-log-md-update-emoji-rule](8312a3-port-log-md-update-emoji-rule/)
+- [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 <!-- task-list-end -->

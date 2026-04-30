@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | —           |
 | Category    | workspace-mgmt         |
 | Created     | 2026-04-03            |
-| Completed   | —                      |
+| Completed | 2026-04-30 |
 | Next-subtask-id | 0002 |
 
 ## Goal
