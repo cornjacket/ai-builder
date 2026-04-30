@@ -13,6 +13,7 @@ project/
     tasks/      # task management system — what needs to be done
     status/     # session and daily status logs — what was done
     reviews/    # formal review artifacts — what was decided and why
+    scripts/    # cross-cutting process scripts (e.g. log-add.sh)
 ```
 
 ---
@@ -66,6 +67,19 @@ on the same day, append to the existing file rather than creating a new one.
 
 When writing a sign-off, also add a new row to the top of the log table in
 `project/status/README.md` with the date and a one-line summary.
+
+---
+
+## scripts/
+
+Cross-cutting process scripts that operate on repo-level artifacts and don't
+belong to a single subsystem. Currently:
+
+- `log-add.sh` — appends entries to the repo-root [`log.md`](../log.md) and
+  back-fills the most recent `_pending_` hash. See
+  [`scripts/log-add.md`](scripts/log-add.md).
+
+Distinct from `tasks/scripts/`, which manages `tasks/` artifacts only.
 
 ---
 

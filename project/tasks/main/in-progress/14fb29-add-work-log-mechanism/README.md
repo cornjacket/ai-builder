@@ -10,7 +10,7 @@
 | Category    | task-tooling           |
 | Created     | 2026-04-30            |
 | Completed   | —                      |
-| Next-subtask-id | 0004 |
+| Next-subtask-id | 0005 |
 
 ## Goal
 
@@ -61,6 +61,7 @@ back-filled directly into `log.md` and rides into the next task's commit.
 - [x] [X-14fb29-0001-add-claude-md-work-log-rule](X-14fb29-0001-add-claude-md-work-log-rule/)
 - [x] [X-14fb29-0002-implement-log-add-script](X-14fb29-0002-implement-log-add-script/)
 - [x] [X-14fb29-0003-update-documentation](X-14fb29-0003-update-documentation/)
+- [x] [X-14fb29-0004-relocate-scripts-to-project-scripts](X-14fb29-0004-relocate-scripts-to-project-scripts/)
 <!-- subtask-list-end -->
 
 ## Notes

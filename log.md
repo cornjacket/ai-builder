@@ -28,10 +28,11 @@ fully-qualified name (matching the task README heading and the `Task:` /
 
 When an entry is written before its commit lands, the hash is left as
 `_pending_` and back-filled directly into `log.md` after the commit using
-`scripts/log-add.sh --backfill`. The back-fill leaves `log.md` dirty; the
+`project/scripts/log-add.sh --backfill`. The back-fill leaves `log.md` dirty; the
 change rides into the next task's commit. **Never create a dedicated commit
 just to back-fill the hash** — two commits per task is a smell.
 
 ## Entries
 
-- **2026-04-30** — Introduced `log.md`, the enforcing CLAUDE.md `## Work Log` rule, and `scripts/log-add.sh` for adding entries and back-filling commit hashes. Task: `14fb29-add-work-log-mechanism`. Commit: `_pending_`.
+- **2026-04-30** — Introduced `log.md`, the enforcing CLAUDE.md `## Work Log` rule, and `project/scripts/log-add.sh` for adding entries and back-filling commit hashes. Task: `14fb29-add-work-log-mechanism`. Commit: `69acb01`.
+- **2026-04-30** — Relocated the work-log helper from top-level `scripts/` to `project/scripts/`, sibling of `project/tasks/scripts/`, keeping `bootstrap/` strictly about workspace setup. Task: `14fb29-add-work-log-mechanism`. Subtask: `14fb29-0004-relocate-scripts-to-project-scripts`. Commit: `_pending_`.

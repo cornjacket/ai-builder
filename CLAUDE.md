@@ -390,13 +390,13 @@ Include `Subtask:` only when the entry is subtask-scoped.
 
 1. Append the entry with a `_pending_` hash placeholder:
    ```bash
-   scripts/log-add.sh --task <task-name> [--subtask <subtask-name>] -- <description>
+   project/scripts/log-add.sh --task <task-name> [--subtask <subtask-name>] -- <description>
    ```
 2. Stage and commit `log.md` alongside the work it describes (normal commit
    with task trailers — no special wrapper).
 3. Back-fill the hash:
    ```bash
-   scripts/log-add.sh --backfill
+   project/scripts/log-add.sh --backfill
    ```
    This leaves `log.md` dirty; the change rides into the next task's commit.
 

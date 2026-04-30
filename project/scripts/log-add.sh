@@ -2,10 +2,10 @@
 # Append an entry to log.md, or back-fill the most recent _pending_ hash.
 #
 # Append mode (writes log.md with _pending_ as the hash placeholder):
-#   scripts/log-add.sh --task <task-name> [--subtask <subtask-name>] [--epic <epic>] -- <description>
+#   project/scripts/log-add.sh --task <task-name> [--subtask <subtask-name>] [--epic <epic>] -- <description>
 #
 # Back-fill mode (replaces the most recent _pending_ with `git rev-parse --short HEAD`):
-#   scripts/log-add.sh --backfill
+#   project/scripts/log-add.sh --backfill
 #
 # In both modes the script writes to log.md only — it does NOT commit. Stage
 # log.md alongside the work it describes and commit normally. After the commit
@@ -19,7 +19,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LOG_FILE="$REPO_ROOT/log.md"
 
 # ---------------------------------------------------------------------------

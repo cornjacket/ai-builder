@@ -23,12 +23,12 @@ ai-builder/         Orchestrator, state machines, role prompts, companion docs
 ai-builder/orchestrator/machines/builder/  Builder pipeline machine + role prompts
 ai-builder/orchestrator/machines/doc/      Doc pipeline machine + role prompts
 bootstrap/          Workspace setup and worktree management scripts
-scripts/            General-purpose repo scripts (e.g. log-add.sh)
 target/             Bootstrap scripts for setting up a target repository
 tests/
     regression/     Gold tests for full pipeline runs; infra smoke test
     unit/           Python unit tests for orchestrator modules
 project/            Task management system for this repo's own development
+project/scripts/    Cross-cutting process scripts (e.g. log-add.sh)
 sandbox/            Untracked scratch space for pipeline runs and experiments
 docs/               Design notes and reference documents
 log.md              Date-ordered work log indexed by short commit hash
