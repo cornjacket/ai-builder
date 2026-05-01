@@ -11,7 +11,7 @@ been decided, and what happened — across both human and AI sessions.
 ```
 project/
     tasks/      # task management system — what needs to be done
-    status/     # session and daily status logs — what was done
+    status/     # periodic status reports — narrative synthesis of what shipped
     reviews/    # formal review artifacts — what was decided and why
     scripts/    # cross-cutting process scripts (e.g. log-add.sh)
 ```
@@ -49,24 +49,30 @@ viewer, without opening any file.
 
 ## status/
 
-Session and daily status logs. One file per day, named `YYYY-MM-DD.md`.
+Periodic status reports. Each report is a **delta document** covering the
+period since the previous report — narrative synthesis, not a daily log.
+Cadence is operator-driven (weekly, twice-weekly, daily) and is not tied
+to session boundaries. Files are named `YYYY-MM-DD.md`, where the date is
+the as-of date of the report.
 
-Each status file records:
-- What was completed
-- What was worked on but not completed
-- What is in progress or coming up next
-- Any key decisions made
+Each status report records:
+- **Work Completed** — narrative summary of what shipped during the
+  period (not a 1:1 restatement of `log.md`, which is the atomic
+  per-task ground truth)
+- **Work In Progress** — what is currently open
+- **Next Up** — what comes after the in-progress work
+- **Key Decisions** — non-obvious decisions worth carrying forward
 
-**Purpose for AI agents:** `status/` is how a new session picks up where the
-last one left off. Before starting work, read the most recent status file to
-understand current state. At the end of a session, write a status file
-summarising what was done (see Sign-off below).
+**Purpose for AI agents:** `status/` is how a new session picks up where
+the last one left off. Before starting work, read the most recent status
+report to understand current state. New reports are produced when the
+operator says **"write a status report"** (see below).
 
-**Convention:** files are named `YYYY-MM-DD.md`. If multiple sessions occur
-on the same day, append to the existing file rather than creating a new one.
+When writing a status report, also add a new row to the top of the log
+table in `project/status/README.md` with the date and a one-line summary.
 
-When writing a sign-off, also add a new row to the top of the log table in
-`project/status/README.md` with the date and a one-line summary.
+**Worktrees:** status reports are produced from `main/` only — they are
+a coordination artifact, not per-worktree state.
 
 ---
 
@@ -99,15 +105,24 @@ for the design task.
 
 ---
 
-## Sign-off
+## Writing a status report
 
-When ending a session, the user should say **"sign off"** to trigger a status
-summary. The AI will:
+When the operator says **"write a status report"** (or natural variants:
+"status report", "draft a status report", "write status", "write up the
+period"), the AI will:
 
-1. Summarise all work done during the session
-2. Note what is in progress, what is next, and any open decisions
-3. Write the summary to `project/status/YYYY-MM-DD.md`
-4. Commit if requested
+1. Identify the period since the most recent status report.
+2. Synthesise what shipped during that period (drawing on `log.md`,
+   completed tasks, and any in-flight work) — not a line-by-line replay
+   of `log.md`, but a narrative summary of themes and outcomes.
+3. Note what is in progress, what is next, and any key decisions made
+   during the period.
+4. Write the report to `project/status/YYYY-MM-DD.md`, where the date is
+   the as-of date.
+5. Add a new row to the top of the log table in
+   `project/status/README.md`.
+6. Commit if requested.
 
-This ensures the next session — whether the same day or weeks later — has a
-clear starting point.
+Status reports are produced on operator request, not at session end.
+Cadence is flexible — weekly, twice-weekly, or daily, as the operator
+chooses. This mirrors a real staff status meeting.

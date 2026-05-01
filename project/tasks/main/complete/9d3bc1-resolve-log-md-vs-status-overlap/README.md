@@ -3,14 +3,14 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status      | in-progress             |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH           |
 | Category    | task-tooling           |
 | Created     | 2026-04-30            |
-| Completed   | —                      |
-| Next-subtask-id | 0000               |
+| Completed | 2026-05-01 |
+| Next-subtask-id | 0003 |
 
 ## Goal
 
@@ -58,21 +58,50 @@ answer is partially. The unique value of each is:
    Do parallel worktrees need their own status docs, or is log.md
    sufficient because it's hash-indexed?
 
-**Approach:** write a short design note in `sandbox/log-vs-status.md`
-analysing the overlap, propose a resolution, get operator approval,
-then update CLAUDE.md (`## Work Log` and `## Session Status` sections)
-and possibly add or refactor a sign-off helper script.
+## Resolution
 
-## Subtasks
+Reframe status as a **delta document** — "what happened since the last
+status" — rather than a daily snapshot. Cadence becomes flexible (weekly,
+twice-weekly, daily) at operator's choice, mirroring a real staff status
+meeting.
 
-(To be added after the design note is approved. Likely:
-write the design note, update CLAUDE.md, add/refactor sign-off helper,
-final docs subtask.)
+**Roles after the change:**
+- `log.md` — atomic, per-task, hash-indexed ground truth (unchanged).
+- `project/status/YYYY-MM-DD.md` — periodic synthesis covering the period
+  since the previous status. Sections: Work Completed (summary of the
+  period, not a 1:1 restatement of log.md), Work In Progress, Next Up,
+  Key Decisions.
+
+**Trigger phrase:** the old "sign off" semantic is dropped entirely.
+Replaced by **"write a status report"** as the canonical operator phrase
+to produce a new status doc. CLAUDE.md must recognize this phrase (and
+natural variants: "status report", "draft a status report", "write
+status", "write up the period") as the trigger.
+
+**Naming:** keep `YYYY-MM-DD.md` as the as-of date of the status.
+
+**Cross-worktree:** status remains main-only (coordination artifact, not
+per-worktree state).
+
+**Open questions resolved:**
+1. "Work Completed" stays, but as a summary spanning the period, not a
+   daily restatement of log.md entries.
+2. Status keeps both backward (synthesis) and forward (in-progress,
+   next-up, decisions) sections.
+3. Helper to draft "Work Completed" from `log.md` between dates:
+   optional, defer.
+4. Canonical "where are we": latest status for narrative;
+   `list-tasks.sh --folder in-progress` for live state.
+5. Status stays main-only; log.md (hash-indexed) is sufficient
+   cross-worktree history.
 
 ## Subtasks
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [x] [X-9d3bc1-0000-update-claude-md-status-semantics](X-9d3bc1-0000-update-claude-md-status-semantics/)
+- [x] [X-9d3bc1-0001-update-project-status-readme](X-9d3bc1-0001-update-project-status-readme/)
+- [x] [X-9d3bc1-0002-update-repo-readme-with-status-pointer](X-9d3bc1-0002-update-repo-readme-with-status-pointer/)
 <!-- subtask-list-end -->
 
 ## Notes

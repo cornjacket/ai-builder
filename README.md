@@ -28,6 +28,7 @@ tests/
     regression/     Gold tests for full pipeline runs; infra smoke test
     unit/           Python unit tests for orchestrator modules
 project/            Task management system for this repo's own development
+project/status/     Periodic status reports — narrative synthesis of recent work
 project/scripts/    Cross-cutting process scripts (e.g. log-add.sh)
 sandbox/            Untracked scratch space for pipeline runs and experiments
 docs/               Design notes and reference documents
@@ -189,6 +190,7 @@ for instructions on adding a new regression test.
 | [`ai-builder/orchestrator/routing.md`](ai-builder/orchestrator/routing.md) | ROUTES table, outcome values, DOCUMENTER hook |
 | [`CLAUDE.md`](CLAUDE.md) | Instructions for AI agents working in this repository |
 | [`log.md`](log.md) | Date-ordered work log at task granularity, indexed by commit hash |
+| [`project/status/`](project/status/) | Periodic status reports — read the most recent for current state, in-progress work, and what's next |
 
 ---
 

@@ -71,18 +71,40 @@ and why in one short sentence, then suggest the next steps.
 
 ---
 
-## Session Status
+## Status Reports
 
-`project/status/` contains daily session logs (`YYYY-MM-DD.md`). **At the
-start of every session, read the most recent status file** to understand where
-things left off — what was in progress, what decisions were made, what is
-coming up next.
+`project/status/` contains periodic status reports (`YYYY-MM-DD.md`). Each
+report is a **delta document** covering the period since the previous status
+— a synthesis of what shipped, what's in flight, and what's next. It is not
+a daily snapshot, and it is not tied to session boundaries. Cadence is
+operator-driven: weekly, twice-weekly, or daily, as the operator chooses.
+This mirrors a real staff status meeting, not a per-session log.
 
-**Sign-off:** when the user says "sign off", write a status summary to
-`project/status/YYYY-MM-DD.md` covering: work completed, work in progress,
-next up, and any key decisions. Also add a new row to the top of the log
-table in `project/status/README.md` with the date and a one-line summary.
-This is how context survives across sessions.
+**At the start of every session, read the most recent status file** to
+understand where things left off — what was in progress, what decisions
+were made, what is coming up next.
+
+**Trigger:** when the user says **"write a status report"** (or natural
+variants: "status report", "draft a status report", "write status",
+"write up the period"), produce a new `project/status/YYYY-MM-DD.md`
+covering the period since the previous status. Sections:
+
+- **Work Completed** — narrative summary of what shipped during the period.
+  Do *not* restate `log.md` line-for-line; `log.md` is the atomic per-task
+  ground truth. The status report synthesizes log entries into themes,
+  outcomes, and decisions.
+- **Work In Progress** — what is currently open and where it stands.
+- **Next Up** — what comes after the in-progress work, and why.
+- **Key Decisions** — non-obvious decisions made during the period that
+  future-you will want context on.
+
+Also add a new row to the top of the log table in
+`project/status/README.md` with the date and a one-line summary. The
+filename's date is the as-of date of the report.
+
+**Roles:** `log.md` is atomic per-task history (hash-indexed). Status is
+the human narrative layered on top of it. Status reports are produced from
+`main/` only — they are a coordination artifact, not per-worktree state.
 
 **Reviews:** `project/reviews/` contains session review documents named
 `YYYY-MM-DD.md`. Reviews examine workflow, collaboration patterns, and AI

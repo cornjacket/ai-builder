@@ -1,11 +1,34 @@
-# Session Status
+# Status Reports
 
-Daily session logs. One file per day. Read the most recent entry at the start
-of a new session to understand where things left off.
+Periodic status reports — each one a **delta document** covering the
+period since the previous report. Not daily, not session-bound. Cadence
+is operator-driven (weekly, twice-weekly, daily — whatever fits), the
+way a real staff status meeting works.
 
-At the end of a session, the user says **"sign off"** and the AI writes a
-summary to `YYYY-MM-DD.md` covering: work completed, work in progress,
-next up, and key decisions made.
+Read the most recent report at the start of a new session to understand
+where things left off.
+
+When the operator says **"write a status report"** (or natural variants:
+"status report", "draft a status report", "write status", "write up the
+period"), the AI writes a new `YYYY-MM-DD.md` covering the period since
+the previous report. The filename's date is the as-of date.
+
+**Sections:**
+
+- **Work Completed** — narrative summary of what shipped during the
+  period. *Not* a 1:1 restatement of `log.md`; that is the atomic
+  per-task ground truth. The status report synthesizes log entries into
+  themes, outcomes, and decisions.
+- **Work In Progress** — what is currently open and where it stands.
+- **Next Up** — what comes after the in-progress work, and why.
+- **Key Decisions** — non-obvious decisions made during the period
+  worth carrying forward.
+
+**Roles:** `log.md` (repo root) is atomic, hash-indexed, per-task
+history. Status reports are the human narrative layered on top of it.
+
+**Worktrees:** status reports are produced from `main/` only — they are
+a coordination artifact, not per-worktree state.
 
 ---
 
