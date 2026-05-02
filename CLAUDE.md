@@ -246,6 +246,16 @@ project/tasks/scripts/list-tasks.sh --epic main --folder backlog --sort-priority
 project/tasks/scripts/list-tasks.sh --epic main --folder draft --sort-priority
 project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --sort-priority
 ```
+To partition the backlog by worktree class (see [`project/tasks/classes.md`](project/tasks/classes.md)),
+use `--group-by-category` for a global "what's next per class" view, or
+`--category <branch>` to filter to one worktree class:
+```bash
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog --group-by-category --sort-priority
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog --category task-tooling --sort-priority
+```
+The literal value `unclassified` matches tasks whose `Category:` field is
+`—` or missing.
+
 Do NOT use `list-tasks.sh --epic main` without `--folder` when the user asks for
 outstanding or incomplete tasks — it includes `complete/` which adds noise.
 
@@ -336,7 +346,7 @@ project/tasks/scripts/show-task.sh            --epic main --folder <status> --na
 project/tasks/scripts/delete-task.sh          --epic main --folder <status> --name <task>
 project/tasks/scripts/restore-task.sh         --epic main --folder <status> --name <task>
 project/tasks/scripts/wont-do-subtask.sh      --epic main --folder <status> --parent <task> --name <subtask>
-project/tasks/scripts/list-tasks.sh           --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--sort-priority]
+project/tasks/scripts/list-tasks.sh           --epic main [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--category <branch>] [--group-by-category] [--sort-priority]
 project/tasks/scripts/rename-subtask.sh       --epic main --folder <status> --parent <task> --name <subtask> --new-id NNNN
 project/tasks/scripts/insert-subtask.sh       --epic main --folder <status> --parent <task> --at NNNN --name <name> [--type user|pipeline]
 ```

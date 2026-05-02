@@ -285,6 +285,13 @@ project/tasks/scripts/list-tasks.sh --epic main --folder in-progress --depth 2
 # Filter by tag
 project/tasks/scripts/list-tasks.sh --epic main --tag backend --depth 2 --all
 
+# Filter by Category (worktree class — see classes.md)
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog --category task-tooling
+
+# Group output by Category for a per-worktree-class breakdown
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog \
+    --group-by-category --sort-priority
+
 # List tasks rooted at a specific directory
 project/tasks/scripts/list-tasks.sh --root main/in-progress/my-task --depth 3
 
