@@ -6,10 +6,13 @@
 #
 # By default only incomplete tasks are shown. Use --all to show everything.
 # Use --tag to filter to tasks whose Tags field contains the given value.
+# Use --category to filter to tasks whose Category field equals the given value
+# (use 'unclassified' to match tasks with Category '—' or no Category field).
+# Use --group-by-category to group output by Category within each status folder.
 # Use --sort-priority to sort tasks HIGH → MED → LOW → unset within each folder.
 #
 # Usage:
-#   list-tasks.sh [--epic <epic>] [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--sort-priority]
+#   list-tasks.sh [--epic <epic>] [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--category <branch>] [--group-by-category] [--sort-priority]
 #
 # Examples:
 #   list-tasks.sh --epic main
@@ -18,6 +21,8 @@
 #   list-tasks.sh --root main/in-progress/my-task --depth 3 --all
 #   list-tasks.sh --epic main --tag tooling --depth 2
 #   list-tasks.sh --epic main --folder backlog --sort-priority
+#   list-tasks.sh --epic main --folder backlog --category task-tooling
+#   list-tasks.sh --epic main --folder backlog --group-by-category --sort-priority
 
 set -euo pipefail
 
@@ -34,20 +39,38 @@ DEPTH=1
 ROOT=""
 SHOW_ALL=false
 TAG=""
+CATEGORY=""
+GROUP_BY_CATEGORY=false
 SORT_PRIORITY=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --epic)            EPIC="$2";   shift 2 ;;
-        --folder)          FOLDER="$2"; shift 2 ;;
-        --depth)           DEPTH="$2";  shift 2 ;;
-        --root)            ROOT="$2";   shift 2 ;;
-        --all)             SHOW_ALL=true; shift ;;
-        --tag)             TAG="$2";    shift 2 ;;
-        --sort-priority)   SORT_PRIORITY=true; shift ;;
+        --epic)              EPIC="$2";   shift 2 ;;
+        --folder)            FOLDER="$2"; shift 2 ;;
+        --depth)             DEPTH="$2";  shift 2 ;;
+        --root)              ROOT="$2";   shift 2 ;;
+        --all)               SHOW_ALL=true; shift ;;
+        --tag)                TAG="$2";    shift 2 ;;
+        --category)          CATEGORY="$2"; shift 2 ;;
+        --group-by-category) GROUP_BY_CATEGORY=true; shift ;;
+        --sort-priority)     SORT_PRIORITY=true; shift ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
+
+# Canonical category order — matches project/tasks/classes.md classes 1..8.
+# 'unclassified' is appended last for tasks with Category '—' or missing.
+CATEGORY_ORDER=(
+    "gemini-compat"
+    "orchestrator-core"
+    "acceptance-spec"
+    "new-pipelines"
+    "regression-infra"
+    "task-tooling"
+    "docs"
+    "workspace-mgmt"
+    "unclassified"
+)
 
 # ---------------------------------------------------------------------------
 # Resolve traversal root
@@ -105,6 +128,35 @@ has_tag() {
     local tags
     tags=$(grep -m1 "^| Tags" "$readme" 2>/dev/null | sed 's/| Tags *| *\(.*\) *|/\1/' | tr '[:upper:]' '[:lower:]')
     echo "$tags" | grep -qiw "$(echo "$TAG" | tr '[:upper:]' '[:lower:]')"
+}
+
+# ---------------------------------------------------------------------------
+# Helper: read the Category field from a task README.
+# Returns the raw value, or "unclassified" if the field is missing/blank/'—'.
+# ---------------------------------------------------------------------------
+
+get_category() {
+    local readme="$1"
+    local category
+    category=$(grep -m1 "^| Category" "$readme" 2>/dev/null | sed 's/| Category *| *\(.*\) *|/\1/' | tr -d ' ')
+    if [[ -z "$category" || "$category" == "—" ]]; then
+        echo "unclassified"
+    else
+        echo "$category"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# Helper: check if a task README's Category matches the --category filter.
+# Returns 0 (true) if no CATEGORY filter is set or the field matches.
+# ---------------------------------------------------------------------------
+
+matches_category() {
+    local readme="$1"
+    [[ -z "$CATEGORY" ]] && return 0
+    local actual
+    actual="$(get_category "$readme")"
+    [[ "$actual" == "$CATEGORY" ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -167,6 +219,10 @@ print_dir_tasks() {
     while IFS= read -r task_dir; do
         [[ -f "$task_dir/README.md" ]] || continue
         has_tag "$task_dir/README.md" || continue
+        # Category filter only applies at depth 1 (top-level tasks own the field).
+        if [[ "$current_depth" -eq 1 ]]; then
+            matches_category "$task_dir/README.md" || continue
+        fi
         local task_name priority
         task_name="$(basename "$task_dir")"
         priority="$(get_priority "$task_dir/README.md")"
@@ -201,6 +257,7 @@ print_status_tasks() {
     while IFS= read -r task_dir; do
         [[ -f "$task_dir/README.md" ]] || continue
         has_tag "$task_dir/README.md" || continue
+        matches_category "$task_dir/README.md" || continue
         task_dirs+=("$task_dir")
     done < <(
         if [[ -f "$readme" ]]; then
