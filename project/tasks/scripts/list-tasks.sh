@@ -247,7 +247,6 @@ print_status_tasks() {
     local status_dir="$1"
     local status="$2"
     local readme="$status_dir/README.md"
-    local has_tasks=0
 
     # At the status level there are no checkboxes, so we always show all
     # top-level tasks regardless of --all (status folder = completion state).
@@ -286,27 +285,49 @@ print_status_tasks() {
 
     [[ ${#task_dirs[@]} -eq 0 ]] && return
 
-    for task_dir in "${task_dirs[@]}"; do
-        local task_name priority
-        task_name="$(basename "$task_dir")"
-        priority="$(get_priority "$task_dir/README.md")"
+    echo ""
+    echo "  [$status]"
 
-        if [[ $has_tasks -eq 0 ]]; then
-            echo ""
-            echo "  [$status]"
-            has_tasks=1
-        fi
-
-        if [[ "$priority" != "—" ]]; then
-            echo "    $task_name [$priority]"
-        else
-            echo "    $task_name"
-        fi
-
-        if [[ "$DEPTH" -gt 1 ]]; then
-            print_dir_tasks "$task_dir" 2 "$DEPTH" "      └── "
-        fi
-    done
+    if [[ "$GROUP_BY_CATEGORY" == true ]]; then
+        # Walk CATEGORY_ORDER and print each non-empty group in canonical order.
+        for category in "${CATEGORY_ORDER[@]}"; do
+            local group_first=1
+            for task_dir in "${task_dirs[@]}"; do
+                local task_cat
+                task_cat="$(get_category "$task_dir/README.md")"
+                [[ "$task_cat" == "$category" ]] || continue
+                if [[ $group_first -eq 1 ]]; then
+                    echo "    [$category]"
+                    group_first=0
+                fi
+                local task_name priority
+                task_name="$(basename "$task_dir")"
+                priority="$(get_priority "$task_dir/README.md")"
+                if [[ "$priority" != "—" ]]; then
+                    echo "      $task_name [$priority]"
+                else
+                    echo "      $task_name"
+                fi
+                if [[ "$DEPTH" -gt 1 ]]; then
+                    print_dir_tasks "$task_dir" 2 "$DEPTH" "        └── "
+                fi
+            done
+        done
+    else
+        for task_dir in "${task_dirs[@]}"; do
+            local task_name priority
+            task_name="$(basename "$task_dir")"
+            priority="$(get_priority "$task_dir/README.md")"
+            if [[ "$priority" != "—" ]]; then
+                echo "    $task_name [$priority]"
+            else
+                echo "    $task_name"
+            fi
+            if [[ "$DEPTH" -gt 1 ]]; then
+                print_dir_tasks "$task_dir" 2 "$DEPTH" "      └── "
+            fi
+        done
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -316,6 +337,8 @@ print_status_tasks() {
 FILTER_LABEL="incomplete only"
 [[ "$SHOW_ALL" == true ]] && FILTER_LABEL="all"
 [[ -n "$TAG" ]] && FILTER_LABEL="$FILTER_LABEL, tag: $TAG"
+[[ -n "$CATEGORY" ]] && FILTER_LABEL="$FILTER_LABEL, category: $CATEGORY"
+[[ "$GROUP_BY_CATEGORY" == true ]] && FILTER_LABEL="$FILTER_LABEL, grouped by category"
 [[ "$SORT_PRIORITY" == true ]] && FILTER_LABEL="$FILTER_LABEL, sorted by priority"
 
 if [[ -n "$ROOT" ]]; then

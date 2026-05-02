@@ -58,7 +58,7 @@ themselves, so category logic only applies at the top-level task layer
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [8ec43a-0000-add-category-filter-flag](8ec43a-0000-add-category-filter-flag/)
+- [x] [X-8ec43a-0000-add-category-filter-flag](X-8ec43a-0000-add-category-filter-flag/)
 - [ ] [8ec43a-0001-add-group-by-category-flag](8ec43a-0001-add-group-by-category-flag/)
 - [ ] [8ec43a-0002-add-bats-tests](8ec43a-0002-add-bats-tests/)
 - [ ] [8ec43a-0003-update-claude-md-and-companion-doc](8ec43a-0003-update-claude-md-and-companion-doc/)
