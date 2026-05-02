@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH           |
 | Category    | task-tooling           |
 | Created     | 2026-05-02            |
-| Completed   | —                      |
+| Completed | 2026-05-02 |
 | Next-subtask-id | 0004 |
 
 ## Goal
@@ -61,7 +61,7 @@ themselves, so category logic only applies at the top-level task layer
 - [x] [X-8ec43a-0000-add-category-filter-flag](X-8ec43a-0000-add-category-filter-flag/)
 - [x] [X-8ec43a-0001-add-group-by-category-flag](X-8ec43a-0001-add-group-by-category-flag/)
 - [x] [X-8ec43a-0002-add-bats-tests](X-8ec43a-0002-add-bats-tests/)
-- [ ] [8ec43a-0003-update-claude-md-and-companion-doc](8ec43a-0003-update-claude-md-and-companion-doc/)
+- [x] [X-8ec43a-0003-update-claude-md-and-companion-doc](X-8ec43a-0003-update-claude-md-and-companion-doc/)
 <!-- subtask-list-end -->
 
 ## Notes

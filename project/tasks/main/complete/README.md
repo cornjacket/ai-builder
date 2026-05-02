@@ -60,4 +60,5 @@
 - [8312a3-port-log-md-update-emoji-rule](8312a3-port-log-md-update-emoji-rule/)
 - [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 - [9d3bc1-resolve-log-md-vs-status-overlap](9d3bc1-resolve-log-md-vs-status-overlap/)
+- [8ec43a-list-tasks-by-category](8ec43a-list-tasks-by-category/)
 <!-- task-list-end -->

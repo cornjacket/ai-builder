@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 8ec43a-list-tasks-by-category             |
 | Priority    | —           |
 | Created     | 2026-05-02            |
-| Completed   | —                      |
+| Completed | 2026-05-02 |
 | Next-subtask-id | 0000               |
 
 ## Goal
