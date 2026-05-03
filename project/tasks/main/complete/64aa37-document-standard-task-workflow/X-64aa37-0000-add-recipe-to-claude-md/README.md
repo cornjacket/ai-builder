@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 64aa37-document-standard-task-workflow             |
 | Priority    | —           |
 | Created     | 2026-05-03            |
-| Completed   | —                      |
+| Completed | 2026-05-03 |
 | Next-subtask-id | 0000               |
 
 ## Goal

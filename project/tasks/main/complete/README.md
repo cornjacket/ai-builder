@@ -61,4 +61,5 @@
 - [4a8789-investigate-task-partitioning-for-parallel-worktrees](4a8789-investigate-task-partitioning-for-parallel-worktrees/)
 - [9d3bc1-resolve-log-md-vs-status-overlap](9d3bc1-resolve-log-md-vs-status-overlap/)
 - [8ec43a-list-tasks-by-category](8ec43a-list-tasks-by-category/)
+- [64aa37-document-standard-task-workflow](64aa37-document-standard-task-workflow/)
 <!-- task-list-end -->

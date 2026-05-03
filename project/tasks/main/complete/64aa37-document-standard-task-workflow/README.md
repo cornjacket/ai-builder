@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-TASK              |
-| Status | in-progress |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Priority    | HIGH           |
 | Category    | docs           |
 | Created     | 2026-05-03            |
-| Completed   | —                      |
+| Completed | 2026-05-03 |
 | Next-subtask-id | 0001 |
 
 ## Goal
@@ -41,7 +41,7 @@ are referenced.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [64aa37-0000-add-recipe-to-claude-md](64aa37-0000-add-recipe-to-claude-md/)
+- [x] [X-64aa37-0000-add-recipe-to-claude-md](X-64aa37-0000-add-recipe-to-claude-md/)
 <!-- subtask-list-end -->
 
 ## Notes
