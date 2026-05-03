@@ -32,6 +32,75 @@ do not interfere with each other.
 **`ai-builder-gold/`** is the archived pre-migration repo. It is read-only
 and should not be modified.
 
+### Standard task workflow
+
+End-to-end loop for any task tracked under `project/tasks/`. Run from
+`main/` for steps 1–2 and 8; run from the feature worktree for 3–7.
+
+**1. Pick the next task.** From `main/`, view the backlog grouped by
+worktree class and ordered by priority:
+```bash
+project/tasks/scripts/list-tasks.sh --epic main --folder backlog \
+    --group-by-category --sort-priority
+```
+Use `--category <branch>` to filter to a single worktree class.
+
+**2. Start the task** (moves it to `in-progress/` and creates a worktree):
+```bash
+bash bootstrap/new-workflow.sh -taskname <hex-id>-<task-name> -name <worktree-name>
+cd ../<worktree-name>
+```
+Pick `<worktree-name>` to match the task's `Category:` branch (e.g.
+`task-tooling`) so concurrent classes stay isolated.
+
+**3. Describe and align.** Before any implementation, state the task's
+purpose and list every subtask in order. Wait for human approval if the
+task manager is human. (See `## Task Management` for the full rule set.)
+
+**4. Implement one subtask at a time.** For each subtask:
+- Make the change.
+- Add a log entry (placeholder hash):
+  ```bash
+  project/scripts/log-add.sh --task <hex-id>-<task-name> \
+      --subtask <hex-id>-<NNNN>-<subtask-name> -- "<one-or-two sentence summary>"
+  ```
+- Commit with task trailers (see `## Git Commits` for the format).
+- Back-fill the hash; the diff rides into the next commit:
+  ```bash
+  project/scripts/log-add.sh --backfill
+  ```
+- Mark the subtask complete:
+  ```bash
+  project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
+      --parent <task-name> --name <subtask-name>
+  ```
+
+**5. Final subtask is always docs.** Every task's last subtask updates
+the relevant `README.md`, `CLAUDE.md`, and any companion `.md` files.
+(See `## Documentation`.)
+
+**6. Push and open a PR.** From the worktree, push the branch and open
+a PR against `main`. Get review and merge.
+
+**7. Close the task.** After PR merges, ask the user before closing
+(see Task Management rules). When approved, from `main/`:
+```bash
+project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
+    --name <task-name>
+git add -A && git commit -m "Close <task-name>" -m "Task: <task-name>"
+project/scripts/log-add.sh --backfill
+```
+
+**8. Tear down the worktree.** From `main/`:
+```bash
+bash bootstrap/remove-worktree.sh <worktree-name>
+```
+The script verifies the task is in `complete/` and the PR is merged
+before removing.
+
+For the deeper rules behind each step, see `## Task Management`,
+`## Git Commits`, `## Work Log`, and `## Documentation` further below.
+
 ---
 
 ## Tool Usage
