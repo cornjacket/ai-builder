@@ -6,8 +6,6 @@
 <!-- task-list-start -->
 - [59d31e-add-completion-summary-to-target-claude-md](59d31e-add-completion-summary-to-target-claude-md/)
 - [697e5a-add-rename-task-script](697e5a-add-rename-task-script/)
-- [b13566-review-regression-test-readmes](b13566-review-regression-test-readmes/)
-- [ef40e2-add-session-context-document](ef40e2-add-session-context-document/)
 - [4f9fba-add-model-selection-to-machine-config](4f9fba-add-model-selection-to-machine-config/)
 - [403a88-role-doc-size-audit](403a88-role-doc-size-audit/)
 - [ba2238-regression-run-history-tracking](ba2238-regression-run-history-tracking/)
@@ -15,7 +13,6 @@
 - [d99044-per-role-model-tiering](d99044-per-role-model-tiering/)
 - [ba683a-parallel-component-execution](ba683a-parallel-component-execution/)
 - [e7dce3-brainstorm-direct-api-calls](e7dce3-brainstorm-direct-api-calls/)
-- [f1b888-brainstorm-gemini-as-frontend-ai](f1b888-brainstorm-gemini-as-frontend-ai/)
 - [99ed0c-document-claude-vs-gemini-behavioral-differences](99ed0c-document-claude-vs-gemini-behavioral-differences/)
 - [66251c-design-model-role-addendum-in-machine-config](66251c-design-model-role-addendum-in-machine-config/)
 - [fe6b43-review-pipeline](fe6b43-review-pipeline/)
@@ -48,7 +45,6 @@
 - [7502e8-add-task-breakdown-field-and-script](7502e8-add-task-breakdown-field-and-script/)
 - [ec6a38-bug-gemini-tester-cannot-read-job-doc](ec6a38-bug-gemini-tester-cannot-read-job-doc/)
 - [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
-- [f5f7b8-pipeline-acceptance-spec-writer](f5f7b8-pipeline-acceptance-spec-writer/)
 - [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
 - [6d4102-post-push-ci-check](6d4102-post-push-ci-check/)
 <!-- task-list-end -->
