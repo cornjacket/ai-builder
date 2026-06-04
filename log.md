@@ -53,4 +53,4 @@ just to back-fill the hash** — two commits per task is a smell.
 - **2026-05-03** — Moved to in-progress for parallel work in the acceptance-spec worktree. Task: `f5f7b8-pipeline-acceptance-spec-writer`. Commit: `_pending_`.
 - **2026-05-03** — Moved to in-progress for parallel work in the docs worktree. Task: `f1b888-brainstorm-gemini-as-frontend-ai`. Commit: `_pending_`.
 - **2026-05-03** — Moved to in-progress for parallel work in the regression-infra worktree. Task: `b13566-review-regression-test-readmes`. Commit: `_pending_`.
-- **2026-05-03** — Moved to in-progress for parallel work in the task-tooling worktree. Task: `ef40e2-add-session-context-document`. Commit: `_pending_`.
+- **2026-05-03** — Moved to in-progress for parallel work in the task-tooling worktree. Task: `ef40e2-add-session-context-document`. Commit: `f689f55`.
