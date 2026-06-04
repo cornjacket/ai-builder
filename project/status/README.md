@@ -16,15 +16,15 @@ the previous report. The filename's date is the as-of date.
 **Sections:**
 
 - **Work Completed** — narrative summary of what shipped during the
-  period. *Not* a 1:1 restatement of `log.md`; that is the atomic
-  per-task ground truth. The status report synthesizes log entries into
-  themes, outcomes, and decisions.
+  period. *Not* a 1:1 restatement of the git commit history; that is the
+  atomic per-task ground truth. The status report synthesizes those commits
+  into themes, outcomes, and decisions.
 - **Work In Progress** — what is currently open and where it stands.
 - **Next Up** — what comes after the in-progress work, and why.
 - **Key Decisions** — non-obvious decisions made during the period
   worth carrying forward.
 
-**Roles:** `log.md` (repo root) is atomic, hash-indexed, per-task
+**Roles:** the git commit history is atomic, hash-indexed, per-task
 history. Status reports are the human narrative layered on top of it.
 
 **Worktrees:** status reports are produced from `main/` only — they are

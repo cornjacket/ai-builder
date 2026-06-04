@@ -59,16 +59,9 @@ task manager is human. (See `## Task Management` for the full rule set.)
 
 **4. Implement one subtask at a time.** For each subtask:
 - Make the change.
-- Add a log entry (placeholder hash):
-  ```bash
-  project/scripts/log-add.sh --task <hex-id>-<task-name> \
-      --subtask <hex-id>-<NNNN>-<subtask-name> -- "<one-or-two sentence summary>"
-  ```
-- Commit with task trailers (see `## Git Commits` for the format).
-- Back-fill the hash; the diff rides into the next commit:
-  ```bash
-  project/scripts/log-add.sh --backfill
-  ```
+- Commit with task trailers and a schema-compliant message (see
+  `## Git Commits` and the **Knowledge Extraction & Git Automation** section
+  for the format). Announce it with `✅ <short-hash> — <title>`.
 - Mark the subtask complete:
   ```bash
   project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
@@ -88,7 +81,6 @@ a PR against `main`. Get review and merge.
 project/tasks/scripts/complete-task.sh --epic main --folder in-progress \
     --name <task-name>
 git add -A && git commit -m "Close <task-name>" -m "Task: <task-name>"
-project/scripts/log-add.sh --backfill
 ```
 
 **8. Tear down the worktree.** From `main/`:
@@ -99,7 +91,7 @@ The script verifies the task is in `complete/` and the PR is merged
 before removing.
 
 For the deeper rules behind each step, see `## Task Management`,
-`## Git Commits`, `## Work Log`, and `## Documentation` further below.
+`## Git Commits`, and `## Documentation` further below.
 
 ---
 
@@ -159,9 +151,9 @@ variants: "status report", "draft a status report", "write status",
 covering the period since the previous status. Sections:
 
 - **Work Completed** — narrative summary of what shipped during the period.
-  Do *not* restate `log.md` line-for-line; `log.md` is the atomic per-task
-  ground truth. The status report synthesizes log entries into themes,
-  outcomes, and decisions.
+  Do *not* restate `git log` commit-by-commit; the commit history (with its
+  `[Context]`/`[Impact]` bodies) is the atomic per-task ground truth. The
+  status report synthesizes those commits into themes, outcomes, and decisions.
 - **Work In Progress** — what is currently open and where it stands.
 - **Next Up** — what comes after the in-progress work, and why.
 - **Key Decisions** — non-obvious decisions made during the period that
@@ -171,8 +163,9 @@ Also add a new row to the top of the log table in
 `project/status/README.md` with the date and a one-line summary. The
 filename's date is the as-of date of the report.
 
-**Roles:** `log.md` is atomic per-task history (hash-indexed). Status is
-the human narrative layered on top of it. Status reports are produced from
+**Roles:** the git commit history is atomic per-task history (hash-indexed,
+with `[Context]`/`[Impact]` bodies). Status is the human narrative layered on
+top of it. Status reports are produced from
 `main/` only — they are a coordination artifact, not per-worktree state.
 
 **Reviews:** `project/reviews/` contains session review documents named
@@ -463,64 +456,9 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 Use the fully-qualified task name (same convention as the task README heading).
 Omit `Subtask:` for commits that span an entire task or are not tied to a
 specific subtask. This makes `git log --grep="Task: {hex-id}"` an instant
-audit trail for any task.
-
-The short commit hash also feeds the [Work Log](#work-log) — every commit
-that delivers a task entry is back-filled into `log.md`.
-
----
-
-## Work Log
-
-The repo-root [`log.md`](log.md) is a date-ordered record of work at
-**task / question / concept** granularity, indexed by short commit hash. It
-exists to bridge the gap between `git log` (too granular to skim) and
-conversation transcripts (not searchable, decay over time). Background:
-[`ai-builder-lessons/lessons/038-work-log-at-task-granularity.md`](../../ai-builder-lessons/lessons/038-work-log-at-task-granularity.md).
-
-**Entry format:**
-
-```
-- **YYYY-MM-DD** — <one or two sentences>. Task: `<hex-id>-<task-name>`. [Subtask: `<hex-id>-<NNNN>-<subtask-name>`.] Commit: `<short-hash>`.
-```
-
-Use the fully-qualified task name (same convention as commit trailers).
-Include `Subtask:` only when the entry is subtask-scoped.
-
-**Workflow:**
-
-1. Append the entry with a `_pending_` hash placeholder:
-   ```bash
-   project/scripts/log-add.sh --task <task-name> [--subtask <subtask-name>] -- <description>
-   ```
-2. Stage and commit `log.md` alongside the work it describes (normal commit
-   with task trailers — no special wrapper).
-3. Back-fill the hash:
-   ```bash
-   project/scripts/log-add.sh --backfill
-   ```
-   This leaves `log.md` dirty; the change rides into the next task's commit.
-
-> **Rule:** Every task that produces a commit must add exactly one `log.md`
-> entry. Two failure modes to avoid:
->
-> 1. **Entries-per-prompt** — multiple prompts inside the same task share a
->    single entry. Open a new entry only when the focus changes (new task,
->    substantively different question, or meaningfully new concept).
-> 2. **Tasks-without-entries** — a task that ships a commit but adds no log
->    entry. The log is only useful if every task is represented.
->
-> Every entry must end with the short commit hash that delivered the work
-> (or `_pending_` until back-filled). **Never create a dedicated commit just
-> to back-fill a hash** — back-fills ride into the next task's commit.
->
-> If unsure whether the latest message starts a new task or continues an
-> existing one, ask before writing the entry.
->
-> **Whenever Claude edits `log.md`** (whether appending a new entry or
-> back-filling a hash), Claude must announce it in the conversation with the
-> literal string `📝 log.md updated` on its own line, so the user can scan
-> transcripts for log activity at a glance.
+audit trail for any task. Task-granularity history is reconstructed directly
+from these commit messages (see the **Knowledge Extraction & Git Automation**
+section below) — there is no separate work-log file to maintain.
 
 ---
 
@@ -559,55 +497,53 @@ task:
   This block is injected and refreshed by ai-project-status:
   https://github.com/cornjacket/ai-project-status
 
-  It defines how this repo's log.md must be maintained so the
-  meta-repo can summarize cross-portfolio activity in summary.md.
+  It defines the commit-message discipline this repo must follow so
+  the meta-repo can summarize cross-portfolio activity in summary.md.
 
   Do not edit between the begin/end markers — local edits will be
   overwritten on the next `setup-new-repo.sh --update`. To change
   the rules, edit templates/claude-rule.md in ai-project-status
   and re-run `setup-new-repo.sh --update <this-repo-remote>`.
 -->
-## Work log (log.md)
+## Knowledge Extraction & Git Automation
 
-This repo is monitored by [`ai-project-status`](https://github.com/cornjacket/ai-project-status). You MUST maintain `log.md` at the repo root as a date-ordered, task-granularity record of work. The mechanism is documented in [`ai-builder-lessons` lesson 038](https://github.com/cornjacket/ai-builder-lessons/blob/main/lessons/038-work-log-at-task-granularity.md).
+This repo is monitored by [`ai-project-status`](https://github.com/cornjacket/ai-project-status). It no longer reads a `log.md` file — backward-looking activity is reconstructed **directly from your git history**. Your job is to make every commit message a high-level, self-contained telemetry record so the meta-repo can summarize cross-portfolio activity in `summary.md`.
+
+### Commit-message schema
+
+Every commit MUST follow this shape:
+
+```
+<domain>(<scope>): <high-level functional summary>
+- [Context]: Why this was done / what was learned.
+- [Impact]: How it alters the project or system behavior.
+```
 
 ### Rules
 
-1. **Granularity is task / question / concept — never per-prompt.** Multiple prompts inside the same task share one entry. Open a new entry only when the focus changes (a new task starts, the user asks a substantively different question, or a meaningfully new concept comes up). Both failure modes corrupt the log: **entries-per-prompt** (noise that drowns out signal) and **tasks-without-entries** (gaps that make the log untrustworthy). When unsure whether the latest message starts a new task or continues one, **ask before writing** — picking the wrong granularity is harder to undo than asking.
+1. **The title summarizes the functional change, not the files.** Describe the overall behavior change or architectural decision (`engine(telemetry): replace log.md mining with commit parsing`), NOT a list of touched file names (`update _lib.py and tests`). A reader scanning `git log` should grasp *what changed in the system* from the title alone.
 
-2. **Entry format is fixed** — one or two sentences of *what changed and why*, ending with the short commit hash:
+2. **`[Context]` and `[Impact]` are required on any non-trivial commit.** `[Context]` captures the why / the lesson learned; `[Impact]` captures how the project or system behavior changes. Each may span multiple lines. Trivial mechanical commits (typo, formatting) may omit them.
 
-   ```
-   - **YYYY-MM-DD** — <what changed and why>. Task: `<task-name>`. [Subtask: `<subtask-name>`.] Commit: `<short-hash>`.
-   ```
+3. **Commit at task granularity — never per-prompt.** Multiple prompts inside one task land in one commit. Open a new commit when the focus changes (a new task, a substantively different question, a meaningfully new concept). Avoid both **commit-per-prompt** (noise that drowns out signal) and **task-without-a-commit** (gaps that make the history untrustworthy).
 
-   Use the fully-qualified task name (matching commit trailers and any task READMEs). Include `Subtask:` only when the entry is subtask-scoped.
+4. **Automate the commit before session close.** Stage the work (`git add`) and run `git commit -m` with a schema-compliant message before ending the session. Do not leave completed work uncommitted — uncommitted work is invisible to the meta-repo.
 
-3. **The commit hash is required.** If the entry is written before the commit lands, write `Commit: \`_pending_\`` and back-fill the short hash after the commit. **Do not create a dedicated commit just to back-fill the hash** — let the resolution ride into the next task's commit. Two commits per task is a smell.
-
-4. **Announce every `log.md` edit.** Immediately after appending a new entry or back-filling a hash, output the literal string `📝 log.md updated` on its own line in chat. Silent edits do not count as a record of work — without the announcement, log activity is invisible inside long tool-call sequences.
-
-<!--
-  TODO: Rule 5 is a candidate for removal. ai-project-status only needs log.md
-  discipline (rules 1–4); how a tracked repo announces commits in chat is a
-  per-project Claude-Code-ergonomics concern and arguably belongs in each
-  repo's own CLAUDE.md, not in a block injected by this meta-repo.
--->
-5. **Announce every commit.** Immediately after creating a commit, output the literal string `✅ commit <short-hash>` on its own line in chat. This makes commits scannable in the transcript without scrolling tool calls.
+5. **Announce each task commit.** Immediately after committing, print `✅ <short-hash> — <title>` on its own line in the conversation, so the user can scan the transcript for recorded work at a glance. One checkmark per task commit — the commit *is* the record, so there is nothing else to back-fill.
 
 ## Daily plan (daily-plan.md)
 
-`daily-plan.md` is a **forward-looking** companion to `log.md`, also at the repo root. It captures the intent for one working day. ai-project-status aggregates every tracked repo's `daily-plan.md` into [`daily-plan-summary.md`](https://github.com/cornjacket/ai-project-status/blob/main/daily-plan-summary.md).
+`daily-plan.md` is a **forward-looking** plan file at the repo root. It captures the intent for one working day. ai-project-status aggregates every tracked repo's `daily-plan.md` into [`daily-plan-summary.md`](https://github.com/cornjacket/ai-project-status/blob/main/daily-plan-summary.md).
 
 ### Rules
 
-1. **Single-day scope.** The file represents *one* day's plan. It is **always overwritten**, never appended. History of what actually happened lives in `log.md` and `summary.md`.
+1. **Single-day scope.** The file represents *one* day's plan. It is **always overwritten**, never appended. History of what actually happened lives in your git history and `summary.md`.
 
 2. **Header carries the date.** The first line MUST be `# Daily plan — YYYY-MM-DD`, where the date is the day the plan is *for*. The aggregator parses this to detect stale plans; an unparseable header is treated as stale.
 
-3. **Body is a 100-ft view.** One short paragraph or list of intent, plus a small ASCII diagram (timeline, flow, milestones) that conveys the shape of the day at a glance. Don't write granular tasks — `log.md` records granularity after the fact.
+3. **Body is a 100-ft view.** One short paragraph or list of intent, plus a small ASCII diagram (timeline, flow, milestones) that conveys the shape of the day at a glance. Don't write granular tasks — your commit history records granularity after the fact.
 
-4. **End-of-session sign-off rule.** When the user signals end-of-day or signoff, confirm tomorrow's plan with them and overwrite `daily-plan.md` with it. If today is Friday, write Monday's plan (the aggregator's weekend tolerance keeps the Friday-written-on-Friday plan valid through the weekend; Monday's plan is what's needed for Monday).
+4. **Forward-write rule.** Overwrite `daily-plan.md` with the next working day's plan **only when the user explicitly asks to plan tomorrow** — e.g., "write tomorrow's plan", "set up tomorrow", or an end-of-day signoff that includes a forward-planning intent. Do NOT auto-trigger on ambiguous "let's stop here" or "good for today" signoffs — wait for an explicit forward-planning ask. If today is Friday, write Monday's plan (the aggregator's weekend tolerance keeps the Friday-written-on-Friday plan valid through the weekend; Monday's plan is what's needed for Monday).
 
 5. **Start-of-session safety net.** A `SessionStart` hook (installed at `.claude/hooks/check-daily-plan.py`) checks `daily-plan.md` freshness against today's most-recent-weekday. If stale or missing, it injects a prompt instructing you to ask the user for today's plan and overwrite the file before doing other work. Treat this as a hard precondition — don't proceed with other tasks until the plan is fresh.
 

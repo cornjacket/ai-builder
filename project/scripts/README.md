@@ -11,12 +11,6 @@ Distinct from:
 
 ## Scripts
 
-### `log-add.sh`
-
-Appends an entry to the repo-root [`log.md`](../../log.md), or back-fills the
-most recent `_pending_` hash with the current short HEAD. Writes `log.md`
-only — does not commit.
-
-See [`log-add.md`](log-add.md) for full usage and the surrounding workflow.
-The convention this script supports is documented in the
-[Work Log](../../CLAUDE.md#work-log) section of `CLAUDE.md`.
+_None currently._ (The former `log-add.sh` was retired when this repo moved
+off `log.md` to git-native commit telemetry — see the **Knowledge Extraction
+& Git Automation** section of [`CLAUDE.md`](../../CLAUDE.md).)

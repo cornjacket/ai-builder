@@ -13,7 +13,7 @@ project/
     tasks/      # task management system — what needs to be done
     status/     # periodic status reports — narrative synthesis of what shipped
     reviews/    # formal review artifacts — what was decided and why
-    scripts/    # cross-cutting process scripts (e.g. log-add.sh)
+    scripts/    # cross-cutting process scripts
 ```
 
 ---
@@ -57,8 +57,8 @@ the as-of date of the report.
 
 Each status report records:
 - **Work Completed** — narrative summary of what shipped during the
-  period (not a 1:1 restatement of `log.md`, which is the atomic
-  per-task ground truth)
+  period (not a 1:1 restatement of the git commit history, which is the
+  atomic per-task ground truth)
 - **Work In Progress** — what is currently open
 - **Next Up** — what comes after the in-progress work
 - **Key Decisions** — non-obvious decisions worth carrying forward
@@ -79,11 +79,7 @@ a coordination artifact, not per-worktree state.
 ## scripts/
 
 Cross-cutting process scripts that operate on repo-level artifacts and don't
-belong to a single subsystem. Currently:
-
-- `log-add.sh` — appends entries to the repo-root [`log.md`](../log.md) and
-  back-fills the most recent `_pending_` hash. See
-  [`scripts/log-add.md`](scripts/log-add.md).
+belong to a single subsystem.
 
 Distinct from `tasks/scripts/`, which manages `tasks/` artifacts only.
 
@@ -112,9 +108,9 @@ When the operator says **"write a status report"** (or natural variants:
 period"), the AI will:
 
 1. Identify the period since the most recent status report.
-2. Synthesise what shipped during that period (drawing on `log.md`,
-   completed tasks, and any in-flight work) — not a line-by-line replay
-   of `log.md`, but a narrative summary of themes and outcomes.
+2. Synthesise what shipped during that period (drawing on the git commit
+   history, completed tasks, and any in-flight work) — not a line-by-line
+   replay of `git log`, but a narrative summary of themes and outcomes.
 3. Note what is in progress, what is next, and any key decisions made
    during the period.
 4. Write the report to `project/status/YYYY-MM-DD.md`, where the date is
