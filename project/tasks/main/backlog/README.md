@@ -47,4 +47,7 @@
 - [024459-bug-gemini-agent-cannot-read-job-doc](024459-bug-gemini-agent-cannot-read-job-doc/)
 - [e62647-add-test-support-for-gemini-subagents](e62647-add-test-support-for-gemini-subagents/)
 - [6d4102-post-push-ci-check](6d4102-post-push-ci-check/)
+- [29297c-relocate-pipeline-scripts](29297c-relocate-pipeline-scripts/)
+- [59ea60-repo-name-rename-audit](59ea60-repo-name-rename-audit/)
+- [15d940-target-composition-delegate-to-generate](15d940-target-composition-delegate-to-generate/)
 <!-- task-list-end -->

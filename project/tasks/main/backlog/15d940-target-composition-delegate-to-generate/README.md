@@ -1,0 +1,52 @@
+# Task: target-composition-delegate-to-generate
+
+| Field       | Value                  |
+|-------------|------------------------|
+| Task-type   | USER-TASK              |
+| Status      | backlog             |
+| Epic        | main               |
+| Tags        | —               |
+| Priority    | MED           |
+| Category    | workspace-mgmt           |
+| Created     | 2026-07-26            |
+| Completed   | —                      |
+| Next-subtask-id | 0000               |
+
+## Goal
+
+Refactor `target/setup-project.sh` so a target repo's **task layer** comes from a
+**pinned** create-project-system `generate.sh` (one hop, single source), while
+create-ai-builder installs its **pipeline** as an overlay on top. Removes the
+current copy-of-a-copy.
+
+## Context
+
+Re-homed from create-project-system (its placeholder task 14). Design doc:
+`create-project-system/docs/composition-with-create-ai-builder.md`.
+
+`target/setup-project.sh` currently installs the target's task system by copying
+this repo's **own** `project/tasks/scripts/`. After the migration those scripts
+are themselves generated, so it's a **copy-of-a-copy** with two drift points, and
+the script hand-re-implements epic scaffolding + CLAUDE.md init that `generate.sh`
+already does better.
+
+Two layers, two owners:
+- **Layer 1 (task system)** → delegate to a **pinned** `generate.sh`
+  (`--with-status --with-skill --inject-claude-md` …). That single call lands the
+  scripts, `USING.md`, the `task-system` **skill**, and the CLAUDE.md block.
+- **Layer 2 (pipeline)** → create-ai-builder's own overlay — the 7 pipeline
+  scripts + orchestrator/roles/machines. **Not** from `generate.sh`.
+
+**Pinned version decided** (submodule at a pinned commit vs vendored snapshot —
+pick during execution). Coordinate with `29297c-relocate-pipeline-scripts` (the
+overlay should source the relocated pipeline dir, not the generated mount).
+
+## Subtasks
+
+<!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
+<!-- subtask-list-start -->
+<!-- subtask-list-end -->
+
+## Notes
+
+_None._
