@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Create a new epic directory with all status subdirectories.
 #
-# Without --project: creates project/tasks/<epic-name>/
-# With --project:    creates project/projects/<project-name>/<epic-name>/
+# Without --project: creates <tasks-root>/<epic-name>/
+# With --project:    creates <projects-root>/<project-name>/<epic-name>/
 #
 # Usage:
 #   new-epic.sh --name <epic-name>
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -42,18 +42,18 @@ fi
 # ---------------------------------------------------------------------------
 
 if [[ -n "$PROJECT" ]]; then
-    BASE_DIR="$REPO_ROOT/project/projects/$PROJECT"
+    BASE_DIR="$PROJECTS_ROOT/$PROJECT"
     if [[ ! -d "$BASE_DIR" ]]; then
         echo "Project directory not found: $BASE_DIR"
         echo "Run new-project.sh --name $PROJECT first."
         exit 1
     fi
     EPIC_DIR="$BASE_DIR/$NAME"
-    DISPLAY_PATH="project/projects/$PROJECT/$NAME"
+    DISPLAY_PATH="$PROJECTS_REL/$PROJECT/$NAME"
 else
-    BASE_DIR="$REPO_ROOT/project/tasks"
+    BASE_DIR="$TASKS_ROOT"
     EPIC_DIR="$BASE_DIR/$NAME"
-    DISPLAY_PATH="project/tasks/$NAME"
+    DISPLAY_PATH="$TASKS_REL/$NAME"
 fi
 
 if [[ -d "$EPIC_DIR" ]]; then

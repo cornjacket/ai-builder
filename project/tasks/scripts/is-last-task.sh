@@ -11,7 +11,7 @@
 #   1 — last-task: false, field absent, or file not found
 #
 # Example:
-#   if is-last-task.sh project/tasks/main/in-progress/abc123-my-task/xyz-integrate/README.md
+#   if is-last-task.sh <tasks>/main/in-progress/abc123-my-task/xyz-integrate/README.md
 #   then echo "integration step"
 #   fi
 

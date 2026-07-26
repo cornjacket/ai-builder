@@ -77,9 +77,13 @@ teardown() {
     [ "$status" -ne 0 ]
 }
 
-@test "fails when --category is missing" {
+# --category is OPTIONAL in the generated (create-project-system) new-user-task.sh:
+# an omitted category is recorded as '—' (unclassified). Category-required
+# enforcement is tracked separately as create-project-system's `--require-category`
+# opt-in (PLAN task 15); when adopted here, restore a "fails when missing" test.
+@test "succeeds without --category (optional; recorded as unclassified)" {
     run bash "$PATCHED_SCRIPT" --epic main --folder draft --name no-category
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 0 ]
 }
 
 @test "fails when --category is not a known class" {

@@ -81,4 +81,4 @@ list-tasks.sh --epic main --folder backlog --category unclassified
 - Group rendering iterates `CATEGORY_ORDER` outer and `task_dirs` inner.
   Per-task printing is duplicated between the grouped and ungrouped
   branches; this is deliberate to keep the indentation logic obvious.
-- Tests live in [`tests/unit/shell/test_list_tasks.bats`](../../../tests/unit/shell/test_list_tasks.bats).
+- Tests live alongside the generated subsystem (see the target repo test suite).

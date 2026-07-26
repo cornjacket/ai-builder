@@ -12,7 +12,7 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 # shellcheck source=task-json-helpers.sh
 source "$SCRIPTS_DIR/task-json-helpers.sh"
 
@@ -20,7 +20,7 @@ source "$SCRIPTS_DIR/task-json-helpers.sh"
 # Parse arguments
 # ---------------------------------------------------------------------------
 
-EPIC="main"
+EPIC="$DEFAULT_EPIC"
 NAME=""
 FROM=""
 TO=""
@@ -44,20 +44,20 @@ fi
 # Paths
 # ---------------------------------------------------------------------------
 
-SRC_DIR="$REPO_ROOT/project/tasks/$EPIC/$FROM/$NAME"
-DST_DIR="$REPO_ROOT/project/tasks/$EPIC/$TO/$NAME"
-SRC_README="$REPO_ROOT/project/tasks/$EPIC/$FROM/README.md"
-DST_STATUS_DIR="$REPO_ROOT/project/tasks/$EPIC/$TO"
+SRC_DIR="$TASKS_ROOT/$EPIC/$FROM/$NAME"
+DST_DIR="$TASKS_ROOT/$EPIC/$TO/$NAME"
+SRC_README="$TASKS_ROOT/$EPIC/$FROM/README.md"
+DST_STATUS_DIR="$TASKS_ROOT/$EPIC/$TO"
 DST_README="$DST_STATUS_DIR/README.md"
 TASK_README="$DST_DIR/README.md"
 
 if [[ ! -d "$SRC_DIR" ]]; then
-    echo "Task not found: project/tasks/$EPIC/$FROM/$NAME"
+    echo "Task not found: $TASKS_REL/$EPIC/$FROM/$NAME"
     exit 1
 fi
 
 if [[ -d "$DST_DIR" ]]; then
-    echo "Task already exists at destination: project/tasks/$EPIC/$TO/$NAME"
+    echo "Task already exists at destination: $TASKS_REL/$EPIC/$TO/$NAME"
     exit 1
 fi
 
@@ -109,5 +109,5 @@ _sed_i "s|<!-- task-list-end -->|- [$NAME]($NAME/)\n<!-- task-list-end -->|" "$D
 # Done
 # ---------------------------------------------------------------------------
 
-echo "Moved: project/tasks/$EPIC/$FROM/$NAME"
-echo "   ->  project/tasks/$EPIC/$TO/$NAME"
+echo "Moved: $TASKS_REL/$EPIC/$FROM/$NAME"
+echo "   ->  $TASKS_REL/$EPIC/$TO/$NAME"

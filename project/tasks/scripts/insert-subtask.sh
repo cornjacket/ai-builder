@@ -22,7 +22,7 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 # shellcheck source=task-id-helpers.sh
 source "$SCRIPTS_DIR/task-id-helpers.sh"
 
@@ -30,7 +30,7 @@ source "$SCRIPTS_DIR/task-id-helpers.sh"
 # Parse arguments
 # ---------------------------------------------------------------------------
 
-EPIC="main"
+EPIC="$DEFAULT_EPIC"
 FOLDER=""
 PARENT=""
 AT=""
@@ -67,7 +67,7 @@ fi
 # Resolve paths
 # ---------------------------------------------------------------------------
 
-PARENT_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT"
+PARENT_DIR="$TASKS_ROOT/$EPIC/$FOLDER/$PARENT"
 PARENT_README="$PARENT_DIR/README.md"
 
 if [[ ! -d "$PARENT_DIR" ]]; then
@@ -244,7 +244,7 @@ if [[ -n "$CURRENT_NEXT" ]]; then
 fi
 
 echo ""
-echo "Created: project/tasks/$EPIC/$FOLDER/$PARENT/$NEW_DIRNAME/"
+echo "Created: $TASKS_REL/$EPIC/$FOLDER/$PARENT/$NEW_DIRNAME/"
 echo "Updated: $PARENT_README"
 echo ""
 echo "Done."

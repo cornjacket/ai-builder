@@ -17,11 +17,11 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 # shellcheck source=task-json-helpers.sh
 source "$SCRIPTS_DIR/task-json-helpers.sh"
 
-EPIC="main"
+EPIC="$DEFAULT_EPIC"
 FOLDER=""
 PARENT=""
 
@@ -39,11 +39,11 @@ if [[ -z "$FOLDER" || -z "$PARENT" ]]; then
     exit 1
 fi
 
-PARENT_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER/$PARENT"
+PARENT_DIR="$TASKS_ROOT/$EPIC/$FOLDER/$PARENT"
 PARENT_JSON="$PARENT_DIR/task.json"
 
 if [[ ! -f "$PARENT_JSON" ]]; then
-    echo "Parent task.json not found: project/tasks/$EPIC/$FOLDER/$PARENT"
+    echo "Parent task.json not found: $TASKS_REL/$EPIC/$FOLDER/$PARENT"
     exit 1
 fi
 

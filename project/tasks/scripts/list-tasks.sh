@@ -27,13 +27,13 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
 # ---------------------------------------------------------------------------
 
-EPIC="main"
+EPIC="$DEFAULT_EPIC"
 FOLDER=""
 DEPTH=1
 ROOT=""
@@ -58,32 +58,35 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Canonical category order — matches project/tasks/classes.md classes 1..8.
-# 'unclassified' is appended last for tasks with Category '—' or missing.
-CATEGORY_ORDER=(
-    "gemini-compat"
-    "orchestrator-core"
-    "acceptance-spec"
-    "new-pipelines"
-    "regression-infra"
-    "task-tooling"
-    "docs"
-    "workspace-mgmt"
-    "unclassified"
-)
+# Canonical category order, read at runtime from the classes layer's classes.md
+# (the order classes are declared in that file). 'unclassified' is always
+# appended last, for tasks whose Category is '—' or missing.
+#
+# When the classes layer is not installed (no classes.md), the order is just
+# 'unclassified' — --group-by-category then degrades to a single group, and
+# --category filtering still works against whatever values tasks carry.
+CATEGORY_ORDER=()
+_CLASSES_FILE="$TASKS_ROOT/classes.md"
+if [[ -f "$_CLASSES_FILE" ]]; then
+    while IFS= read -r _cat; do
+        [[ -n "$_cat" ]] && CATEGORY_ORDER+=("$_cat")
+    done < <(grep -oE '^\*\*Worktree branch:\*\* `[^`]+`' "$_CLASSES_FILE" \
+             | sed 's/^\*\*Worktree branch:\*\* `\([^`]*\)`/\1/')
+fi
+CATEGORY_ORDER+=("unclassified")
 
 # ---------------------------------------------------------------------------
 # Resolve traversal root
 # ---------------------------------------------------------------------------
 
 if [[ -n "$ROOT" ]]; then
-    ROOT_DIR="$REPO_ROOT/project/tasks/$ROOT"
+    ROOT_DIR="$TASKS_ROOT/$ROOT"
     if [[ ! -d "$ROOT_DIR" ]]; then
-        echo "Root not found: project/tasks/$ROOT"
+        echo "Root not found: $TASKS_REL/$ROOT"
         exit 1
     fi
 else
-    EPIC_DIR="$REPO_ROOT/project/tasks/$EPIC"
+    EPIC_DIR="$TASKS_ROOT/$EPIC"
     if [[ ! -d "$EPIC_DIR" ]]; then
         echo "Epic not found: $EPIC"
         exit 1

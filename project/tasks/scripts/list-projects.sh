@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# List all projects under project/projects/ with their builds and status.
+# List all projects under $PROJECTS_REL/ with their builds and status.
 #
 # Usage:
 #   list-projects.sh
@@ -7,11 +7,11 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
-PROJECTS_DIR="$REPO_ROOT/project/projects"
+source "$SCRIPTS_DIR/task-env.sh"
+PROJECTS_DIR="$PROJECTS_ROOT"
 
 if [[ ! -d "$PROJECTS_DIR" ]]; then
-    echo "No projects directory found at project/projects/"
+    echo "No projects directory found at $PROJECTS_REL/"
     exit 0
 fi
 

@@ -18,7 +18,7 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 # shellcheck source=task-id-helpers.sh
 source "$SCRIPTS_DIR/task-id-helpers.sh"
 
@@ -26,7 +26,7 @@ source "$SCRIPTS_DIR/task-id-helpers.sh"
 # Parse arguments
 # ---------------------------------------------------------------------------
 
-EPIC="main"
+EPIC="$DEFAULT_EPIC"
 FOLDER=""
 PARENT=""
 NAME=""
@@ -50,7 +50,7 @@ fi
 # Resolve paths
 # ---------------------------------------------------------------------------
 
-STATUS_DIR="$REPO_ROOT/project/tasks/$EPIC/$FOLDER"
+STATUS_DIR="$TASKS_ROOT/$EPIC/$FOLDER"
 
 if [[ -n "$PARENT" ]]; then
     PARENT_DIR="$STATUS_DIR/$PARENT"
@@ -113,8 +113,8 @@ mv "$TASK_DIR" "$HIDDEN_DIR"
 # ---------------------------------------------------------------------------
 
 if [[ -n "$PARENT" ]]; then
-    echo "Deleted subtask: project/tasks/$EPIC/$FOLDER/$PARENT/$ACTUAL_NAME/ → .$ACTUAL_NAME/"
+    echo "Deleted subtask: $TASKS_REL/$EPIC/$FOLDER/$PARENT/$ACTUAL_NAME/ → .$ACTUAL_NAME/"
 else
-    echo "Deleted task:    project/tasks/$EPIC/$FOLDER/$ACTUAL_NAME/ → .$ACTUAL_NAME/"
+    echo "Deleted task:    $TASKS_REL/$EPIC/$FOLDER/$ACTUAL_NAME/ → .$ACTUAL_NAME/"
 fi
 echo "Updated:         $PARENT_README"

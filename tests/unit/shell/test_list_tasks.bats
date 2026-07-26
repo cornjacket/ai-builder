@@ -16,6 +16,13 @@ setup() {
     mkdir -p "$TEST_DIR/project/tasks/scripts"
     ln -s "$SCRIPTS_DIR"/*.sh "$TEST_DIR/project/tasks/scripts/"
     ln -s "$SCRIPTS_DIR"/*.md "$TEST_DIR/project/tasks/scripts/" 2>/dev/null || true
+    # The decoupled list-tasks.sh reads the canonical category order from
+    # classes.md at $TASKS_ROOT (project/tasks/classes.md), not via the script's
+    # own path. Symlink the real classes.md into the fixture so grouping resolves
+    # (same approach as test_new_user_task.bats). Its class order
+    # (gemini-compat < orchestrator-core < task-tooling < docs) drives the
+    # canonical-order assertions below.
+    ln -s "$SCRIPTS_DIR/../classes.md" "$TEST_DIR/project/tasks/classes.md"
 
     LIST="$TEST_DIR/project/tasks/scripts/list-tasks.sh"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create a new project under project/projects/ with a user-task README
+# Create a new project under $PROJECTS_REL/ with a user-task README
 # and a default main epic with all status subdirectories.
 #
 # Usage:
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPTS_DIR/../../.." && pwd)"
+source "$SCRIPTS_DIR/task-env.sh"
 TASK_TEMPLATE="$SCRIPTS_DIR/user-task-template.md"
 
 # ---------------------------------------------------------------------------
@@ -36,11 +36,11 @@ fi
 # Resolve paths
 # ---------------------------------------------------------------------------
 
-PROJECTS_DIR="$REPO_ROOT/project/projects"
+PROJECTS_DIR="$PROJECTS_ROOT"
 PROJECT_DIR="$PROJECTS_DIR/$NAME"
 
 if [[ -d "$PROJECT_DIR" ]]; then
-    echo "Project already exists: project/projects/$NAME"
+    echo "Project already exists: $PROJECTS_REL/$NAME"
     exit 1
 fi
 
@@ -64,7 +64,7 @@ sed \
     -e "s/{{PRIORITY}}/—/g" \
     "$TASK_TEMPLATE" > "$PROJECT_DIR/README.md"
 
-echo "Created project: project/projects/$NAME/"
+echo "Created project: $PROJECTS_REL/$NAME/"
 
 # ---------------------------------------------------------------------------
 # Create default main epic with status directories
