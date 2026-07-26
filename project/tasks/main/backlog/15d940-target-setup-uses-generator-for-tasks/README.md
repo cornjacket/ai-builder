@@ -1,4 +1,4 @@
-# Task: target-composition-delegate-to-generate
+# Task: target-setup-uses-generator-for-tasks
 
 | Field       | Value                  |
 |-------------|------------------------|
