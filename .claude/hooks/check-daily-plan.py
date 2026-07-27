@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SessionStart hook: prompt for a fresh daily-plan.md when stale or missing.
 
-Installed by ai-project-status' setup-new-repo.sh. Stdout is automatically
+Installed by project-status' setup-new-repo.sh. Stdout is automatically
 injected as a system reminder before Claude sees the user's first prompt;
 silent (no output, exit 0) when the plan is fresh, so successful sessions
 are unaffected.
@@ -40,13 +40,16 @@ def main() -> int:
         return 0  # not in a git repo; do nothing
 
     today_iso = today.isoformat()
+    # The body structure is stated once, in project-status-guide.md at the repo
+    # root — this message points there rather than restating it, so the two
+    # can't drift (they did: this hook used to say "one short paragraph").
     fresh_template = (
         "Before doing other work, ask the user for today's plan and "
         "overwrite `daily-plan.md` with this header:\n\n"
         f"    # Daily plan — {today_iso}\n\n"
-        "Body: one short paragraph of intent plus a small ASCII diagram "
-        "of the day's shape (timeline, flow, milestones). "
-        "ai-project-status aggregates this across tracked repos."
+        "Then read the 'Body structure' section of `project-status-guide.md` "
+        "(repo root) and follow it. project-status aggregates this file across "
+        "every tracked repo, so the structure is what makes it legible."
     )
 
     if not plan.exists():
