@@ -1,4 +1,4 @@
-# Daily plan — 2026-07-24
+# Daily plan — 2026-07-27
 
 **What this repo is (for a newcomer):** `create-ai-builder` is a generator that
 installs an AI-agent **build pipeline** (an orchestrator plus ARCHITECT /
@@ -6,26 +6,31 @@ IMPLEMENTOR / TESTER role agents) into a target platform repo. The pipeline is
 driven by a Markdown task system, so an installed ai-builder turns tracked tasks
 into shipped code.
 
-**Last implemented:** Renamed `ai-builder` → `create-ai-builder` (it's a
-generator, joins the `create-*` family) and **re-homed its task subsystem onto
-the `create-project-system` generator** — stripped the 25 hand-built core scripts
-to a task-free checkpoint, regenerated the decoupled machinery, and verified
-parity against the 134 real tasks (writes, category grouping, worktree root, 175
-`X-` subtasks all preserved).
+**Last implemented:** the `task-system-generator-migration` branch **merged to
+main** (PR #4) — the task subsystem now rides on the `create-project-system`
+generator instead of the 25 hand-built scripts. The three create-ai-builder-owned
+follow-ups were then **re-homed into this repo's own tracker** (dogfooding the
+migrated tooling): `29297c-relocate-pipeline-scripts` (task-tooling, MED),
+`59ea60-repo-name-rename-audit` (workspace-mgmt, LOW), and
+`15d940-target-setup-uses-generator-for-tasks` (workspace-mgmt, MED — renamed from
+the old `target-composition-delegate-to-generate`).
 
 **Focus / plan:**
 
-- **Review + merge** the `task-system-generator-migration` branch on GitHub
-  (pushed; machinery-swap-only diff, 28 files). Today's gate.
-- After merge, **re-home** the create-ai-builder-owned follow-ups into this
-  repo's now-working tracker (dogfooding): pipeline-script relocation, the
-  repo-name rename audit, and target composition.
-- Begin **target composition** — make `target/setup-project.sh` delegate the task
-  layer to a pinned `create-project-system` `generate.sh` instead of copying.
+- **Begin target composition — `15d940-target-setup-uses-generator-for-tasks`.**
+  Make `target/setup-project.sh` **delegate** the task layer to a pinned
+  `create-project-system` `generate.sh` instead of copying create-ai-builder's own
+  scripts. Start the task (move to `in-progress`, worktree class `workspace-mgmt`),
+  describe subtasks, and align before implementing.
+- Design the pin: which `create-project-system` ref to pin to, and how the target
+  setup invokes `generate.sh` (`--tasks-dir` / `--epic` / `--with-status`).
+- Next in the re-homed queue (not today): `29297c-relocate-pipeline-scripts`
+  (MED), then `59ea60-repo-name-rename-audit` (LOW).
 
 ```
-task-system-generator-migration (pushed) ──review──▶ merge to main
-                                                        │
-                                                        ▼
-              re-home 12/13/14 ──▶ target composition (pinned generate.sh)
+PR #4 merged ─▶ follow-ups re-homed ─▶ [15d940] target composition (today)
+                                          │  setup-project.sh delegates to
+                                          │  a pinned create-project-system generate.sh
+                                          ▼
+                            then ▶ 29297c relocate pipeline scripts ▶ 59ea60 rename audit
 ```
