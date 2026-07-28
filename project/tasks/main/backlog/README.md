@@ -49,5 +49,4 @@
 - [6d4102-post-push-ci-check](6d4102-post-push-ci-check/)
 - [29297c-relocate-pipeline-scripts](29297c-relocate-pipeline-scripts/)
 - [59ea60-repo-name-rename-audit](59ea60-repo-name-rename-audit/)
-- [15d940-target-setup-uses-generator-for-tasks](15d940-target-setup-uses-generator-for-tasks/)
 <!-- task-list-end -->
