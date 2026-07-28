@@ -12,6 +12,15 @@
 # The generator never emits pipeline machinery — there is no --with-pipeline
 # flag. Layer 2 is ours and stays ours.
 #
+# Layer 2 is deliberately THIN: the 7 task-facing pipeline scripts and nothing
+# else. The orchestrator, its state machines and its role prompts are NOT
+# installed into the target. They do not need to be — the orchestrator runs
+# from a create-ai-builder checkout and reaches into the target via
+# --target-repo, resolving the target's script dir itself (orchestrator.py:
+# PM_SCRIPTS_DIR = TARGET_REPO/project/tasks/scripts). Copying the engine into
+# every target would recreate, for layer 2, exactly the copy-of-a-copy drift
+# that moving layer 1 to a pinned generator was meant to eliminate.
+#
 # Usage:
 #   setup-project.sh <target-repo-path> [--epic <name>]
 #
