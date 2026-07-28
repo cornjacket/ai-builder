@@ -48,7 +48,7 @@ overlay should source the relocated pipeline dir, not the generated mount).
 - [x] [X-15d940-0000-vendor-pinned-create-project-system](X-15d940-0000-vendor-pinned-create-project-system/)
 - [x] [X-15d940-0001-delegate-layer-1-to-generate](X-15d940-0001-delegate-layer-1-to-generate/)
 - [x] [X-15d940-0002-pipeline-overlay-layer-2](X-15d940-0002-pipeline-overlay-layer-2/)
-- [ ] [15d940-0003-retire-init-claude-md](15d940-0003-retire-init-claude-md/)
+- [x] [X-15d940-0003-retire-init-claude-md](X-15d940-0003-retire-init-claude-md/)
 - [ ] [15d940-0004-define-reinstall-contract](15d940-0004-define-reinstall-contract/)
 - [ ] [15d940-0005-update-verify-setup](15d940-0005-update-verify-setup/)
 - [ ] [15d940-0006-sandbox-install-regression](15d940-0006-sandbox-install-regression/)
