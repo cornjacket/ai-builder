@@ -66,7 +66,6 @@ echo "[1/4] Recreating target repo infrastructure..."
 rm -rf "$TARGET_REPO"
 mkdir -p "$TARGET_REPO"
 "$REPO_ROOT/target/setup-project.sh" "$TARGET_REPO" --epic "$EPIC"
-"$REPO_ROOT/target/init-claude-md.sh" "$TARGET_REPO"
 
 # ---------------------------------------------------------------------------
 # 2. Overlay gold task tree

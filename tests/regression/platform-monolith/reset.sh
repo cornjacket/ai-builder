@@ -97,7 +97,6 @@ mkdir -p "$TARGET_REPO"
 
 echo "[2/5] Installing task management system ..."
 "$REPO_ROOT/target/setup-project.sh" "$TARGET_REPO" --epic "$EPIC"
-"$REPO_ROOT/target/init-claude-md.sh" "$TARGET_REPO"
 
 SCRIPTS="$TARGET_REPO/project/tasks/scripts"
 

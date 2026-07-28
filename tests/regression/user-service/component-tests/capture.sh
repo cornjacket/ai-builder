@@ -62,7 +62,7 @@ mkdir -p "$GOLD_DIR"
 
 # ---------------------------------------------------------------------------
 # 1. Capture task tree (project/tasks/ only — scripts and CLAUDE.md are
-#    reinstalled fresh by run.sh via setup-project.sh and init-claude-md.sh)
+#    reinstalled fresh by run.sh via setup-project.sh)
 # ---------------------------------------------------------------------------
 
 echo "  [1/3] Capturing task tree..."

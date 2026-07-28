@@ -59,8 +59,8 @@ Every `reset.sh` must perform these steps in order:
 
 1. **Save the previous run** to `last_run/` (see §3a).
 2. **Wipe and recreate** the target repo at `sandbox/<test-name>-target/`.
-3. **Install the task system** using `target/setup-project.sh` and
-   `target/init-claude-md.sh`.
+3. **Install the task system** using `target/setup-project.sh`. That one call
+   installs both layers and writes `CLAUDE.md` / `GEMINI.md`.
 4. **Create a USER-TASK** (Oracle-owned pipeline boundary) in `in-progress/`
    using `new-user-task.sh`. This is the human-owned node the pipeline must
    not traverse above.

@@ -180,8 +180,6 @@ if TM_MODE:
     TARGET_REPO    = args.target_repo.resolve()
     EPIC           = args.epic
     PM_SCRIPTS_DIR = TARGET_REPO / "project" / "tasks" / "scripts"
-    SETUP_SCRIPT   = REPO_ROOT / "target" / "setup-project.sh"
-    INIT_SCRIPT    = REPO_ROOT / "target" / "init-claude-md.sh"
 
     # Resolve initial job doc: --job takes precedence; --resume falls back to
     # last-job.json written by a previous run.

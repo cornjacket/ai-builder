@@ -113,9 +113,8 @@ The orchestrator writes all artifacts to `--output-dir`.
 ## Quick Start: TM Mode
 
 ```bash
-# 1. Set up a fresh target repository
+# 1. Set up a fresh target repository (installs both layers, CLAUDE.md and GEMINI.md)
 target/setup-project.sh  /path/to/target-repo --epic main
-target/init-claude-md.sh /path/to/target-repo
 
 # 2. Create the pipeline entry point
 SCRIPTS=/path/to/target-repo/project/tasks/scripts

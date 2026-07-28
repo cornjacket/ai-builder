@@ -26,8 +26,8 @@ for inspection. Run `reset.sh` to remove it before re-running.
 |---|---|
 | 1 | `setup-project.sh` installs all expected directories and scripts |
 | 2 | `setup-project.sh` is idempotent |
-| 3 | `init-claude-md.sh` creates `CLAUDE.md` with task management section and `GEMINI.md` symlink |
-| 4 | `init-claude-md.sh` is idempotent — does not duplicate the section |
+| 3 | `setup-project.sh` produces `CLAUDE.md` with the task-system block and a `GEMINI.md` symlink |
+| 4 | The task-system block is not duplicated |
 | 5 | `verify-setup.sh` passes against the freshly installed target |
 | 6 | `new-task.sh` creates a top-level task with correct README and status |
 | 7 | `new-task.sh --parent` creates a subtask with `—` status and checkbox in parent |

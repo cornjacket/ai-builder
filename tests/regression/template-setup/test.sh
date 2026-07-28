@@ -73,30 +73,42 @@ echo "$OUTPUT" | grep -q "already installed" \
     || fail "second run did not detect existing installation"
 
 # ---------------------------------------------------------------------------
-# 3. init-claude-md.sh creates CLAUDE.md and GEMINI.md
+# 3. setup-project.sh produced CLAUDE.md and the GEMINI.md symlink
+#
+# There is no init-claude-md.sh step any more: the pinned task-system
+# generator injects the CLAUDE.md block during setup, and setup-project.sh
+# adds the GEMINI.md symlink as a repo convention.
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "--- 3. init-claude-md.sh ---"
+echo "--- 3. CLAUDE.md / GEMINI.md ---"
 
-bash "$REPO_ROOT/target/init-claude-md.sh" "$TARGET" > /dev/null
+[[ -f "$TARGET/CLAUDE.md" ]] \
+    && pass "CLAUDE.md created" \
+    || fail "CLAUDE.md missing"
+
+check_contains "$TARGET/CLAUDE.md" "task-system:begin" "CLAUDE.md contains the task-system block"
+
+[[ -L "$TARGET/GEMINI.md" ]] \
+    && pass "GEMINI.md is a symlink" \
+    || fail "GEMINI.md is not a symlink"
+
+LINK_TARGET=$(readlink "$TARGET/GEMINI.md" 2>/dev/null || echo "")
+[[ "$LINK_TARGET" == "CLAUDE.md" ]] \
+    && pass "GEMINI.md -> CLAUDE.md" \
+    || fail "GEMINI.md points to '$LINK_TARGET' instead of CLAUDE.md"
 
 # ---------------------------------------------------------------------------
-# 4. init-claude-md.sh is idempotent
+# 4. The task-system block is not duplicated
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "--- 4. init-claude-md.sh idempotency ---"
+echo "--- 4. CLAUDE.md block not duplicated ---"
 
-OUTPUT=$(bash "$REPO_ROOT/target/init-claude-md.sh" "$TARGET" 2>&1)
-echo "$OUTPUT" | grep -q "already present" \
-    && pass "second run detects existing task management section" \
-    || fail "second run did not detect existing task management section"
-
-SECTION_COUNT=$(grep -c "task-management-start" "$TARGET/CLAUDE.md")
+SECTION_COUNT=$(grep -c "task-system:begin" "$TARGET/CLAUDE.md")
 [[ "$SECTION_COUNT" -eq 1 ]] \
-    && pass "task management section not duplicated (count: $SECTION_COUNT)" \
-    || fail "task management section duplicated (count: $SECTION_COUNT)"
+    && pass "task-system block not duplicated (count: $SECTION_COUNT)" \
+    || fail "task-system block duplicated (count: $SECTION_COUNT)"
 
 # ---------------------------------------------------------------------------
 # 5. verify-setup.sh passes

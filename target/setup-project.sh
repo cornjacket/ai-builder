@@ -158,6 +158,26 @@ find "$TARGET_TASKS/scripts" -name "*.sh" -exec chmod +x {} \;
 echo "  ~ project/tasks/scripts/  (pipeline: ${#PIPELINE_SCRIPTS[@]} files)"
 
 # ---------------------------------------------------------------------------
+# Repo conventions
+# ---------------------------------------------------------------------------
+#
+# GEMINI.md -> CLAUDE.md. The generator writes the CLAUDE.md task-tracking
+# block but deliberately stops there: it is agent-neutral and does not assume
+# any particular agent's filename. Mirroring CLAUDE.md as GEMINI.md is a
+# create-ai-builder convention, so it belongs here rather than upstream.
+
+echo ""
+echo "=== Repo conventions ==="
+
+GEMINI_MD="$TARGET_REPO/GEMINI.md"
+if [[ -e "$GEMINI_MD" || -L "$GEMINI_MD" ]]; then
+    echo "  = GEMINI.md already present — left alone"
+else
+    ln -s CLAUDE.md "$GEMINI_MD"
+    echo "  + GEMINI.md -> CLAUDE.md"
+fi
+
+# ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 

@@ -32,16 +32,17 @@ GEMINI.md               — symlink to CLAUDE.md
 
 ## Installation
 
-From the `ai-builder` repository root, run both scripts against your target
+From the `ai-builder` repository root, run one script against your target
 repository path:
 
 ```bash
-# Step 1: install the project/ directory
 target/setup-project.sh <path-to-target-repo>
-
-# Step 2: initialise CLAUDE.md and GEMINI.md
-target/init-claude-md.sh <path-to-target-repo>
 ```
+
+That single command installs both layers and writes `CLAUDE.md` / `GEMINI.md`.
+The separate `init-claude-md.sh` step is gone: the pinned task-system generator
+injects the CLAUDE.md task-tracking block itself, and `setup-project.sh` adds
+the `GEMINI.md` symlink alongside it.
 
 ### Options
 
@@ -52,8 +53,8 @@ target/init-claude-md.sh <path-to-target-repo>
 target/setup-project.sh <path-to-target-repo> --epic core
 ```
 
-Both scripts are **idempotent** — running them a second time is safe and will
-not overwrite existing files.
+Re-running is safe: the script currently declines to touch a target that
+already has `project/tasks/`.
 
 ---
 
