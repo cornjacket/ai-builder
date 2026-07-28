@@ -1,4 +1,4 @@
-# Daily plan — 2026-07-27
+# Daily plan — 2026-07-28
 
 **What this repo is (for a newcomer):** `create-ai-builder` is a generator that
 installs an AI-agent **build pipeline** (an orchestrator plus ARCHITECT /
