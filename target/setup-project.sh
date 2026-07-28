@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 # Install the ai-builder project management system into a target repository.
 #
+# An installed ai-builder is two stacked layers with different owners:
+#
+#   Layer 1 — task system   : from the PINNED create-project-system generator
+#                             in vendor/create-project-system/ (see its PIN
+#                             file and vendor/README.md)
+#   Layer 2 — pipeline      : create-ai-builder's own hand-maintained scripts,
+#                             overlaid on top of layer 1
+#
+# The generator never emits pipeline machinery — there is no --with-pipeline
+# flag. Layer 2 is ours and stays ours.
+#
 # Usage:
 #   setup-project.sh <target-repo-path> [--epic <name>]
 #
@@ -15,8 +26,22 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-TEMPLATE_DIR="$SCRIPT_DIR/project"
-CANONICAL_SCRIPTS="$REPO_ROOT/project/tasks/scripts"
+
+GENERATOR="$REPO_ROOT/vendor/create-project-system/generate.sh"
+PIN_FILE="$REPO_ROOT/vendor/create-project-system/PIN"
+PIPELINE_SCRIPTS_SRC="$REPO_ROOT/project/tasks/scripts"
+
+# Layer 2 — create-ai-builder's own pipeline machinery. These are NOT produced
+# by the generator; they are overlaid on top of the generated task system.
+PIPELINE_SCRIPTS=(
+    advance-pipeline.sh
+    check-stop-after.sh
+    new-pipeline-build.sh
+    new-pipeline-subtask.sh
+    on-task-complete.sh
+    set-current-job.sh
+    pipeline-build-template.md
+)
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -54,9 +79,28 @@ fi
 TARGET_TASKS="$TARGET_REPO/project/tasks"
 
 # ---------------------------------------------------------------------------
-# Idempotency check
+# Preflight
 # ---------------------------------------------------------------------------
 
+if [[ ! -x "$GENERATOR" ]]; then
+    echo "Pinned task-system generator not found or not executable:"
+    echo "  $GENERATOR"
+    echo ""
+    echo "The generator is vendored, not fetched. See vendor/README.md."
+    exit 1
+fi
+
+for f in "${PIPELINE_SCRIPTS[@]}"; do
+    if [[ ! -f "$PIPELINE_SCRIPTS_SRC/$f" ]]; then
+        echo "Pipeline overlay source missing: $PIPELINE_SCRIPTS_SRC/$f"
+        exit 1
+    fi
+done
+
+# Idempotency check. NOTE: the generator itself is non-destructive and
+# re-runnable (machinery overwritten, task content never touched), so this
+# hard exit is more conservative than it needs to be. The install-vs-upgrade
+# contract is decided in subtask 15d940-0004-define-reinstall-contract.
 if [[ -d "$TARGET_TASKS" ]]; then
     echo "Project management system already installed at: $TARGET_TASKS"
     echo "Nothing to do. To reinstall, remove $TARGET_TASKS first."
@@ -64,51 +108,54 @@ if [[ -d "$TARGET_TASKS" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Copy template skeleton and canonical scripts
+# Layer 1 — task system, from the pinned generator
 # ---------------------------------------------------------------------------
 
-# Copy the skeleton structure (status dir .gitkeeps, project/status/.gitkeep)
-# but not the scripts directory — that comes from the canonical source.
-cp -r "$TEMPLATE_DIR" "$TARGET_REPO/project"
-rm -rf "$TARGET_REPO/project/tasks/scripts"
-
-# Copy scripts from the canonical source so there is only one copy to maintain.
-cp -r "$CANONICAL_SCRIPTS" "$TARGET_REPO/project/tasks/scripts"
-
-# Make all scripts executable
-find "$TARGET_REPO/project/tasks/scripts" -name "*.sh" -exec chmod +x {} \;
-
-# ---------------------------------------------------------------------------
-# Create epic directory structure
-# ---------------------------------------------------------------------------
-
-for folder in inbox draft backlog in-progress complete wont-do; do
-    mkdir -p "$TARGET_TASKS/$EPIC/$folder"
-    # Remove placeholder if it exists (copied from template)
-    rm -f "$TARGET_TASKS/$EPIC/$folder/.gitkeep"
-    touch "$TARGET_TASKS/$EPIC/$folder/.gitkeep"
-done
-
-# Remove the generic placeholder from main/ if a different epic was requested
-if [[ "$EPIC" != "main" ]]; then
-    for folder in inbox draft backlog in-progress complete wont-do; do
-        rm -rf "$TARGET_TASKS/main/$folder"
-    done
-    rmdir "$TARGET_TASKS/main" 2>/dev/null || true
+echo "=== Layer 1: task system (pinned create-project-system) ==="
+if [[ -f "$PIN_FILE" ]]; then
+    echo "    pin: $(grep -E '^tag:' "$PIN_FILE" | awk '{print $2}') " \
+         "($(grep -E '^sha:' "$PIN_FILE" | awk '{print substr($2,1,7)}'))"
 fi
+echo ""
+
+# One call lands the machinery, docs/USING.md, the task-system skill, and the
+# CLAUDE.md block. --with-projects and --with-worktree-guard keep the target's
+# script surface at parity with what ai-builder itself uses.
+"$GENERATOR" \
+    --target-repo "$TARGET_REPO" \
+    --tasks-dir   project/tasks \
+    --epic        "$EPIC" \
+    --with-status \
+    --with-skill \
+    --inject-claude-md \
+    --with-projects \
+    --with-worktree-guard
+
+# ---------------------------------------------------------------------------
+# Layer 2 — pipeline overlay (create-ai-builder's own)
+# ---------------------------------------------------------------------------
+#
+# Seam only: the 7 pipeline scripts. Orchestrator, roles and machines are
+# added by subtask 15d940-0002-pipeline-overlay-layer-2.
+
+echo ""
+echo "=== Layer 2: pipeline overlay (create-ai-builder) ==="
+
+for f in "${PIPELINE_SCRIPTS[@]}"; do
+    cp "$PIPELINE_SCRIPTS_SRC/$f" "$TARGET_TASKS/scripts/$f"
+done
+find "$TARGET_TASKS/scripts" -name "*.sh" -exec chmod +x {} \;
+
+echo "  ~ project/tasks/scripts/  (pipeline: ${#PIPELINE_SCRIPTS[@]} files)"
 
 # ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 
-echo "Installed project management system into: $TARGET_REPO/project/"
 echo ""
-echo "  tasks/scripts/   — management scripts"
-echo "  tasks/$EPIC/     — epic directory (inbox, draft, backlog, in-progress, complete, wont-do)"
-echo "  status/          — daily status reports"
+echo "Installed into: $TARGET_REPO"
 echo ""
 echo "Next steps:"
-echo "  1. Run init-claude-md.sh $TARGET_REPO to set up CLAUDE.md"
-echo "  2. Read $TARGET_REPO/project/tasks/README.md for usage instructions"
-echo "  3. Create your first task:"
-echo "     $TARGET_REPO/project/tasks/scripts/new-user-task.sh --epic $EPIC --folder draft --name my-first-task"
+echo "  1. Read $TARGET_TASKS/docs/USING.md for usage instructions"
+echo "  2. Create your first task:"
+echo "     $TARGET_TASKS/scripts/new-user-task.sh --epic $EPIC --folder draft --name my-first-task"
