@@ -46,7 +46,7 @@ overlay should source the relocated pipeline dir, not the generated mount).
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
 - [x] [X-15d940-0000-vendor-pinned-create-project-system](X-15d940-0000-vendor-pinned-create-project-system/)
-- [ ] [15d940-0001-delegate-layer-1-to-generate](15d940-0001-delegate-layer-1-to-generate/)
+- [x] [X-15d940-0001-delegate-layer-1-to-generate](X-15d940-0001-delegate-layer-1-to-generate/)
 - [ ] [15d940-0002-pipeline-overlay-layer-2](15d940-0002-pipeline-overlay-layer-2/)
 - [ ] [15d940-0003-retire-init-claude-md](15d940-0003-retire-init-claude-md/)
 - [ ] [15d940-0004-define-reinstall-contract](15d940-0004-define-reinstall-contract/)
