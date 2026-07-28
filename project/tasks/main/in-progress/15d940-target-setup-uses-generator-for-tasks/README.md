@@ -10,7 +10,7 @@
 | Category    | workspace-mgmt           |
 | Created     | 2026-07-26            |
 | Completed   | —                      |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0008 |
 
 ## Goal
 
@@ -45,6 +45,14 @@ overlay should source the relocated pipeline dir, not the generated mount).
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [ ] [15d940-0000-vendor-pinned-create-project-system](15d940-0000-vendor-pinned-create-project-system/)
+- [ ] [15d940-0001-delegate-layer-1-to-generate](15d940-0001-delegate-layer-1-to-generate/)
+- [ ] [15d940-0002-pipeline-overlay-layer-2](15d940-0002-pipeline-overlay-layer-2/)
+- [ ] [15d940-0003-retire-init-claude-md](15d940-0003-retire-init-claude-md/)
+- [ ] [15d940-0004-define-reinstall-contract](15d940-0004-define-reinstall-contract/)
+- [ ] [15d940-0005-update-verify-setup](15d940-0005-update-verify-setup/)
+- [ ] [15d940-0006-sandbox-install-regression](15d940-0006-sandbox-install-regression/)
+- [ ] [15d940-0007-update-affected-documentation](15d940-0007-update-affected-documentation/)
 <!-- subtask-list-end -->
 
 ## Notes

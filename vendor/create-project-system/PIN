@@ -1,0 +1,28 @@
+# Pin record for the vendored create-project-system snapshot.
+# Machine-readable (key: value). Human context lives in ../README.md.
+# Do not hand-edit to bump — follow the bump procedure in ../README.md.
+
+repo:      git@github.com:cornjacket/create-project-system.git
+tag:       v0.1.0
+tag-type:  annotated
+sha:       c003956296d40db76f06fdda016e575486316580
+vendored:  generate.sh src/
+excluded:  tests/ tasks/ docs/ PLAN.md daily-plan.md .claude/ .github/ self-test.sh README.md
+manifest-sha256: 17e9612a555eb1c73568a3e700468f6accfa5d930d811e2c04aa43b6d0f3589c
+
+# manifest-sha256 is computed over the snapshot only (PIN itself excluded):
+#   find generate.sh src -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256
+
+# --- Layer-1 contract guaranteed by v0.1.0 ---------------------------------
+# generate.sh accepts exactly these ten flags and no others (verified against
+# the vendored parser at generate.sh:53-62):
+#
+#   --target-repo --tasks-dir --epic --with-status --with-skill
+#   --inject-claude-md --with-classes --with-projects --with-worktree-guard
+#   --force
+#
+# Generation is non-destructive and re-runnable: machinery is overwritten,
+# task content is never touched. The core / all-layers / project golden
+# fixtures reproduce byte-for-byte at this ref.
+#
+# There is NO --with-pipeline. The generator never emits pipeline machinery.
