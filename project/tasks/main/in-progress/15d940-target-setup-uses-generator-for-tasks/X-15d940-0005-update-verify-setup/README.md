@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | 15d940-target-setup-uses-generator-for-tasks             |
 | Priority    | —           |
 | Created     | 2026-07-28            |
-| Completed   | —                      |
+| Completed | 2026-08-03 |
 | Next-subtask-id | 0000               |
 
 ## Goal
