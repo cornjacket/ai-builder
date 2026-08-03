@@ -50,5 +50,4 @@
 - [29297c-relocate-pipeline-scripts](29297c-relocate-pipeline-scripts/)
 - [59ea60-repo-name-rename-audit](59ea60-repo-name-rename-audit/)
 - [9046c5-adopt-worktree-rename](9046c5-adopt-worktree-rename/)
-- [abe6a1-regression-targets-must-be-git-repos](abe6a1-regression-targets-must-be-git-repos/)
 <!-- task-list-end -->
