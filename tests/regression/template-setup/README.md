@@ -25,7 +25,8 @@ for inspection. Run `reset.sh` to remove it before re-running.
 | Section | Coverage |
 |---|---|
 | 1 | `setup-project.sh` installs all expected directories and scripts |
-| 2 | `setup-project.sh` is idempotent |
+| 2 | `setup-project.sh` is idempotent — a bare re-run declines and changes nothing |
+| 2b | `--upgrade` repairs drifted machinery while preserving task content, hand-edited seeded files and hand-written CLAUDE.md prose |
 | 3 | `setup-project.sh` produces `CLAUDE.md` with the task-system block and a `GEMINI.md` symlink |
 | 4 | The task-system block is not duplicated |
 | 5 | `verify-setup.sh` passes against the freshly installed target |

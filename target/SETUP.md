@@ -53,8 +53,27 @@ the `GEMINI.md` symlink alongside it.
 target/setup-project.sh <path-to-target-repo> --epic core
 ```
 
-Re-running is safe: the script currently declines to touch a target that
-already has `project/tasks/`.
+### Re-running: install vs upgrade
+
+A bare re-run on a target that already has `project/tasks/` **declines and
+changes nothing**, so setup is safe to call blind from a script.
+
+To refresh an existing installation — after bumping the pinned generator, for
+example — use `--upgrade`:
+
+```bash
+target/setup-project.sh <path-to-target-repo> --upgrade
+```
+
+That is safe by construction rather than by convention. The generator writes
+machinery unconditionally (scripts, docs, skill, `task-config.sh`) but only
+*seeds* user-editable files (`classes.md`, `status/README.md`) when they are
+absent, and it replaces the `CLAUDE.md` block between its own markers instead
+of appending. **Task content under `project/tasks/<epic>/` is never touched.**
+
+The generator's own `--force` is not exposed: its only effect is to re-seed
+user-editable files, overwriting a target's hand-edited `classes.md` and
+status README.
 
 ---
 

@@ -22,14 +22,35 @@
 # that moving layer 1 to a pinned generator was meant to eliminate.
 #
 # Usage:
-#   setup-project.sh <target-repo-path> [--epic <name>]
+#   setup-project.sh <target-repo-path> [--epic <name>] [--upgrade]
 #
 # Options:
 #   --epic <name>   Epic name for the initial directory structure (default: main)
+#   --upgrade       Refresh an existing installation in place (see below)
 #
 # Example:
 #   setup-project.sh ~/code/my-app
 #   setup-project.sh ~/code/my-app --epic core
+#   setup-project.sh ~/code/my-app --upgrade
+#
+# Install vs upgrade
+# ------------------
+# A bare run on a target that already has project/tasks/ declines and changes
+# nothing, so setup can be re-run blind in a script without surprises.
+#
+# --upgrade re-runs the generator over the existing install. That is safe by
+# construction, not by convention: the generator writes machinery
+# unconditionally (scripts, docs, skill, task-config.sh) but only *seeds*
+# user-editable files (classes.md, status/README.md) when they are absent, and
+# it replaces the CLAUDE.md block between its own markers rather than
+# appending. Task content under project/tasks/<epic>/ is never touched.
+#
+# Use --upgrade after bumping the pinned generator (see vendor/README.md).
+#
+# The generator's own --force is deliberately NOT exposed: its only effect is
+# to re-seed user-editable files, i.e. to overwrite a target's hand-edited
+# classes.md and status README. If that is ever wanted it should be a separate,
+# louder flag.
 
 set -euo pipefail
 
@@ -58,10 +79,12 @@ PIPELINE_SCRIPTS=(
 
 TARGET_REPO=""
 EPIC="main"
+UPGRADE=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --epic) EPIC="$2"; shift 2 ;;
+        --upgrade) UPGRADE=true; shift ;;
         -*) echo "Unknown flag: $1"; exit 1 ;;
         *)
             if [[ -z "$TARGET_REPO" ]]; then
@@ -106,21 +129,35 @@ for f in "${PIPELINE_SCRIPTS[@]}"; do
     fi
 done
 
-# Idempotency check. NOTE: the generator itself is non-destructive and
-# re-runnable (machinery overwritten, task content never touched), so this
-# hard exit is more conservative than it needs to be. The install-vs-upgrade
-# contract is decided in subtask 15d940-0004-define-reinstall-contract.
-if [[ -d "$TARGET_TASKS" ]]; then
+# Install vs upgrade. A bare re-run declines; --upgrade refreshes in place.
+#
+# Note what this deliberately does NOT say any more: it used to tell the
+# operator to remove project/tasks/ and re-install, which would have deleted
+# every task in the target along with the machinery.
+if [[ -d "$TARGET_TASKS" && "$UPGRADE" != true ]]; then
     echo "Project management system already installed at: $TARGET_TASKS"
-    echo "Nothing to do. To reinstall, remove $TARGET_TASKS first."
+    echo ""
+    echo "Nothing to do. To refresh the machinery in place (safe — task"
+    echo "content is never touched), re-run with --upgrade:"
+    echo ""
+    echo "  $0 $TARGET_REPO --upgrade"
     exit 0
 fi
+
+if [[ "$UPGRADE" == true && ! -d "$TARGET_TASKS" ]]; then
+    echo "--upgrade given but no existing installation found at: $TARGET_TASKS"
+    echo "Run without --upgrade to install for the first time."
+    exit 1
+fi
+
+MODE="install"
+[[ "$UPGRADE" == true ]] && MODE="upgrade"
 
 # ---------------------------------------------------------------------------
 # Layer 1 — task system, from the pinned generator
 # ---------------------------------------------------------------------------
 
-echo "=== Layer 1: task system (pinned create-project-system) ==="
+echo "=== Layer 1: task system (pinned create-project-system) — $MODE ==="
 if [[ -f "$PIN_FILE" ]]; then
     echo "    pin: $(grep -E '^tag:' "$PIN_FILE" | awk '{print $2}') " \
          "($(grep -E '^sha:' "$PIN_FILE" | awk '{print substr($2,1,7)}'))"
@@ -182,7 +219,12 @@ fi
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "Installed into: $TARGET_REPO"
+if [[ "$MODE" == "upgrade" ]]; then
+    echo "Upgraded in place: $TARGET_REPO"
+    echo "  machinery refreshed; task content and user-edited files untouched"
+else
+    echo "Installed into: $TARGET_REPO"
+fi
 echo ""
 echo "Next steps:"
 echo "  1. Read $TARGET_TASKS/docs/USING.md for usage instructions"

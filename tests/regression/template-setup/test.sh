@@ -73,6 +73,49 @@ echo "$OUTPUT" | grep -q "already installed" \
     || fail "second run did not detect existing installation"
 
 # ---------------------------------------------------------------------------
+# 2b. --upgrade refreshes machinery without touching content
+#
+# The generator overwrites machinery unconditionally but only seeds
+# user-editable files when absent, so an upgrade must repair a drifted script
+# while leaving task content, a hand-edited seeded file, and hand-written
+# CLAUDE.md prose alone.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "--- 2b. setup-project.sh --upgrade ---"
+
+echo "# DRIFTED" >> "$TARGET/project/tasks/scripts/list-tasks.sh"
+echo "MY STATUS NOTES" >> "$TARGET/project/status/README.md"
+printf '\n## My own section\nhand written\n' >> "$TARGET/CLAUDE.md"
+
+bash "$REPO_ROOT/target/setup-project.sh" "$TARGET" --upgrade > /dev/null
+
+check_not_contains "$TARGET/project/tasks/scripts/list-tasks.sh" "DRIFTED" \
+    "upgrade repairs a drifted machinery script"
+check_contains "$TARGET/project/status/README.md" "MY STATUS NOTES" \
+    "upgrade preserves a hand-edited seeded file"
+check_contains "$TARGET/CLAUDE.md" "My own section" \
+    "upgrade preserves hand-written CLAUDE.md prose"
+
+BLOCK_COUNT=$(grep -c "task-system:begin" "$TARGET/CLAUDE.md")
+[[ "$BLOCK_COUNT" -eq 1 ]] \
+    && pass "upgrade does not duplicate the task-system block (count: $BLOCK_COUNT)" \
+    || fail "upgrade duplicated the task-system block (count: $BLOCK_COUNT)"
+
+# --upgrade on a real directory that was never installed into must be rejected,
+# not silently treated as a fresh install.
+BARE_DIR="$TARGET/../bare-uninstalled"
+rm -rf "$BARE_DIR"; mkdir -p "$BARE_DIR"
+OUTPUT=$(bash "$REPO_ROOT/target/setup-project.sh" "$BARE_DIR" --upgrade 2>&1 || true)
+echo "$OUTPUT" | grep -q "no existing installation" \
+    && pass "--upgrade on a never-installed target is rejected" \
+    || fail "--upgrade on a never-installed target was not rejected"
+[[ ! -d "$BARE_DIR/project/tasks" ]] \
+    && pass "rejected --upgrade installed nothing" \
+    || fail "rejected --upgrade installed anyway"
+rm -rf "$BARE_DIR"
+
+# ---------------------------------------------------------------------------
 # 3. setup-project.sh produced CLAUDE.md and the GEMINI.md symlink
 #
 # There is no init-claude-md.sh step any more: the pinned task-system
