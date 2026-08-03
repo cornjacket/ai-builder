@@ -65,6 +65,9 @@ echo ""
 echo "[1/4] Recreating target repo infrastructure..."
 rm -rf "$TARGET_REPO"
 mkdir -p "$TARGET_REPO"
+
+# The target must be its OWN git repo — see the note in ../reset.sh.
+git -C "$TARGET_REPO" init -q
 "$REPO_ROOT/target/setup-project.sh" "$TARGET_REPO" --epic "$EPIC"
 
 # ---------------------------------------------------------------------------

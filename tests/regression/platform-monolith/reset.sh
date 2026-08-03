@@ -91,6 +91,12 @@ echo "[1/5] Creating fresh target repo at $TARGET_REPO ..."
 rm -rf "$TARGET_REPO"
 mkdir -p "$TARGET_REPO"
 
+# The target must be its OWN git repo. The task scripts resolve the repo root
+# with `git rev-parse --show-toplevel` from their own directory, so a plain
+# directory nested inside create-ai-builder resolves to create-ai-builder and
+# the target's scripts would read and write THIS repo's project/tasks/.
+git -C "$TARGET_REPO" init -q
+
 # ---------------------------------------------------------------------------
 # 2. Install task management system and CLAUDE.md
 # ---------------------------------------------------------------------------

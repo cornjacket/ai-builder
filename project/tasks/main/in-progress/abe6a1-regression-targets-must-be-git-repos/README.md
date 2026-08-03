@@ -10,7 +10,7 @@
 | Category    | regression-infra           |
 | Created     | 2026-08-03            |
 | Completed   | —                      |
-| Next-subtask-id | 0000               |
+| Next-subtask-id | 0004 |
 
 ## Goal
 
@@ -95,6 +95,10 @@ that is a create-project-system decision, not one to make here.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
+- [ ] [abe6a1-0000-add-git-init-to-pipeline-harnesses](abe6a1-0000-add-git-init-to-pipeline-harnesses/)
+- [ ] [abe6a1-0001-guard-non-git-target-in-setup](abe6a1-0001-guard-non-git-target-in-setup/)
+- [ ] [abe6a1-0002-verify-target-isolation](abe6a1-0002-verify-target-isolation/)
+- [ ] [abe6a1-0003-document-the-requirement](abe6a1-0003-document-the-requirement/)
 <!-- subtask-list-end -->
 
 ## Notes
