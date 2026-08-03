@@ -3,13 +3,13 @@
 | Field       | Value                  |
 |-------------|------------------------|
 | Task-type   | USER-SUBTASK           |
-| Status      | —                      |
+| Status | complete |
 | Epic        | main               |
 | Tags        | —               |
 | Parent      | abe6a1-regression-targets-must-be-git-repos             |
 | Priority    | —           |
 | Created     | 2026-08-03            |
-| Completed   | —                      |
+| Completed | 2026-08-03 |
 | Next-subtask-id | 0000               |
 
 ## Goal

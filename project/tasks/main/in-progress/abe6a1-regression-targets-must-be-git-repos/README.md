@@ -95,7 +95,7 @@ that is a create-project-system decision, not one to make here.
 
 <!-- When a subtask is finished, run complete-task.sh --parent to mark it [x] before moving on. -->
 <!-- subtask-list-start -->
-- [ ] [abe6a1-0000-add-git-init-to-pipeline-harnesses](abe6a1-0000-add-git-init-to-pipeline-harnesses/)
+- [x] [X-abe6a1-0000-add-git-init-to-pipeline-harnesses](X-abe6a1-0000-add-git-init-to-pipeline-harnesses/)
 - [ ] [abe6a1-0001-guard-non-git-target-in-setup](abe6a1-0001-guard-non-git-target-in-setup/)
 - [ ] [abe6a1-0002-verify-target-isolation](abe6a1-0002-verify-target-isolation/)
 - [ ] [abe6a1-0003-document-the-requirement](abe6a1-0003-document-the-requirement/)
