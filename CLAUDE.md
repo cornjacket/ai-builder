@@ -491,7 +491,6 @@ task:
 
 **Full documentation guideline:** [`ai-builder/docs/guidelines/documentation-standards.md`](ai-builder/docs/guidelines/documentation-standards.md)
 
-
 <!-- git-workspace-commits:begin -->
 <!--
   Injected and refreshed by a git-workspace that tracks this repo:
