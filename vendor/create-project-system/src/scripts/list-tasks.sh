@@ -5,14 +5,19 @@
 # specify a traversal root directly.
 #
 # By default only incomplete tasks are shown. Use --all to show everything.
-# Use --tag to filter to tasks whose Tags field contains the given value.
-# Use --category to filter to tasks whose Category field equals the given value
-# (use 'unclassified' to match tasks with Category '—' or no Category field).
-# Use --group-by-category to group output by Category within each status folder.
+# Use --tag to filter to tasks whose Tags field contains the given value — this
+# is the topical filter (docs, video, education).
+# Use --worktree to filter to tasks whose Worktree field equals the given value
+# (use 'unclassified' to match tasks with Worktree '—' or no Worktree field).
+# Use --group-by-worktree to group output by Worktree within each status folder.
 # Use --sort-priority to sort tasks HIGH → MED → LOW → unset within each folder.
 #
+# --worktree/--group-by-worktree were called --category/--group-by-category
+# before the field was named for what it selects; both remain as deprecated
+# aliases that warn.
+#
 # Usage:
-#   list-tasks.sh [--epic <epic>] [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--category <branch>] [--group-by-category] [--sort-priority]
+#   list-tasks.sh [--epic <epic>] [--folder <status>] [--depth <n>] [--root <path>] [--all] [--tag <tag>] [--worktree <branch>] [--group-by-worktree] [--sort-priority]
 #
 # Examples:
 #   list-tasks.sh --epic main
@@ -21,8 +26,8 @@
 #   list-tasks.sh --root main/in-progress/my-task --depth 3 --all
 #   list-tasks.sh --epic main --tag tooling --depth 2
 #   list-tasks.sh --epic main --folder backlog --sort-priority
-#   list-tasks.sh --epic main --folder backlog --category task-tooling
-#   list-tasks.sh --epic main --folder backlog --group-by-category --sort-priority
+#   list-tasks.sh --epic main --folder backlog --worktree task-tooling
+#   list-tasks.sh --epic main --folder backlog --group-by-worktree --sort-priority
 
 set -euo pipefail
 
@@ -39,8 +44,8 @@ DEPTH=1
 ROOT=""
 SHOW_ALL=false
 TAG=""
-CATEGORY=""
-GROUP_BY_CATEGORY=false
+WORKTREE=""
+GROUP_BY_WORKTREE=false
 SORT_PRIORITY=false
 
 while [[ $# -gt 0 ]]; do
@@ -50,30 +55,42 @@ while [[ $# -gt 0 ]]; do
         --depth)             DEPTH="$2";  shift 2 ;;
         --root)              ROOT="$2";   shift 2 ;;
         --all)               SHOW_ALL=true; shift ;;
-        --tag)                TAG="$2";    shift 2 ;;
-        --category)          CATEGORY="$2"; shift 2 ;;
-        --group-by-category) GROUP_BY_CATEGORY=true; shift ;;
+        --tag)               TAG="$2";    shift 2 ;;
+        --worktree)          WORKTREE="$2"; shift 2 ;;
+        --group-by-worktree) GROUP_BY_WORKTREE=true; shift ;;
+        # Deprecated aliases — see the header note.
+        --category)
+            echo "Warning: --category is deprecated; use --worktree." >&2
+            WORKTREE="$2"; shift 2 ;;
+        --group-by-category)
+            echo "Warning: --group-by-category is deprecated; use --group-by-worktree." >&2
+            GROUP_BY_WORKTREE=true; shift ;;
         --sort-priority)     SORT_PRIORITY=true; shift ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
 
-# Canonical category order, read at runtime from the classes layer's classes.md
-# (the order classes are declared in that file). 'unclassified' is always
-# appended last, for tasks whose Category is '—' or missing.
+# Canonical worktree order, read at runtime from the worktrees layer's
+# worktrees.md (the order worktrees are declared in that file). 'unclassified'
+# is always appended last, for tasks whose Worktree is '—' or missing.
 #
-# When the classes layer is not installed (no classes.md), the order is just
-# 'unclassified' — --group-by-category then degrades to a single group, and
-# --category filtering still works against whatever values tasks carry.
-CATEGORY_ORDER=()
-_CLASSES_FILE="$TASKS_ROOT/classes.md"
-if [[ -f "$_CLASSES_FILE" ]]; then
-    while IFS= read -r _cat; do
-        [[ -n "$_cat" ]] && CATEGORY_ORDER+=("$_cat")
-    done < <(grep -oE '^\*\*Worktree branch:\*\* `[^`]+`' "$_CLASSES_FILE" \
+# Repos generated before the Category -> Worktree rename carry this file as
+# classes.md. It is CONTENT, which the generator never rewrites, so the
+# fallback below is permanent rather than transitional.
+#
+# When the worktrees layer is not installed at all, the order is just
+# 'unclassified' — --group-by-worktree then degrades to a single group, and
+# --worktree filtering still works against whatever values tasks carry.
+WORKTREE_ORDER=()
+_WORKTREES_FILE="$TASKS_ROOT/worktrees.md"
+[[ -f "$_WORKTREES_FILE" ]] || _WORKTREES_FILE="$TASKS_ROOT/classes.md"
+if [[ -f "$_WORKTREES_FILE" ]]; then
+    while IFS= read -r _wt; do
+        [[ -n "$_wt" ]] && WORKTREE_ORDER+=("$_wt")
+    done < <(grep -oE '^\*\*Worktree branch:\*\* `[^`]+`' "$_WORKTREES_FILE" \
              | sed 's/^\*\*Worktree branch:\*\* `\([^`]*\)`/\1/')
 fi
-CATEGORY_ORDER+=("unclassified")
+WORKTREE_ORDER+=("unclassified")
 
 # ---------------------------------------------------------------------------
 # Resolve traversal root
@@ -134,32 +151,40 @@ has_tag() {
 }
 
 # ---------------------------------------------------------------------------
-# Helper: read the Category field from a task README.
+# Helper: read the Worktree field from a task README.
 # Returns the raw value, or "unclassified" if the field is missing/blank/'—'.
+#
+# Tasks created before the Category -> Worktree rename carry a `| Category |`
+# row. Task READMEs are CONTENT — the generator never rewrites them — so this
+# reader accepts both spellings permanently, and no migration of existing tasks
+# is required. A repo may hold a mix of both rows indefinitely.
 # ---------------------------------------------------------------------------
 
-get_category() {
+get_worktree() {
     local readme="$1"
-    local category
-    category=$(grep -m1 "^| Category" "$readme" 2>/dev/null | sed 's/| Category *| *\(.*\) *|/\1/' | tr -d ' ')
-    if [[ -z "$category" || "$category" == "—" ]]; then
+    local worktree
+    worktree=$(grep -m1 "^| Worktree" "$readme" 2>/dev/null | sed 's/| Worktree *| *\(.*\) *|/\1/' | tr -d ' ')
+    if [[ -z "$worktree" ]]; then
+        worktree=$(grep -m1 "^| Category" "$readme" 2>/dev/null | sed 's/| Category *| *\(.*\) *|/\1/' | tr -d ' ')
+    fi
+    if [[ -z "$worktree" || "$worktree" == "—" ]]; then
         echo "unclassified"
     else
-        echo "$category"
+        echo "$worktree"
     fi
 }
 
 # ---------------------------------------------------------------------------
-# Helper: check if a task README's Category matches the --category filter.
-# Returns 0 (true) if no CATEGORY filter is set or the field matches.
+# Helper: check if a task README's Worktree matches the --worktree filter.
+# Returns 0 (true) if no WORKTREE filter is set or the field matches.
 # ---------------------------------------------------------------------------
 
-matches_category() {
+matches_worktree() {
     local readme="$1"
-    [[ -z "$CATEGORY" ]] && return 0
+    [[ -z "$WORKTREE" ]] && return 0
     local actual
-    actual="$(get_category "$readme")"
-    [[ "$actual" == "$CATEGORY" ]]
+    actual="$(get_worktree "$readme")"
+    [[ "$actual" == "$WORKTREE" ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -222,9 +247,9 @@ print_dir_tasks() {
     while IFS= read -r task_dir; do
         [[ -f "$task_dir/README.md" ]] || continue
         has_tag "$task_dir/README.md" || continue
-        # Category filter only applies at depth 1 (top-level tasks own the field).
+        # Worktree filter only applies at depth 1 (top-level tasks own the field).
         if [[ "$current_depth" -eq 1 ]]; then
-            matches_category "$task_dir/README.md" || continue
+            matches_worktree "$task_dir/README.md" || continue
         fi
         local task_name priority
         task_name="$(basename "$task_dir")"
@@ -259,7 +284,7 @@ print_status_tasks() {
     while IFS= read -r task_dir; do
         [[ -f "$task_dir/README.md" ]] || continue
         has_tag "$task_dir/README.md" || continue
-        matches_category "$task_dir/README.md" || continue
+        matches_worktree "$task_dir/README.md" || continue
         task_dirs+=("$task_dir")
     done < <(
         if [[ -f "$readme" ]]; then
@@ -291,16 +316,16 @@ print_status_tasks() {
     echo ""
     echo "  [$status]"
 
-    if [[ "$GROUP_BY_CATEGORY" == true ]]; then
-        # Walk CATEGORY_ORDER and print each non-empty group in canonical order.
-        for category in "${CATEGORY_ORDER[@]}"; do
+    if [[ "$GROUP_BY_WORKTREE" == true ]]; then
+        # Walk WORKTREE_ORDER and print each non-empty group in canonical order.
+        for worktree in "${WORKTREE_ORDER[@]}"; do
             local group_first=1
             for task_dir in "${task_dirs[@]}"; do
-                local task_cat
-                task_cat="$(get_category "$task_dir/README.md")"
-                [[ "$task_cat" == "$category" ]] || continue
+                local task_wt
+                task_wt="$(get_worktree "$task_dir/README.md")"
+                [[ "$task_wt" == "$worktree" ]] || continue
                 if [[ $group_first -eq 1 ]]; then
-                    echo "    [$category]"
+                    echo "    [$worktree]"
                     group_first=0
                 fi
                 local task_name priority
@@ -340,8 +365,8 @@ print_status_tasks() {
 FILTER_LABEL="incomplete only"
 [[ "$SHOW_ALL" == true ]] && FILTER_LABEL="all"
 [[ -n "$TAG" ]] && FILTER_LABEL="$FILTER_LABEL, tag: $TAG"
-[[ -n "$CATEGORY" ]] && FILTER_LABEL="$FILTER_LABEL, category: $CATEGORY"
-[[ "$GROUP_BY_CATEGORY" == true ]] && FILTER_LABEL="$FILTER_LABEL, grouped by category"
+[[ -n "$WORKTREE" ]] && FILTER_LABEL="$FILTER_LABEL, worktree: $WORKTREE"
+[[ "$GROUP_BY_WORKTREE" == true ]] && FILTER_LABEL="$FILTER_LABEL, grouped by worktree"
 [[ "$SORT_PRIORITY" == true ]] && FILTER_LABEL="$FILTER_LABEL, sorted by priority"
 
 if [[ -n "$ROOT" ]]; then

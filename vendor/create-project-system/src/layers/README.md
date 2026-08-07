@@ -5,29 +5,47 @@ its flag is passed. The human core (`src/scripts`, `src/templates`, `src/docs`)
 works fully without any of them.
 
 Design rule followed throughout: **prefer runtime gating over file variants.**
-Where the core can detect a layer's presence at runtime (e.g. "does `classes.md`
+Where the core can detect a layer's presence at runtime (e.g. "does `worktrees.md`
 exist?"), there is one script that works both ways, rather than two variants the
 generator has to choose between.
 
 ---
 
-## `classes/` — `--with-classes` (worktree categories)
+## `worktrees/` — `--with-worktrees` (parallel-work isolation)
 
-**Emits:** `classes.md` → `<tasks-root>/classes.md` (a starter with one example
-class, so `--category` works immediately).
+**Emits:** `worktrees.md` → `<tasks-root>/worktrees.md` (a starter with one
+example worktree, so `--worktree` works immediately).
+
+The field names which files a task touches, so unrelated work can run in
+parallel branches. It is **not** topical grouping — that is `Tags`, which is
+free text and settable at any time via `set-field.sh`. The field was called
+`Category` through v0.1.0 and renamed in v0.2.0 precisely because the old name
+pulled operators toward it when they wanted `Tags` (task 19).
 
 **Core behavior when absent (already implemented, no file swap needed):**
-- `new-user-task.sh` — `--category` is optional; it validates against
-  `classes.md` *only if that file exists*, otherwise skips validation. Unset
-  category is recorded as `—`.
-- `list-tasks.sh` — builds `CATEGORY_ORDER` at runtime from `classes.md`
-  (declaration order), falling back to just `unclassified`. `--category` and
-  `--group-by-category` remain present and harmless either way.
+- `new-user-task.sh` — `--worktree` is optional; it validates against
+  `worktrees.md` *only if that file exists*, otherwise skips validation. Unset
+  worktree is recorded as `—`.
+- `list-tasks.sh` — builds `WORKTREE_ORDER` at runtime from `worktrees.md`
+  (declaration order), falling back to just `unclassified`. `--worktree` and
+  `--group-by-worktree` remain present and harmless either way.
 
-**Generator emit rule:** when `--with-classes` is **not** passed, strip the
-`| Category | … |` row from the emitted `user-task-template.md` so non-classes
-repos don't carry a permanently-empty field. (Implemented in `generate.sh`,
-task 04.)
+**Generator emit rule:** when `--with-worktrees` is **not** passed, strip the
+`| Worktree | … |` row from the emitted `user-task-template.md` so repos
+without the layer don't carry a permanently-empty field. (Implemented in
+`generate.sh`, task 04.)
+
+**Backward compatibility (task 19).** Both the metadata row and the definitions
+file are CONTENT, which the generator never rewrites — so pre-rename installs
+are supported by the *readers*, permanently, rather than by a migration:
+- `list-tasks.sh` reads `| Worktree |`, then falls back to `| Category |`.
+- Both scripts read `worktrees.md`, then fall back to `classes.md`.
+- `generate.sh` seeds `worktrees.md` only when **neither** name is present, so
+  regenerating over a pre-rename install never leaves a fresh empty file
+  shadowing the operator's real definitions.
+- `--category` / `--group-by-category` warn and still work. `--with-classes`
+  errors out: generate-time flags are typed once during a deliberate upgrade,
+  and v0.1.0 remains pinnable.
 
 ---
 

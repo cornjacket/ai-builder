@@ -111,6 +111,11 @@ Top-level tasks move between status folders. **Subtask status is binary**: `—`
 # Top-level task
 {{TASKS_REL}}/scripts/new-user-task.sh --folder draft --name my-feature
 
+# ...with topical tags and a priority. Tags are how you group tasks by SUBJECT
+# (docs, video, education); they are free text and you can set them later too.
+{{TASKS_REL}}/scripts/new-user-task.sh --folder draft --name my-feature \
+    --tags "docs, search" --priority HIGH
+
 # Subtask (parent is the task's full directory name)
 {{TASKS_REL}}/scripts/new-user-subtask.sh --folder draft \
     --parent a3f2c1-my-feature --name design-review
@@ -127,6 +132,9 @@ Top-level tasks move between status folders. **Subtask status is binary**: `—`
 
 # Order by priority: HIGH → MED → LOW → unset
 {{TASKS_REL}}/scripts/list-tasks.sh --folder backlog --sort-priority
+
+# Filter by topic — matches against the Tags field
+{{TASKS_REL}}/scripts/list-tasks.sh --folder backlog --tag docs
 
 # Everything including completed
 {{TASKS_REL}}/scripts/list-tasks.sh --all
@@ -157,6 +165,30 @@ Top-level tasks move between status folders. **Subtask status is binary**: `—`
 # Undo either
 {{TASKS_REL}}/scripts/complete-task.sh --folder in-progress --name a3f2c1-my-feature --undo
 ```
+
+### Editing metadata
+
+`Tags` and `Priority` can be changed after creation — you do not have to
+delete and recreate a task (which would destroy its subtasks), and you must not
+hand-edit the metadata table.
+
+```bash
+# Retag an existing task (Tags is free text; this is the TOPICAL grouping)
+{{TASKS_REL}}/scripts/set-field.sh --folder backlog --name a3f2c1-my-feature \
+    --field Tags --value "docs, search"
+
+# Re-prioritise
+{{TASKS_REL}}/scripts/set-field.sh --folder backlog --name a3f2c1-my-feature \
+    --field Priority --value HIGH
+
+# Clear a field
+{{TASKS_REL}}/scripts/set-field.sh --folder backlog --name a3f2c1-my-feature \
+    --field Tags --value "—"
+```
+
+Only `Tags` and `Priority` are settable this way — they mirror nothing on the
+filesystem. `Status` and a task's location are owned by `move-task.sh` and
+`complete-task.sh`.
 
 ### Restructuring
 
@@ -218,19 +250,30 @@ python3 {{TASKS_REL}}/scripts/reorder-subtasks.py --task-dir <path> --apply name
 
 These commands exist only if the corresponding layer was installed.
 
-### Categories (`classes.md`)
+### Worktrees (`worktrees.md`)
 
 Groups tasks that touch the same files, so different groups can be worked in
-parallel without conflicting. Valid values are the **Worktree branch** names
-declared in `{{TASKS_REL}}/classes.md`; `unclassified` is always accepted.
+parallel branches without conflicting. Valid values are the **Worktree branch**
+names declared in `{{TASKS_REL}}/worktrees.md`; `unclassified` is always
+accepted.
+
+> **This is about isolation, not topic.** `Worktree` answers "which files does
+> this touch, and what can run beside it" — not "what is this about". For
+> subject-matter grouping (`docs`, `video`, `education`) use **`Tags`**, which
+> is free text and settable at any time with `set-field.sh`.
 
 ```bash
-{{TASKS_REL}}/scripts/new-user-task.sh --folder draft --name my-feature --category docs
-{{TASKS_REL}}/scripts/list-tasks.sh --folder backlog --category docs
-{{TASKS_REL}}/scripts/list-tasks.sh --folder backlog --group-by-category --sort-priority
+{{TASKS_REL}}/scripts/new-user-task.sh --folder draft --name my-feature --worktree docs
+{{TASKS_REL}}/scripts/list-tasks.sh --folder backlog --worktree docs
+{{TASKS_REL}}/scripts/list-tasks.sh --folder backlog --group-by-worktree --sort-priority
 ```
 
-If this layer is installed, set a task's category at creation; don't leave it `—`.
+If this layer is installed, set a task's worktree at creation; don't leave it `—`.
+
+> Installs generated before this field was renamed carry it as `Category`, in a
+> `classes.md`. Both spellings are read for as long as they exist — those are
+> content files the generator never rewrites — so no migration is needed. The
+> `--category` and `--group-by-category` flags still work, with a warning.
 
 ### Long-running projects
 

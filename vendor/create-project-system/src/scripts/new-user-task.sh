@@ -3,15 +3,20 @@
 # Updates the status folder's README.md task list.
 #
 # Usage:
-#   new-user-task.sh --epic <epic> --folder <status> --name <task-name> [--category <name>] [--id HEX] [--tags <tags>] [--priority <p>]
+#   new-user-task.sh --epic <epic> --folder <status> --name <task-name> [--worktree <name>] [--id HEX] [--tags <tags>] [--priority <p>]
 #
-# --category NAME  Optional. The worktree class this task belongs to. When a
-#                  classes.md exists at the root of the task subsystem, the
-#                  value must be a branch name listed in it, or the literal
-#                  `unclassified` if no class fits; run with an unknown value
-#                  to see the list of valid options. When classes.md is absent,
-#                  the value is accepted as-is. Omitted entirely, the Category
-#                  field is left as `—`.
+# --worktree NAME  Optional. The worktree this task belongs to — which files it
+#                  touches, so unrelated work can run in parallel branches. This
+#                  is about isolation, NOT topic: to group tasks by subject
+#                  matter, use --tags. When a worktrees.md exists at the root of
+#                  the task subsystem, the value must be a branch name listed in
+#                  it, or the literal `unclassified` if none fits; run with an
+#                  unknown value to see the list of valid options. When
+#                  worktrees.md is absent, the value is accepted as-is. Omitted
+#                  entirely, the Worktree field is left as `—`.
+#
+#                  `--category` is a deprecated alias, kept so existing callers
+#                  keep working; it warns and behaves identically.
 #
 # --id HEX  Use the given 6-char hex string as the task ID instead of generating
 #           a random one. Intended for replay regression tests that need to
@@ -20,9 +25,9 @@
 # Priority values: CRITICAL, HIGH, MED, LOW (default: —)
 #
 # Examples:
-#   new-user-task.sh --epic main --folder draft --name my-feature --category task-tooling
-#   new-user-task.sh --epic main --folder in-progress --name my-feature --category docs --priority HIGH
-#   new-user-task.sh --epic main --folder in-progress --name my-feature --category unclassified --id 61857e
+#   new-user-task.sh --epic main --folder draft --name my-feature --worktree task-tooling
+#   new-user-task.sh --epic main --folder in-progress --name my-feature --worktree docs --priority HIGH
+#   new-user-task.sh --epic main --folder in-progress --name my-feature --worktree unclassified --id 61857e
 
 set -euo pipefail
 
@@ -41,7 +46,7 @@ FOLDER=""
 NAME=""
 TAGS="—"
 PRIORITY="—"
-CATEGORY=""
+WORKTREE=""
 FIXED_ID=""
 
 while [[ $# -gt 0 ]]; do
@@ -52,48 +57,63 @@ while [[ $# -gt 0 ]]; do
         --id)       FIXED_ID="$2"; shift 2 ;;
         --tags)     TAGS="$2";     shift 2 ;;
         --priority) PRIORITY="$2"; shift 2 ;;
-        --category) CATEGORY="$2"; shift 2 ;;
+        --worktree) WORKTREE="$2"; shift 2 ;;
+        # Deprecated alias — the field was called Category before it was named
+        # for what it actually selects. Warns, then behaves identically.
+        --category)
+            echo "Warning: --category is deprecated; use --worktree." >&2
+            WORKTREE="$2"; shift 2 ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
     esac
 done
 
 if [[ -z "$FOLDER" || -z "$NAME" ]]; then
-    echo "Usage: new-user-task.sh --folder <status> --name <task-name> [--category <name>] [--epic <epic>] [--id HEX] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
+    echo "Usage: new-user-task.sh --folder <status> --name <task-name> [--worktree <name>] [--epic <epic>] [--id HEX] [--tags <tags>] [--priority <CRITICAL|HIGH|MED|LOW>]"
     exit 1
 fi
 
 # ---------------------------------------------------------------------------
-# Validate --category against worktree branches in classes.md, when present.
-# The classes layer is optional: with no classes.md the value is accepted as-is.
+# Validate --worktree against the worktree branches declared in worktrees.md.
+#
+# The worktrees layer is optional: with no worktrees.md the value is accepted
+# as-is. Repos generated before the Category -> Worktree rename still carry the
+# file under its old name, so fall back to classes.md — that file is CONTENT,
+# which the generator never rewrites, so the fallback is permanent.
 # ---------------------------------------------------------------------------
 
-CLASSES_FILE="$TASKS_ROOT/classes.md"
-if [[ -n "$CATEGORY" && -f "$CLASSES_FILE" ]]; then
+WORKTREES_FILE="$TASKS_ROOT/worktrees.md"
+[[ -f "$WORKTREES_FILE" ]] || WORKTREES_FILE="$TASKS_ROOT/classes.md"
+
+if [[ -n "$WORKTREE" && -f "$WORKTREES_FILE" ]]; then
     # Extract branch names from `**Worktree branch:** \`name\`` lines.
-    VALID_CATEGORIES="$(grep -oE '^\*\*Worktree branch:\*\* `[^`]+`' "$CLASSES_FILE" \
+    VALID_WORKTREES="$(grep -oE '^\*\*Worktree branch:\*\* `[^`]+`' "$WORKTREES_FILE" \
         | sed 's/^\*\*Worktree branch:\*\* `\([^`]*\)`/\1/')"
 
-    if [[ -z "$VALID_CATEGORIES" ]]; then
-        echo "Error: no worktree branches found in $CLASSES_FILE." >&2
+    if [[ -z "$VALID_WORKTREES" ]]; then
+        echo "Error: no worktree branches found in $WORKTREES_FILE." >&2
         exit 1
     fi
 
-    # `unclassified` is always permitted (per the rule for tasks that fit no class).
-    if [[ "$CATEGORY" != "unclassified" ]] \
-       && ! grep -qxF "$CATEGORY" <<< "$VALID_CATEGORIES"; then
+    # `unclassified` is always permitted (for tasks that fit no worktree).
+    if [[ "$WORKTREE" != "unclassified" ]] \
+       && ! grep -qxF "$WORKTREE" <<< "$VALID_WORKTREES"; then
         {
-            echo "Error: unknown --category value: '$CATEGORY'"
-            echo "Valid values (from $CLASSES_FILE):"
-            sed 's/^/  /' <<< "$VALID_CATEGORIES"
+            echo "Error: unknown --worktree value: '$WORKTREE'"
+            echo "Valid values (from $WORKTREES_FILE):"
+            sed 's/^/  /' <<< "$VALID_WORKTREES"
             echo "  unclassified"
+            echo ""
+            echo "Note: --worktree selects which files a task touches, so unrelated"
+            echo "      work can run in parallel branches. To group tasks by subject"
+            echo "      matter instead, use --tags."
         } >&2
         exit 1
     fi
 fi
 
-# No --category supplied: leave the Category field unset.
-if [[ -z "$CATEGORY" ]]; then
-    CATEGORY="—"
+# No --worktree supplied: leave the Worktree field unset.
+if [[ -z "$WORKTREE" ]]; then
+    WORKTREE="—"
 fi
 
 # ---------------------------------------------------------------------------
@@ -133,7 +153,7 @@ sed \
     -e "s/{{EPIC}}/$EPIC/g" \
     -e "s/{{TAGS}}/$TAGS/g" \
     -e "s/{{PRIORITY}}/$PRIORITY/g" \
-    -e "s/{{CATEGORY}}/$CATEGORY/g" \
+    -e "s/{{WORKTREE}}/$WORKTREE/g" \
     -e "s/{{CREATED}}/$CREATED/g" \
     "$TASK_TEMPLATE" > "$TASK_DIR/README.md"
 

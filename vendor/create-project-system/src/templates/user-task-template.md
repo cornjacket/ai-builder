@@ -7,7 +7,7 @@
 | Epic        | {{EPIC}}               |
 | Tags        | {{TAGS}}               |
 | Priority    | {{PRIORITY}}           |
-| Category    | {{CATEGORY}}           |
+| Worktree    | {{WORKTREE}}           |
 | Created     | {{CREATED}}            |
 | Completed   | —                      |
 | Next-subtask-id | 0000               |

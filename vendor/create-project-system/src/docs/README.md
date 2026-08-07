@@ -229,10 +229,10 @@ All scripts are in `{{TASKS_REL}}/scripts/` and should be run from the
 **repo root**.
 
 ```bash
-# Create a new top-level user-task. --category is required and must match a
-# worktree branch name in classes.md (or `unclassified`).
+# Create a new top-level user-task. --worktree must match a worktree branch
+# name in worktrees.md (or `unclassified`). Use --tags for topical grouping.
 {{TASKS_REL}}/scripts/new-user-task.sh --epic main --folder draft \
-    --name my-project --category task-tooling
+    --name my-project --worktree task-tooling --tags "docs, search"
 
 # Create a human-owned subtask (review, planning step, etc.)
 {{TASKS_REL}}/scripts/new-user-subtask.sh --epic main --folder in-progress \
@@ -261,6 +261,12 @@ All scripts are in `{{TASKS_REL}}/scripts/` and should be run from the
 # Print a task's README to stdout
 {{TASKS_REL}}/scripts/show-task.sh --epic main --folder in-progress --name my-task
 
+# Change Tags or Priority on an existing task (never hand-edit the table)
+{{TASKS_REL}}/scripts/set-field.sh --epic main --folder backlog --name my-task \
+    --field Tags --value "docs, search"
+{{TASKS_REL}}/scripts/set-field.sh --epic main --folder backlog --name my-task \
+    --field Priority --value HIGH
+
 # Soft-delete a task (hides directory, removes from parent README)
 {{TASKS_REL}}/scripts/delete-task.sh --epic main --folder draft --name my-task
 
@@ -285,12 +291,12 @@ All scripts are in `{{TASKS_REL}}/scripts/` and should be run from the
 # Filter by tag
 {{TASKS_REL}}/scripts/list-tasks.sh --epic main --tag backend --depth 2 --all
 
-# Filter by Category (worktree class — see classes.md)
-{{TASKS_REL}}/scripts/list-tasks.sh --epic main --folder backlog --category task-tooling
+# Filter by Worktree (which files a task touches — see worktrees.md)
+{{TASKS_REL}}/scripts/list-tasks.sh --epic main --folder backlog --worktree task-tooling
 
-# Group output by Category for a per-worktree-class breakdown
+# Group output by Worktree for a per-worktree breakdown
 {{TASKS_REL}}/scripts/list-tasks.sh --epic main --folder backlog \
-    --group-by-category --sort-priority
+    --group-by-worktree --sort-priority
 
 # List tasks rooted at a specific directory
 {{TASKS_REL}}/scripts/list-tasks.sh --root main/in-progress/my-task --depth 3

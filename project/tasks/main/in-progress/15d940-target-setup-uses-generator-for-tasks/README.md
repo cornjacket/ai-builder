@@ -10,7 +10,7 @@
 | Category    | workspace-mgmt           |
 | Created     | 2026-07-26            |
 | Completed   | —                      |
-| Next-subtask-id | 0008 |
+| Next-subtask-id | 0010 |
 
 ## Goal
 
@@ -51,8 +51,9 @@ overlay should source the relocated pipeline dir, not the generated mount).
 - [x] [X-15d940-0003-retire-init-claude-md](X-15d940-0003-retire-init-claude-md/)
 - [x] [X-15d940-0004-define-reinstall-contract](X-15d940-0004-define-reinstall-contract/)
 - [x] [X-15d940-0005-update-verify-setup](X-15d940-0005-update-verify-setup/)
-- [ ] [15d940-0006-sandbox-install-regression](15d940-0006-sandbox-install-regression/)
-- [ ] [15d940-0007-update-affected-documentation](15d940-0007-update-affected-documentation/)
+- [ ] [15d940-0006-bump-generator-pin-to-v0-2-0](15d940-0006-bump-generator-pin-to-v0-2-0/)
+- [ ] [15d940-0007-sandbox-install-regression](15d940-0007-sandbox-install-regression/)
+- [ ] [15d940-0008-update-affected-documentation](15d940-0008-update-affected-documentation/)
 <!-- subtask-list-end -->
 
 ## Notes

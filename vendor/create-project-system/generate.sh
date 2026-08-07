@@ -8,7 +8,7 @@
 #   --target-repo <path>     Repo to install into (required)
 #   --tasks-dir <rel-path>   Mount path inside the target (default: tasks)
 #   --epic <name>            Starter epic (default: main)
-#   --with-classes           Worktree categories (classes.md + Category field)
+#   --with-worktrees         Worktree isolation (worktrees.md + Worktree field)
 #   --with-projects          Long-running projects (new-project.sh, list-projects.sh)
 #   --with-status            Status-report subsystem: a status/ sibling of the
 #                            tasks mount + a container README (project/ workspace)
@@ -16,17 +16,24 @@
 #   --with-skill             Emit .claude/skills/task-system/ (Claude on-demand skill)
 #   --inject-claude-md       Append the kernel snippet to the target's CLAUDE.md
 #                            (default: print it for manual placement)
-#   --force                  Also re-seed content (classes.md, status task lists).
+#   --force                  Also re-seed content (worktrees.md, status task lists).
 #                            NOT needed for normal regeneration — see below.
 #   -h, --help               Show this help
 #
 # COLLISION POLICY — regeneration is safe by default:
 #   * MACHINERY (scripts/, templates, docs/, task-config.sh, skill) is ALWAYS
 #     overwritten. It is generated output; that is the point.
-#   * CONTENT (epic + status folders, their task lists, classes.md) is created
+#   * CONTENT (epic + status folders, their task lists, worktrees.md) is created
 #     ONLY IF MISSING and is never overwritten. Your tasks are never touched.
 #   So re-running the same command upgrades the machinery and leaves task content
 #   alone. --force additionally re-seeds content files (rarely wanted).
+#
+# UPGRADING FROM <= v0.1.0 (the Category -> Worktree rename):
+#   --with-classes is now --with-worktrees, and the metadata row is `Worktree`.
+#   Existing tasks and an existing classes.md need NO migration: the generated
+#   scripts read both spellings permanently, because both are CONTENT that this
+#   generator never rewrites. The runtime --category / --group-by-category flags
+#   also still work, with a deprecation warning.
 
 set -euo pipefail
 
@@ -38,7 +45,7 @@ SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/src" && pwd)"
 TARGET=""
 TASKS_DIR="tasks"
 EPIC="main"
-WITH_CLASSES=false
+WITH_WORKTREES=false
 WITH_PROJECTS=false
 WITH_STATUS=false
 WITH_GUARD=false
@@ -46,14 +53,23 @@ WITH_SKILL=false
 INJECT_CLAUDE_MD=false
 FORCE=false
 
-usage() { sed -n '2,29p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,36p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --target-repo)        TARGET="$2"; shift 2 ;;
         --tasks-dir)          TASKS_DIR="$2"; shift 2 ;;
         --epic)               EPIC="$2"; shift 2 ;;
-        --with-classes)       WITH_CLASSES=true; shift ;;
+        --with-worktrees)     WITH_WORKTREES=true; shift ;;
+        # Renamed in v0.2.0. Generate-time flags are typed once, during a
+        # deliberate upgrade, so this errors rather than aliasing — pin v0.1.0
+        # if you are not ready to move.
+        --with-classes)
+            echo "Error: --with-classes was renamed to --with-worktrees in v0.2.0." >&2
+            echo "       Existing installs need no migration: the generated scripts" >&2
+            echo "       read both 'Worktree' and 'Category' rows, and both" >&2
+            echo "       worktrees.md and classes.md. Pin v0.1.0 to defer." >&2
+            exit 1 ;;
         --with-projects)      WITH_PROJECTS=true; shift ;;
         --with-status)        WITH_STATUS=true; shift ;;
         --with-worktree-guard) WITH_GUARD=true; shift ;;
@@ -117,7 +133,7 @@ created=(); updated=(); skipped=()
 #                    {{STATUS_REL}} {{CONTAINER_REL}} {{TASKS_BASE}}
 #                    {{PROJECTS_REL_LINE}}   -> substituted here, must not survive.
 #   runtime        : {{NAME}} {{STATUS}} {{EPIC}} {{TAGS}} {{PRIORITY}}
-#                    {{PARENT}} {{CREATED}} {{CATEGORY}}
+#                    {{PARENT}} {{CREATED}} {{WORKTREE}}
 #                    -> live in the task templates and MUST survive generation;
 #                       the task-creation scripts substitute them per task.
 # Never add a runtime token to the substitution list below — it would bake a
@@ -168,10 +184,10 @@ for f in "$SRC_DIR"/templates/*.md; do
     render "$f" "$SCRIPTS_OUT/$(basename "$f")"
 done
 
-# EMIT RULE: without the classes layer, strip the Category row from the
-# user-task template so non-classes repos don't carry a dead field.
-if [[ "$WITH_CLASSES" != true ]]; then
-    perl -0pi -e 's{^\| Category[^\n]*\n}{}m' "$SCRIPTS_OUT/user-task-template.md"
+# EMIT RULE: without the worktrees layer, strip the Worktree row from the
+# user-task template so repos without it don't carry a dead field.
+if [[ "$WITH_WORKTREES" != true ]]; then
+    perl -0pi -e 's{^\| Worktree[^\n]*\n}{}m' "$SCRIPTS_OUT/user-task-template.md"
 fi
 
 # generated config
@@ -209,9 +225,20 @@ if [[ "$WITH_GUARD" == true ]]; then
     updated+=("$TASKS_DIR/scripts/check-task-complete.py  (worktree guard)")
 fi
 
-# classes.md is CONTENT — the user edits it; never clobber their classes
-if [[ "$WITH_CLASSES" == true ]]; then
-    seed "$SRC_DIR/layers/classes/classes.md" "$MOUNT/classes.md"
+# worktrees.md is CONTENT — the user edits it; never clobber their definitions.
+#
+# Pre-rename installs hold this file as classes.md, which the generated scripts
+# still read. Seeding worktrees.md beside it would leave two files where the
+# reader silently prefers the fresh, empty one over the operator's real
+# definitions — so seed only when NEITHER name is present. This holds even
+# under --force, for the same reason: the failure is silent and the recovery
+# (noticing your worktrees vanished) is not.
+if [[ "$WITH_WORKTREES" == true ]]; then
+    if [[ -e "$MOUNT/classes.md" && ! -e "$MOUNT/worktrees.md" ]]; then
+        skipped+=("$TASKS_DIR/classes.md  (pre-rename name — still read; rename it by hand to finish the move)")
+    else
+        seed "$SRC_DIR/layers/worktrees/worktrees.md" "$MOUNT/worktrees.md"
+    fi
 fi
 
 # Status subsystem. Both the log README and the container README are CONTENT
@@ -306,7 +333,7 @@ if [[ ${#skipped[@]} -gt 0 ]]; then
 fi
 
 echo ""
-echo "Layers: classes=$WITH_CLASSES projects=$WITH_PROJECTS status=$WITH_STATUS guard=$WITH_GUARD skill=$WITH_SKILL"
+echo "Layers: worktrees=$WITH_WORKTREES projects=$WITH_PROJECTS status=$WITH_STATUS guard=$WITH_GUARD skill=$WITH_SKILL"
 echo ""
 echo "Next:"
 echo "  $TASKS_DIR/scripts/new-user-task.sh --folder draft --name my-first-task"

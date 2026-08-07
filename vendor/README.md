@@ -5,7 +5,7 @@ on at runtime. Nothing here is edited in place — these are snapshots.
 
 | Directory | Upstream | Pinned at |
 |---|---|---|
-| [`create-project-system/`](create-project-system/) | `git@github.com:cornjacket/create-project-system.git` | `v0.1.0` (`c003956`) |
+| [`create-project-system/`](create-project-system/) | `git@github.com:cornjacket/create-project-system.git` | `v0.2.0` (`322924c`) |
 
 ---
 
@@ -34,7 +34,7 @@ into this repo.
 
 ### What is in the snapshot
 
-Only `generate.sh` and its `src/` tree (41 files). `generate.sh` resolves
+Only `generate.sh` and its `src/` tree (42 files). `generate.sh` resolves
 `src/` as a sibling of itself and reaches nothing else at runtime, so the pair
 is self-contained. Upstream's `tests/` (406 KB of golden fixtures), its own
 `tasks/`, `docs/`, and planning files are deliberately excluded.
@@ -42,15 +42,21 @@ is self-contained. Upstream's `tests/` (406 KB of golden fixtures), its own
 `PIN` records the ref, the SHA, and a `manifest-sha256` over the snapshot
 files, so drift or a hand-edit is detectable.
 
-### The v0.1.0 contract
+### The v0.2.0 contract
 
 `generate.sh` accepts **exactly these ten flags and no others**:
 
 ```
 --target-repo  --tasks-dir  --epic  --with-status  --with-skill
---inject-claude-md  --with-classes  --with-projects  --with-worktree-guard
+--inject-claude-md  --with-worktrees  --with-projects  --with-worktree-guard
 --force
 ```
+
+**Changed from v0.1.0:** `--with-classes` was renamed to `--with-worktrees`.
+The old spelling now **exits non-zero** naming its replacement rather than
+aliasing — generate-time flags are typed once, during a deliberate upgrade, so
+upstream chose to error. `setup-project.sh` never passed `--with-classes`, so
+this repo's call site was unaffected by the rename.
 
 Generation is **non-destructive and re-runnable**: machinery is overwritten,
 task content is never touched. The core / all-layers / project golden fixtures
@@ -62,25 +68,44 @@ reproduce byte-for-byte at this ref.
    machinery. create-ai-builder's 7 pipeline scripts stay hand-owned and are
    overlaid *on top of* layer 1. Any code in `setup-project.sh` that assumes
    the generator produces them is wrong.
-2. **`--with-classes` seeds a starter `classes.md` only.** It does not carry
-   this repo's worktree classes across. A target that needs real classes gets
-   them seeded separately.
+2. **`--with-worktrees` seeds a starter `worktrees.md` only.** It does not
+   carry this repo's worktree definitions across. A target that needs real ones
+   gets them seeded separately. The flag also seeds *only* when neither
+   `worktrees.md` nor the pre-rename `classes.md` exists — even under
+   `--force` — so regenerating over an older install never leaves an empty
+   starter shadowing the operator's real definitions.
 3. **Do not chase upstream `main`.** See the bump procedure below.
 
 ### Bumping the pin
 
 The pin is bumped **deliberately**, like any dependency — never by syncing to
-upstream `main`. Two upstream changes already alter the layer-1 contract:
+upstream `main`.
 
-- **task 19** renames the task metadata field `Category` → `Worktree`
-- **task 15** adds `--require-category`
+**What the v0.1.0 → v0.2.0 bump taught.** This section previously said to stay
+on `v0.1.0` because the `Category` → `Worktree` rename would be "a migration,
+not a version-string edit", and put the cost at ~134 task metadata rows. That
+was wrong, and the reason it was wrong is the rule to carry forward:
 
-Both are breaking for this repo: the `Category:` field name is live in the
-metadata rows of ~134 tasks here. Stay on `v0.1.0` until upstream cuts a tag
-that states a migration position, and treat the bump as a migration, not a
-version-string edit.
+> Ask which side of the generator's **machinery/content line** a change falls
+> on. Machinery — flags, scripts, templates, docs — is always overwritten, so a
+> rename there propagates on regeneration at zero cost. Content — task metadata
+> rows, `worktrees.md` — is never rewritten, so old spellings are *permanent
+> state, not transitional state a migration could drain*. A rename that spans
+> the line is absorbed by readers accepting both names forever, not by a
+> migration.
 
-To bump, once such a tag exists:
+v0.2.0 states this itself ("NO MIGRATION IS REQUIRED"), and upstream verified it
+against *this* repo — both bats suites pass unmodified over its real
+`classes.md` and legacy `| Category |` rows. The only real cost was the one
+change that lives purely in machinery: the `--with-classes` → `--with-worktrees`
+flag rename, which this repo's call site did not use.
+
+**What to watch on the next bump.** Upstream task 15 adds `--require-worktree`,
+which is *not* in v0.2.0 and is deferred to a later tag. Unlike the rename, a
+required field is a genuine contract change — apply the machinery/content test
+to it before assuming it is free.
+
+To bump:
 
 ```bash
 CPS=<path-to-create-project-system-clone>
